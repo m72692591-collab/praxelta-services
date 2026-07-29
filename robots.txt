@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://m72692591-collab.github.io/potok-services/sitemap.xml
