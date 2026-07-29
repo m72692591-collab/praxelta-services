@@ -14,3 +14,5 @@ body{background:radial-gradient(circle at 88% 8%,rgba(15,118,110,.12),transparen
 .brief{background:var(--card);border:1px solid var(--line);box-shadow:0 14px 36px rgba(23,32,31,.06)}
 .brief-title{font-size:1.15rem;font-weight:850;margin-top:0;color:var(--accent-dark)}
 @media(max-width:720px){.order{grid-template-columns:1fr}.order-copy,.brief{padding:24px}.order-actions{align-items:stretch}.order-actions .button{width:100%;text-align:center}}
+
+.card-action{display:inline-flex;margin-top:18px;padding:10px 14px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:800;align-items:center;justify-content:center}.card-action:hover{background:var(--accent-dark)}
