@@ -142,7 +142,7 @@
       <div class="service-grid marketplace-grid">
         <article class="featured">
           <div class="tag-row"><span>Проверка спроса</span><b>1 день</b></div>
-          <h3>Экспресс-аудит карточки</h3>
+          <h3>Аудит карточки</h3>
           <p>Карта проблем, новый заголовок, структура описания, сценарий пяти слайдов и план проверки.</p>
           <div class="meta"><strong>1 490 ₽</strong><span>1 карточка</span></div>
           <a href="mailto:m72692591@gmail.com?subject=Заказ%20ПОТОК%20—%20Аудит%20карточки%20Ozon%20или%20Wildberries&amp;body=Код%20услуги:%20marketplace_card_audit%0AОформить%20письменный%20заказ:%20да%0A%0AСсылка%20на%20карточку:%0A%0AГлавная%20задача:%0A%0AПлательщик:%20физлицо%20/%20ИП%20/%20организация">Запросить заказ <span>→</span></a>
@@ -279,14 +279,14 @@
       </div>
       <button class="dialog-close" type="button" aria-label="Закрыть окно заказа">×</button>
     </div>
-    <p class="order-dialog-lead">Заполните недостающие строки прямо в письме. Сайт ничего не отправляет и не сохраняет.</p>
+    <p class="order-dialog-lead">Заполните недостающие строки здесь — Gmail или почтовое приложение откроется уже с готовым текстом. Сайт ничего не отправляет и не сохраняет.</p>
     <label class="order-field">
       <span>Тема письма</span>
       <input id="order-subject" type="text" readonly>
     </label>
     <label class="order-field">
       <span>Текст запроса</span>
-      <textarea id="order-body" rows="11" readonly></textarea>
+      <textarea id="order-body" rows="11" autocomplete="off"></textarea>
     </label>
     <div class="order-dialog-actions">
       <button class="button primary" id="copy-order" type="button">Скопировать запрос</button>
@@ -296,6 +296,6 @@
     <p class="dialog-status" id="dialog-status" role="status" aria-live="polite"></p>
     <p class="dialog-note">Адрес получателя уже добавлен: <strong>m72692591@gmail.com</strong>. Платёжные и персональные данные в запрос не включайте.</p>
   </dialog>
-  <script src="order.js?v=2c6d9641" defer></script>
+  <script src="order.js?v=editable-order-1" defer></script>
 </body>
 </html>
