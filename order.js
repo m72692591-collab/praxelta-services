@@ -10,6 +10,13 @@
   const orderLinks = document.querySelectorAll(
     'a[href^="mailto:m72692591@gmail.com"][href*="body="]'
   );
+  const allowedSources = new Set([
+    "telegram_partner",
+    "max_partner",
+    "email_partner"
+  ]);
+  const requestedSource = new URLSearchParams(window.location.search).get("ref");
+  const sourceCode = allowedSources.has(requestedSource) ? requestedSource : "";
   let returnFocus = null;
 
   const gmailUrl = (subject, body) => {
@@ -26,7 +33,8 @@
   const showOrder = (link) => {
     const mailto = new URL(link.href);
     const subject = mailto.searchParams.get("subject") || "Заказ ПОТОК";
-    const body = mailto.searchParams.get("body") || "";
+    const baseBody = mailto.searchParams.get("body") || "";
+    const body = sourceCode ? `${baseBody}\nИсточник: ${sourceCode}` : baseBody;
 
     returnFocus = link;
     subjectField.value = subject;
