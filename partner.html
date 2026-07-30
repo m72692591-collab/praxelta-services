@@ -168,14 +168,14 @@
       </div>
       <button class="dialog-close" type="button" aria-label="Закрыть окно заказа">×</button>
     </div>
-    <p class="order-dialog-lead">Заполните недостающие строки прямо в письме. Сайт ничего не отправляет и не сохраняет.</p>
+    <p class="order-dialog-lead">Заполните недостающие строки здесь — Gmail или почтовое приложение откроется уже с готовым текстом. Сайт ничего не отправляет и не сохраняет.</p>
     <label class="order-field">
       <span>Тема письма</span>
       <input id="order-subject" type="text" readonly>
     </label>
     <label class="order-field">
       <span>Текст запроса</span>
-      <textarea id="order-body" rows="11" readonly></textarea>
+      <textarea id="order-body" rows="11" autocomplete="off"></textarea>
     </label>
     <div class="order-dialog-actions">
       <button class="button primary" id="copy-order" type="button">Скопировать запрос</button>
@@ -185,7 +185,6 @@
     <p class="dialog-status" id="dialog-status" role="status" aria-live="polite"></p>
     <p class="dialog-note">Адрес получателя уже добавлен: <strong>m72692591@gmail.com</strong>. Платёжные и персональные данные в запрос не включайте.</p>
   </dialog>
-  <script src="order.js?v=partner-attribution-1" defer></script>
+  <script src="order.js?v=editable-order-1" defer></script>
 </body>
 </html>
-
