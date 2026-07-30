@@ -33,6 +33,16 @@
     return `https://mail.google.com/mail/?${params.toString()}`;
   };
 
+  const updateDestinations = () => {
+    const subject = subjectField.value;
+    const body = bodyField.value;
+    openGmail.href = gmailUrl(subject, body);
+    openMailApp.href = `mailto:m72692591@gmail.com?${new URLSearchParams({
+      subject,
+      body
+    }).toString()}`;
+  };
+
   const showOrder = (link) => {
     const mailto = new URL(link.href);
     const subject = mailto.searchParams.get("subject") || "Заказ ПОТОК";
@@ -42,21 +52,17 @@
     returnFocus = link;
     subjectField.value = subject;
     bodyField.value = body;
-    openGmail.href = gmailUrl(subject, body);
-    openMailApp.href = `mailto:m72692591@gmail.com?${new URLSearchParams({
-      subject,
-      body
-    }).toString()}`;
+    updateDestinations();
     status.textContent = "";
     dialog.showModal();
-    copyButton.focus();
+    bodyField.focus();
   };
 
   const copyOrder = async () => {
     const text = `Кому: m72692591@gmail.com\nТема: ${subjectField.value}\n\n${bodyField.value}`;
     try {
       await navigator.clipboard.writeText(text);
-      status.textContent = "Запрос скопирован. Вставьте его в удобную почту и заполните пустые строки.";
+      status.textContent = "Заполненный запрос скопирован. Его можно вставить в любую почту.";
     } catch {
       bodyField.focus();
       bodyField.select();
@@ -75,6 +81,7 @@
   });
 
   copyButton.addEventListener("click", copyOrder);
+  bodyField.addEventListener("input", updateDestinations);
   closeButton.addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
