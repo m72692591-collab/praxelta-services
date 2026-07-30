@@ -13,7 +13,10 @@
   const allowedSources = new Set([
     "telegram_partner",
     "max_partner",
-    "email_partner"
+    "email_partner",
+    "telegram_marketplace",
+    "max_marketplace",
+    "email_marketplace"
   ]);
   const requestedSource = new URLSearchParams(window.location.search).get("ref");
   const sourceCode = allowedSources.has(requestedSource) ? requestedSource : "";
@@ -40,7 +43,10 @@
     subjectField.value = subject;
     bodyField.value = body;
     openGmail.href = gmailUrl(subject, body);
-    openMailApp.href = link.href;
+    openMailApp.href = `mailto:m72692591@gmail.com?${new URLSearchParams({
+      subject,
+      body
+    }).toString()}`;
     status.textContent = "";
     dialog.showModal();
     copyButton.focus();
@@ -77,4 +83,3 @@
     if (returnFocus) returnFocus.focus();
   });
 })();
-
