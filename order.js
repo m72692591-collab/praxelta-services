@@ -8,7 +8,7 @@
   const openMailApp = document.querySelector("#open-mail-app");
   const closeButton = document.querySelector(".dialog-close");
   const orderLinks = document.querySelectorAll(
-    'a[href^="mailto:m72692591@gmail.com"][href*="body="]'
+    'a[href^="mailto:"][href*="body="]'
   );
   const allowedSources = new Set([
     "telegram_partner",
@@ -22,11 +22,13 @@
   const sourceCode = allowedSources.has(requestedSource) ? requestedSource : "";
   let returnFocus = null;
 
-  const gmailUrl = (subject, body) => {
+  let recipient = "";
+
+  const gmailUrl = (to, subject, body) => {
     const params = new URLSearchParams({
       view: "cm",
       fs: "1",
-      to: "m72692591@gmail.com",
+      to,
       su: subject,
       body
     });
@@ -36,8 +38,8 @@
   const updateDestinations = () => {
     const subject = subjectField.value;
     const body = bodyField.value;
-    openGmail.href = gmailUrl(subject, body);
-    openMailApp.href = `mailto:m72692591@gmail.com?${new URLSearchParams({
+    openGmail.href = gmailUrl(recipient, subject, body);
+    openMailApp.href = `mailto:${recipient}?${new URLSearchParams({
       subject,
       body
     }).toString()}`;
@@ -45,6 +47,7 @@
 
   const showOrder = (link) => {
     const mailto = new URL(link.href);
+    recipient = mailto.pathname;
     const subject = mailto.searchParams.get("subject") || "Запрос ПРАКСЕЛЬТА";
     const baseBody = mailto.searchParams.get("body") || "";
     const body = sourceCode ? `${baseBody}\nИсточник: ${sourceCode}` : baseBody;
@@ -59,7 +62,7 @@
   };
 
   const copyOrder = async () => {
-    const text = `Кому: m72692591@gmail.com\nТема: ${subjectField.value}\n\n${bodyField.value}`;
+    const text = `Кому: ${recipient}\nТема: ${subjectField.value}\n\n${bodyField.value}`;
     try {
       await navigator.clipboard.writeText(text);
       status.textContent = "Заполненный запрос скопирован. Его можно вставить в любую почту.";
