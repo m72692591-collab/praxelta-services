@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "mode": "PREPARED_NOT_DEPLOYED",
+  "legacy_base": "https://m72692591-collab.github.io/potok-services/",
+  "target_base": "https://m72692591-collab.github.io/praxelta-services/",
+  "deployment_order": [
+    "create_target_repository",
+    "deploy_target_site",
+    "verify_target_pages_receipt",
+    "deploy_this_redirect_package_to_legacy_repository"
+  ],
+  "routes": [
+    {"from": "/", "to": "/"},
+    {"from": "/marketplace.html", "to": "/marketplace.html"},
+    {"from": "/marketplace-sample.html", "to": "/marketplace-sample.html"},
+    {"from": "/partner.html", "to": "/partner.html"},
+    {"from": "/offer.html", "to": "/offer.html"},
+    {"from": "/privacy.html", "to": "/privacy.html"},
+    {"from": "/refund.html", "to": "/refund.html"},
+    {"from": "/terms.html", "to": "/terms.html"},
+    {"from": "/sample.html", "to": "/sample.html"},
+    {"from": "/payment-fail.html", "to": "/payment-fail.html"},
+    {"from": "/payment-success.html", "to": "/payment-success.html"}
+  ],
+  "legacy_external_routes": [
+    {
+      "legacy": "https://max.ru/channel_potok_services",
+      "target": null,
+      "status": "HOLD_NO_PROVEN_TARGET"
+    },
+    {
+      "legacy": "https://t.me/potok_services_ru",
+      "target": null,
+      "status": "HOLD_NO_PROVEN_TARGET"
+    },
+    {
+      "legacy": "https://t.me/potok_service_admin_bot",
+      "target": null,
+      "status": "HOLD_NO_PROVEN_TARGET"
+    }
+  ]
+}
