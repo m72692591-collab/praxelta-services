@@ -16,6 +16,8 @@ python -m http.server 8000
 
 Цены направления локального продвижения хранятся в `pricing.json`, а категории и правила их подключения — в `service-categories.json`. `scripts/render_multicategory.py` создаёт каталог и страницы первой волны для Саратова и Энгельса. `scripts/render_campaigns.py` создаёт только черновики кампаний: бюджет равен нулю, расход выключен.
 
+Ближайший денежный продукт и границы работы при бюджете 0 ₽ зафиксированы в `docs/ZERO_BUDGET_MONETIZATION.md`.
+
 PDF создаются командой `python scripts/generate_pdfs.py`. Зависимости для проверок перечислены в `requirements-dev.txt`.
 
 ## Границы
