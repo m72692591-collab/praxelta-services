@@ -1,5 +1,21 @@
-# praxelta-site
-Публичная витрина услуг ПРАКСЕЛЬТА
+# Публичная витрина ПРАКСЕЛЬТЫ
 
-Целевой GitHub Pages URL: `https://m72692591-collab.github.io/praxelta-services/`.
-Публикация разрешается только после прохождения migration deployment gate.
+Статический сайт услуг ПРАКСЕЛЬТЫ. Целевой адрес: `https://m72692591-collab.github.io/praxelta-services/`.
+
+## Локальная проверка
+
+```powershell
+python scripts/render_local_growth.py
+python scripts/check_public_site.py
+python -m http.server 8000
+```
+
+Цены направления локального продвижения хранятся в `pricing.json`. Сгенерированные страницы не редактируются вручную в части тарифов.
+
+PDF создаются командой `python scripts/generate_pdfs.py`. Зависимости для проверок перечислены в `requirements-dev.txt`.
+
+## Границы
+
+В репозитории нет CRM, автоматической отправки сообщений и реальных контактов потенциальных клиентов. `order.js` лишь формирует письмо и открывает Gmail или почтовое приложение. Закрытый операционный контур находится в отдельном локальном проекте `praxelta-ops`.
+
+Публикация разрешается только после прохождения migration deployment gate. Merge в `main` и deploy требуют отдельного подтверждения владельца.

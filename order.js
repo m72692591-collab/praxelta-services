@@ -16,7 +16,18 @@
     "email_partner",
     "telegram_marketplace",
     "max_marketplace",
-    "email_marketplace"
+    "email_marketplace",
+    "local_growth",
+    "commercial",
+    "teaser",
+    "checklist",
+    "sample",
+    "city_saratov",
+    "city_engels",
+    "city_voronezh",
+    "city_tyumen",
+    "city_tambov",
+    "city_penza"
   ]);
   const requestedSource = new URLSearchParams(window.location.search).get("ref");
   const sourceCode = allowedSources.has(requestedSource) ? requestedSource : "";

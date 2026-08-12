@@ -1,0 +1,34 @@
+{
+  "currency": "RUB",
+  "updated_at": "2026-08-12",
+  "services": {
+    "express": {
+      "name": "Экспресс",
+      "price_once": 7900,
+      "duration_days": 7,
+      "summary": "Разбор и усиление до трёх объявлений, отчёт и план на 30 дней"
+    },
+    "start": {
+      "name": "Старт",
+      "first_month": 19900,
+      "monthly": 14900
+    },
+    "growth": {
+      "name": "Рост",
+      "first_month": 29900,
+      "monthly": 24900
+    },
+    "system": {
+      "name": "Система",
+      "implementation": 59900,
+      "monthly": 39900,
+      "third_party_separate": true
+    },
+    "business_partner": {
+      "name": "Бизнес-партнёр",
+      "implementation": 89900,
+      "monthly": 69900,
+      "third_party_separate": true
+    }
+  }
+}
