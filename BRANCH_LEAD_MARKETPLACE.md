@@ -11,11 +11,14 @@
 - CRM, телефония и Telegram-боты;
 - юридические, consent, safety и payment gates.
 
-## Главные документы
+## Порядок чтения
 
-1. [`docs/PRAXELTA_LEAD_MARKETPLACE_PROJECT_RU.md`](docs/PRAXELTA_LEAD_MARKETPLACE_PROJECT_RU.md) — основная продуктовая спецификация.
-2. [`docs/LEAD_MARKETPLACE_PROJECT.md`](docs/LEAD_MARKETPLACE_PROJECT.md) — краткая бизнес-модель и план пилота.
-3. [`codex/PRAXELTA_CODEX_PROMPT_LEAD_MARKETPLACE_RU.md`](codex/PRAXELTA_CODEX_PROMPT_LEAD_MARKETPLACE_RU.md) — мастер-промпт для Codex.
+1. [`docs/PRAXELTA_LEAD_MARKETPLACE_PROJECT_RU.md`](docs/PRAXELTA_LEAD_MARKETPLACE_PROJECT_RU.md) — каноническая продуктовая спецификация.
+2. [`codex/PRAXELTA_CODEX_PROMPT_LEAD_MARKETPLACE_RU.md`](codex/PRAXELTA_CODEX_PROMPT_LEAD_MARKETPLACE_RU.md) — основной исполняемый мастер-промпт для Codex.
+3. [`prompts/PRAXELTA_CODEX_MASTER_PROMPT_LEAD_MARKETPLACE_RU.md`](prompts/PRAXELTA_CODEX_MASTER_PROMPT_LEAD_MARKETPLACE_RU.md) — расширенные технические, safety, consent, billing и supplier-требования; использовать как обязательное дополнение к основному промпту.
+4. [`docs/LEAD_MARKETPLACE_PROJECT.md`](docs/LEAD_MARKETPLACE_PROJECT.md) — короткая бизнес-модель и схема пилота для быстрого ознакомления.
+
+При расхождении формулировок приоритет имеют: безопасность и законность → каноническая продуктовая спецификация → основной Codex-промпт → расширенное дополнение.
 
 ## Статус
 
