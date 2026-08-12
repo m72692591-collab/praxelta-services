@@ -1,0 +1,54 @@
+{
+  "schema": "symbiosis_root_humanity_gate_receipt/1",
+  "content_id": "praxelta_local_growth_2026-08-13",
+  "copy_path": "C:\\Users\\m1981\\Documents\\Codex\\2026-08-12\\proxelta-sales-kit\\work\\praxelta-deploy-20260812-01\\local-growth.html",
+  "copy_sha256": "C1BE3D051AB6FA310404D5FC3CDCAA87D089ECEDED538D6052BEF4CCDDFE2471",
+  "plain_meaning": "ПРАКСЕЛЬТА за семь дней разбирает действующие объявления и путь обращения, готовит конкретные правки и не меняет рекламу или бюджет без согласия клиента.",
+  "observable_action": "Клиент выбирает одну услугу, передаёт ссылки и обезличенную статистику, согласует правки и получает до трёх обновлённых объявлений, шаблоны ответов, десять действий и план на 30 дней.",
+  "independent_reviewer": "inclusionai/ling-3.0-tiny:free via verified zero-budget OpenRouter route on 2026-08-13; first-screen excerpt only; full-package decision by Codex/Maestro; Gemini and longer model routes recorded unavailable",
+  "accepted_elements": [
+    "observable path from advertisement to conversation and visit",
+    "explicit budget and Avito-payment boundaries",
+    "no guaranteed inquiries or sales",
+    "direct respectful address to the business owner"
+  ],
+  "rejected_phrases": [
+    "Не обещания, а проверяемые точки роста",
+    "собираем доступные факты в один понятный маршрут",
+    "контроль остаётся у вас",
+    "статус занимает несколько секунд",
+    "не забирая контроль над бюджетом",
+    "организуем маршрут"
+  ],
+  "spoken_readthrough": "PASS",
+  "platforms_checked": [
+    "local_growth_main_desktop",
+    "local_growth_main_mobile_breakpoint",
+    "local_growth_sample",
+    "local_growth_commercial",
+    "local_growth_teaser",
+    "local_growth_checklist",
+    "six_city_pages",
+    "order_dialog_and_cta",
+    "outreach_copybook",
+    "lead_magnet_social_series",
+    "three_print_pdfs"
+  ],
+  "editorial_dimensions": {
+    "clarity": "PASS",
+    "precision": "PASS",
+    "liveliness": "PASS",
+    "richness_without_pomposity": "PASS",
+    "whole_piece_composition": "PASS"
+  },
+  "addressee": {
+    "speaker": "ПРАКСЕЛЬТА как исполнитель услуги",
+    "reader": "владелец или руководитель локального сервисного бизнеса",
+    "purpose": "понять границы семидневного разбора и подготовить письменный запрос по одной услуге",
+    "person_and_tone_consistent": "PASS"
+  },
+  "on_screen_copy_checked": true,
+  "final_status": "HUMANITY_PASS",
+  "owner_authored_text_changed": false,
+  "external_publication_writes": 0
+}

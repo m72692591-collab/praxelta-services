@@ -1,0 +1,24 @@
+{
+  "brand": "ПРАКСЕЛЬТА",
+  "product": "ПРАКСЕЛЬТА Маркет",
+  "short_description": "Помогаем человеку описать задачу и подобрать подходящего мастера. Контакт открывается только после согласия и принятия заявки.",
+  "long_description": "ПРАКСЕЛЬТА Маркет принимает обращения по локальным услугам, проверяет контакт, категорию и безопасность задачи, затем последовательно предлагает обезличенную заявку подходящим мастерам. Мастер видит условия до принятия. Поставщики отвечают только на конкретные запросы материалов или запчастей и не получают лишние данные клиента.",
+  "pilot_cities": ["Саратов", "Энгельс"],
+  "website": "https://m72692591-collab.github.io/praxelta-services/",
+  "telegram_channel": "https://t.me/praxelta_services_ru",
+  "telegram_admin_bot": "https://t.me/praxelta_service_admin_bot",
+  "max_channel": "https://max.ru/channel_praxelta_services",
+  "public_email": "animatactus087@gmail.com",
+  "operator": "Григоров Михаил Владимирович",
+  "tax_status": "НПД_PRELAUNCH",
+  "phone": null,
+  "physical_address": null,
+  "working_hours": null,
+  "assets": {
+    "logo": "praxelta-logo.png",
+    "icon": "praxelta-icon.png",
+    "cover": null
+  },
+  "public_prices_source": "pricing.json",
+  "missing_owner_inputs": ["отдельный рабочий телефон", "график обработки обращений", "подтверждаемая модель адреса или онлайн-компании", "документы, которые запросит конкретная площадка"]
+}

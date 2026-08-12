@@ -1,0 +1,37 @@
+{
+  "schema": "symbiosis_root_humanity_gate_receipt/1",
+  "content_id": "praxelta-full-automation-wave1-public-copy-2026-08-13",
+  "copy_path": "service-categories.html + services-{saratov,engels}-*.html + campaigns-wave1.json",
+  "copy_sha256": "bce631b0f1c73e9ccab233d41e52ff4bea2a73f5b275411c75b536adb4a3b908",
+  "plain_meaning": "ПРАКСЕЛЬТА готовит шесть категорий локальных услуг, но не принимает и не передаёт реальные заявки до готовности мастеров и снятия gates.",
+  "observable_action": "Клиент описывает задачу и район; система проверяет категорию и наличие подходящего мастера до любой передачи контакта.",
+  "independent_reviewer": "OpenRouter inclusionai/ling-3.0-tiny:free; READY receipt, 2026-08-13; Gemini ROUTE_UNAVAILABLE; Ollama timeout",
+  "accepted_elements": [
+    "рекомендация сократить сложные конструкции поддержана собственной редактурой",
+    "явная граница sandbox сохранена на каждом городском экране"
+  ],
+  "rejected_phrases": [
+    "«Задача описана» вместо «Опишите задачу» — убирает прямого адресата и звучит неестественно",
+    "«система показывает» вместо «страница показывает» — искажает фактическое состояние статической витрины",
+    "«оттуда» вместо «отсюда» — меняет точку зрения читателя и ухудшает ясность"
+  ],
+  "spoken_readthrough": "PASS",
+  "editorial_dimensions": {
+    "clarity": "PASS",
+    "precision": "PASS",
+    "liveliness": "PASS",
+    "richness_without_pomposity": "PASS",
+    "whole_piece_composition": "PASS"
+  },
+  "addressee": {
+    "speaker": "ПРАКСЕЛЬТА",
+    "reader": "житель Саратова или Энгельса, которому нужен мастер",
+    "purpose": "объяснить будущий маршрут и честно отделить подготовку от работающей услуги",
+    "person_and_tone_consistent": "PASS"
+  },
+  "platforms_checked": ["GitHub Pages staging copy", "PDF presentation", "Yandex/VK campaign drafts"],
+  "on_screen_copy_checked": true,
+  "owner_authored_text_changed": false,
+  "external_publication_writes": 0,
+  "final_status": "HUMANITY_PASS_STAGED_NOT_PUBLISHED"
+}
