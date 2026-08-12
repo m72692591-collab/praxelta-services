@@ -28,10 +28,14 @@ class PageParser(HTMLParser):
         self.text: list[str] = []
         self.positive_tabindex: list[str] = []
         self.price_spans: list[tuple[str, str]] = []
+        self.unlabelled_controls: list[str] = []
+        self._label_depth = 0
         self._price_key: str | None = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         data = {key: value or "" for key, value in attrs}
+        if tag == "label":
+            self._label_depth += 1
         if tag in {"a", "link", "script", "img"}:
             target = data.get("href") or data.get("src")
             if target:
@@ -44,10 +48,15 @@ class PageParser(HTMLParser):
             self.positive_tabindex.append(f"{tag}[tabindex={data['tabindex']}]")
         if "data-price-key" in data:
             self._price_key = data["data-price-key"]
+        if tag in {"input", "select", "textarea"} and self._label_depth == 0:
+            if not data.get("aria-label") and not data.get("aria-labelledby"):
+                self.unlabelled_controls.append(f"{tag}[name={data.get('name', '')}]")
 
     def handle_endtag(self, tag: str) -> None:
         if tag == "span" and self._price_key:
             self._price_key = None
+        if tag == "label" and self._label_depth:
+            self._label_depth -= 1
 
     def handle_data(self, data: str) -> None:
         value = data.strip()
@@ -107,6 +116,8 @@ def main() -> int:
             fail(errors, f"{page.name}: canonical {parser.canonical!r}, expected {expected}")
         if parser.positive_tabindex:
             fail(errors, f"{page.name}: positive tabindex {parser.positive_tabindex}")
+        if page.name == "request-service.html" and parser.unlabelled_controls:
+            fail(errors, f"{page.name}: unlabelled controls {parser.unlabelled_controls}")
 
         visible = " ".join(parser.text)
         for bad in ("Проксельта", "Пракселта", "Praxelta"):
@@ -164,6 +175,22 @@ def main() -> int:
         if forbidden in order_js:
             fail(errors, f"order.js: unexpected network primitive {forbidden}")
 
+    service_network_js = (ROOT / "service-network.js").read_text(encoding="utf-8")
+    for forbidden in ("fetch(", "XMLHttpRequest", "sendBeacon", "WebSocket", "localStorage"):
+        if forbidden in service_network_js:
+            fail(errors, f"service-network.js: unexpected persistence/network primitive {forbidden}")
+    request_page = (ROOT / "request-service.html").read_text(encoding="utf-8")
+    for required in (
+        "данные не отправляются",
+        "processing",
+        "transfer",
+        "не более трёх мастеров",
+        "Это не согласие на рекламу",
+        "112",
+    ):
+        if required.casefold() not in request_page.casefold():
+            fail(errors, f"request-service.html: missing safety/consent text {required}")
+
     css = (ROOT / "styles.css").read_text(encoding="utf-8")
     if "@media print" not in css:
         fail(errors, "styles.css: missing print styles")
@@ -191,7 +218,19 @@ def main() -> int:
     except ET.ParseError as exc:
         fail(errors, f"sitemap.xml: invalid XML: {exc}")
         locs = set()
-    for name in ["local-growth.html", "local-growth-commercial.html", "local-growth-checklist.html"]:
+    for name in [
+        "local-growth.html",
+        "local-growth-commercial.html",
+        "local-growth-checklist.html",
+        "lead-marketplace.html",
+        "request-service.html",
+        "for-contractors.html",
+        "for-suppliers.html",
+        "lead-quality-policy.html",
+        "service-network-safety.html",
+        "service-network-privacy.html",
+        "service-network-terms.html",
+    ]:
         if BASE + name not in locs:
             fail(errors, f"sitemap.xml: missing {name}")
 
@@ -201,7 +240,7 @@ def main() -> int:
             print(f"- {item}")
         return 1
     print(f"PUBLIC SITE PREFLIGHT: PASS ({len(pages)} HTML pages)")
-    print("Checks: links, files, sitemap, canonical, robots, CSP, mail composer, mobile/keyboard/print markers, WCAG text contrast, pricing, brand, secrets, contacts")
+    print("Checks: links, files, sitemap, canonical, robots, CSP, mail composer, mobile/keyboard/print markers, form labels, WCAG text contrast, pricing, brand, secrets, contacts")
     return 0
 
 

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests; block-all-mixed-content">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Тестовая форма обращения ПРАКСЕЛЬТЫ без отправки и хранения данных.">
+  <title>Тестовая форма заявки — ПРАКСЕЛЬТА</title>
+  <link rel="canonical" href="https://m72692591-collab.github.io/praxelta-services/request-service.html">
+  <link rel="icon" type="image/png" href="praxelta-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="service-network.js" defer></script>
+</head>
+<body><header class="site-header market-header">
+  <a class="brand" href="index.html" aria-label="ПРАКСЕЛЬТА — на главную">ПРАКСЕЛЬТА</a>
+  <nav aria-label="ПРАКСЕЛЬТА Маркет">
+    <a href="lead-marketplace.html">Как работает</a>
+    <a href="request-service.html">Клиентам</a>
+    <a href="for-contractors.html">Мастерам</a>
+    <a href="for-suppliers.html">Поставщикам</a>
+    <a href="pricing.html">Тарифы</a>
+  </nav>
+</header><main class="local-page market-page"><section class="local-hero"><p class="eyebrow">Тестовая форма · данные не отправляются</p><h1>Опишите задачу, не указывая полный адрес</h1><p class="lead">Форма показывает, какие данные понадобятся в будущем. Сейчас всё остаётся только на экране вашего браузера и исчезает после закрытия страницы.</p></section>
+<section id="emergency-warning" class="emergency-warning" hidden tabindex="-1"><h2>Похоже на аварийную ситуацию</h2><p>Не ждите ответа коммерческого сервиса. При непосредственной угрозе жизни или признаках утечки газа обратитесь в официальную аварийную службу или по номеру 112. Не пытайтесь ремонтировать газовое оборудование самостоятельно.</p></section>
+<form id="service-request-form" class="market-form" novalidate>
+<fieldset><legend>Где и что случилось</legend><div class="form-grid"><label>Город<select name="city" required><option value="">Выберите</option><option>Саратов</option><option>Энгельс</option></select></label><label>Район<input name="district" autocomplete="address-level3" required></label><label>Услуга<select name="category" required><option value="">Выберите</option><option>Ремонт котлов</option><option>Обслуживание котлов</option><option>Отопление</option></select></label><label>Оборудование<input name="equipment" placeholder="Например, бытовой котёл"></label><label>Марка<input name="brand"></label><label>Модель<input name="model"></label><label>Код ошибки<input name="error_code"></label><label>Срочность<select name="urgency" required><option>Сегодня</option><option>В течение 2–3 дней</option><option>Планово</option></select></label></div><label>Что происходит<textarea name="problem" minlength="12" required placeholder="Опишите наблюдаемые признаки. Не пишите полный домашний адрес."></textarea></label></fieldset>
+<fieldset><legend>Как связаться</legend><div class="form-grid"><label>Удобный канал<select name="channel" required><option>Телефон</option><option>Telegram</option><option>Email</option></select></label><label>Контакт<input name="contact" autocomplete="tel" required></label><label>Удобное время<input name="preferred_time" placeholder="Например, после 18:00"></label><label>Фото или видео<input type="file" name="media" accept="image/*,video/*" aria-describedby="media-note"></label></div><p id="media-note" class="micro">В тестовом режиме файл не загружается и никуда не отправляется.</p></fieldset>
+<fieldset><legend>Кому можно показать заявку</legend><label class="radio-row"><input type="radio" name="share_mode" value="one" required> Одному выбранному мастеру</label><label class="radio-row"><input type="radio" name="share_mode" value="sequential"> Последовательно подбирать по одному мастеру</label><label class="radio-row"><input type="radio" name="share_mode" value="three"> Не более трёх мастеров для сравнения</label><label class="radio-row"><input type="radio" name="share_mode" value="choice"> Я сам выберу мастера</label></fieldset>
+<fieldset><legend>Согласия</legend><label class="check-row"><input type="checkbox" name="processing" required> Согласен на обработку указанных данных для разбора этой заявки.</label><label class="check-row"><input type="checkbox" name="transfer" required> Согласен на передачу контакта выбранному числу подходящих мастеров. Это не согласие на рекламу.</label></fieldset>
+<button class="button primary" type="submit">Проверить тестовую заявку</button><p id="form-status" class="form-status" role="status" aria-live="polite"></p></form>
+<section id="request-preview" class="request-preview" hidden><p class="eyebrow">Локальный предпросмотр</p><h2>Заявка никуда не отправлена</h2><pre id="request-preview-text"></pre><button class="button" id="clear-preview" type="button">Очистить экран</button></section></main><footer class="market-footer">
+  <p><strong>ПРАКСЕЛЬТА Маркет</strong><br>Пилотная система. Реальные платежи и автоматическая передача контактов выключены до отдельных проверок.</p>
+  <nav><a href="service-network-safety.html">Безопасность</a><a href="service-network-privacy.html">Данные</a><a href="service-network-terms.html">Условия</a><a href="lead-quality-policy.html">Качество заявки</a></nav>
+</footer></body>
+</html>

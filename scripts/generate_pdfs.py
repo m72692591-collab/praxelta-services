@@ -30,6 +30,7 @@ SOURCES = {
     "local-growth-commercial.html": "praxelta-local-growth-commercial.pdf",
     "local-growth-teaser.html": "praxelta-local-growth-teaser.pdf",
     "local-growth-checklist.html": "praxelta-7-points-checklist.pdf",
+    "service-network-presentation.html": "praxelta-market-presentation.pdf",
 }
 
 
@@ -201,9 +202,13 @@ def main() -> None:
             raise RuntimeError(f"{target.name}: PDF has no pages")
         with pdfplumber.open(target) as document:
             text = "\n".join(page.extract_text() or "" for page in document.pages)
-        required = ["ПРАКСЕЛЬТА", "7 900 ₽"]
+        required = ["ПРАКСЕЛЬТА"]
+        if output_name != "praxelta-market-presentation.pdf":
+            required.append("7 900 ₽")
         if output_name == "praxelta-local-growth-commercial.pdf":
             required.extend(["Авито", "Тарифы после разбора"])
+        if output_name == "praxelta-market-presentation.pdf":
+            required.extend(["ПРАКСЕЛЬТА Маркет", "Квалификация", "Поставщик"])
         for value in required:
             if value not in text:
                 raise RuntimeError(f"{target.name}: required text missing: {value}")
