@@ -29,3 +29,8 @@
 @media(max-width:650px){.market-flow,.market-flow.vertical,.form-grid,.presentation-grid{grid-template-columns:1fr}.market-flow li{min-height:auto}.market-form fieldset{padding:20px}.market-footer nav{align-items:flex-start}}
 @media print{.pilot-badge{border:1px solid #555;color:#111!important}.market-flow,.presentation-grid{grid-template-columns:repeat(2,1fr)}.market-flow li,.presentation-grid article,.market-form fieldset,.request-preview{break-inside:avoid;background:white}.legal-draft{border:2px solid #555}}
 
+/* Мультикатегорийный каталог */
+.category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.category-grid article{padding:26px;border:1px solid var(--line);border-radius:24px;background:#fffaf0}.category-grid h3{margin:26px 0 12px}.category-grid p{color:var(--muted)}.category-links{display:flex;flex-wrap:wrap;gap:12px}.category-links a{color:var(--market);font-weight:850;text-decoration:underline;text-underline-offset:4px}
+@media(max-width:850px){.category-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.category-grid{grid-template-columns:1fr}}
+

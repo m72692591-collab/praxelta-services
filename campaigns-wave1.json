@@ -1,0 +1,727 @@
+{
+  "schema_version": "1.0",
+  "ad_spend": "OFF",
+  "real_launches": 0,
+  "campaigns": [
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Саратов",
+      "category_code": "plumbing",
+      "category_name": "Сантехника",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать сантехника",
+        "устранить протечку",
+        "прочистить канализацию"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «сантехника» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=саратов_plumbing_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Саратов",
+      "category_code": "plumbing",
+      "category_name": "Сантехника",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать сантехника",
+        "устранить протечку",
+        "прочистить канализацию"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «сантехника» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=саратов_plumbing_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Энгельс",
+      "category_code": "plumbing",
+      "category_name": "Сантехника",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать сантехника",
+        "устранить протечку",
+        "прочистить канализацию"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «сантехника» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=энгельс_plumbing_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Энгельс",
+      "category_code": "plumbing",
+      "category_name": "Сантехника",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать сантехника",
+        "устранить протечку",
+        "прочистить канализацию"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «сантехника» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=энгельс_plumbing_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Саратов",
+      "category_code": "electrical",
+      "category_name": "Электрика",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать электрика",
+        "не работает розетка",
+        "выбивает автомат"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «электрика» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=саратов_electrical_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Саратов",
+      "category_code": "electrical",
+      "category_name": "Электрика",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать электрика",
+        "не работает розетка",
+        "выбивает автомат"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «электрика» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=саратов_electrical_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Энгельс",
+      "category_code": "electrical",
+      "category_name": "Электрика",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать электрика",
+        "не работает розетка",
+        "выбивает автомат"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «электрика» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=энгельс_electrical_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Энгельс",
+      "category_code": "electrical",
+      "category_name": "Электрика",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "вызвать электрика",
+        "не работает розетка",
+        "выбивает автомат"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «электрика» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=энгельс_electrical_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Саратов",
+      "category_code": "appliance_repair",
+      "category_name": "Ремонт бытовой техники",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт стиральной машины",
+        "ремонт холодильника",
+        "ремонт посудомоечной машины"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «ремонт бытовой техники» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=саратов_appliance_repair_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Саратов",
+      "category_code": "appliance_repair",
+      "category_name": "Ремонт бытовой техники",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт стиральной машины",
+        "ремонт холодильника",
+        "ремонт посудомоечной машины"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «ремонт бытовой техники» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=саратов_appliance_repair_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Энгельс",
+      "category_code": "appliance_repair",
+      "category_name": "Ремонт бытовой техники",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт стиральной машины",
+        "ремонт холодильника",
+        "ремонт посудомоечной машины"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «ремонт бытовой техники» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=энгельс_appliance_repair_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Энгельс",
+      "category_code": "appliance_repair",
+      "category_name": "Ремонт бытовой техники",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт стиральной машины",
+        "ремонт холодильника",
+        "ремонт посудомоечной машины"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «ремонт бытовой техники» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=энгельс_appliance_repair_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Саратов",
+      "category_code": "heating_boilers",
+      "category_name": "Отопление и бытовые котлы",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт котла",
+        "котёл не включается",
+        "обслуживание отопления"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «отопление и бытовые котлы» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=саратов_heating_boilers_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Саратов",
+      "category_code": "heating_boilers",
+      "category_name": "Отопление и бытовые котлы",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт котла",
+        "котёл не включается",
+        "обслуживание отопления"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «отопление и бытовые котлы» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=саратов_heating_boilers_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Энгельс",
+      "category_code": "heating_boilers",
+      "category_name": "Отопление и бытовые котлы",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт котла",
+        "котёл не включается",
+        "обслуживание отопления"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «отопление и бытовые котлы» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=энгельс_heating_boilers_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Энгельс",
+      "category_code": "heating_boilers",
+      "category_name": "Отопление и бытовые котлы",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт котла",
+        "котёл не включается",
+        "обслуживание отопления"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «отопление и бытовые котлы» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=энгельс_heating_boilers_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Саратов",
+      "category_code": "air_conditioning",
+      "category_name": "Кондиционеры",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт кондиционера",
+        "кондиционер не охлаждает",
+        "чистка кондиционера"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «кондиционеры» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=саратов_air_conditioning_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Саратов",
+      "category_code": "air_conditioning",
+      "category_name": "Кондиционеры",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт кондиционера",
+        "кондиционер не охлаждает",
+        "чистка кондиционера"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «кондиционеры» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=саратов_air_conditioning_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Энгельс",
+      "category_code": "air_conditioning",
+      "category_name": "Кондиционеры",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт кондиционера",
+        "кондиционер не охлаждает",
+        "чистка кондиционера"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «кондиционеры» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=энгельс_air_conditioning_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Энгельс",
+      "category_code": "air_conditioning",
+      "category_name": "Кондиционеры",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "ремонт кондиционера",
+        "кондиционер не охлаждает",
+        "чистка кондиционера"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «кондиционеры» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=энгельс_air_conditioning_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Саратов",
+      "category_code": "handyman",
+      "category_name": "Мастер на час",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "мастер на час",
+        "сборка мебели",
+        "повесить полку"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «мастер на час» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=саратов_handyman_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Саратов",
+      "category_code": "handyman",
+      "category_name": "Мастер на час",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "мастер на час",
+        "сборка мебели",
+        "повесить полку"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Саратов? Опишите задачу по направлению «мастер на час» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=саратов_handyman_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "YANDEX_SEARCH",
+      "city": "Энгельс",
+      "category_code": "handyman",
+      "category_name": "Мастер на час",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "мастер на час",
+        "сборка мебели",
+        "повесить полку"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «мастер на час» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=yandex_search&utm_campaign=энгельс_handyman_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    },
+    {
+      "platform": "VK_LEAD_FORM",
+      "city": "Энгельс",
+      "category_code": "handyman",
+      "category_name": "Мастер на час",
+      "status": "DRAFT_NO_SPEND",
+      "supply_gate": "NOT_PASSED_REAL_DATA",
+      "semantic_core": [
+        "мастер на час",
+        "сборка мебели",
+        "повесить полку"
+      ],
+      "negative_keywords": [
+        "бесплатно",
+        "вакансия",
+        "обучение",
+        "своими руками",
+        "инструкция"
+      ],
+      "copy": "Ищете мастера в городе Энгельс? Опишите задачу по направлению «мастер на час» и укажите район. Перед ответом проверим, есть ли подходящий свободный мастер.",
+      "utm": "utm_source=vk_lead_form&utm_campaign=энгельс_handyman_wave1",
+      "forecast_budget": null,
+      "forecast_note": "Точный прогноз получают в кабинете только после supply gate; неизвестная стоимость не считается бесплатной.",
+      "stop_conditions": [
+        "любая жалоба на вводящий в заблуждение текст",
+        "supply gate перестал проходить",
+        "нет действующего CampaignApproval",
+        "появился расход при AD_SPEND=OFF"
+      ]
+    }
+  ]
+}

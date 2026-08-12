@@ -99,6 +99,10 @@ def main() -> int:
     errors: list[str] = []
     pages = sorted(ROOT.glob("*.html"))
     pricing = json.loads((ROOT / "pricing.json").read_text(encoding="utf-8"))
+    category_registry = json.loads(
+        (ROOT / "service-categories.json").read_text(encoding="utf-8")
+    )
+    campaigns = json.loads((ROOT / "campaigns-wave1.json").read_text(encoding="utf-8"))
     parsed: dict[str, PageParser] = {}
 
     for page in pages:
@@ -230,9 +234,33 @@ def main() -> int:
         "service-network-safety.html",
         "service-network-privacy.html",
         "service-network-terms.html",
+        "service-categories.html",
     ]:
         if BASE + name not in locs:
             fail(errors, f"sitemap.xml: missing {name}")
+
+    wave_one = [item for item in category_registry["categories"] if item["wave"] == 1]
+    if len(wave_one) != 6:
+        fail(errors, f"service-categories.json: expected 6 wave-one categories, got {len(wave_one)}")
+    if len(category_registry["categories"]) != 13:
+        fail(errors, "service-categories.json: expected 13 configured categories")
+    for category in wave_one:
+        for city_slug in ("saratov", "engels"):
+            name = f"services-{city_slug}-{category['code']}.html"
+            if not (ROOT / name).exists():
+                fail(errors, f"missing generated city/category page {name}")
+            if BASE + name not in locs:
+                fail(errors, f"sitemap.xml: missing {name}")
+
+    if len(campaigns.get("campaigns", [])) != 24:
+        fail(errors, "campaigns-wave1.json: expected 24 campaign drafts")
+    if campaigns.get("ad_spend") != "OFF" or campaigns.get("real_launches") != 0:
+        fail(errors, "campaigns-wave1.json: AD_SPEND must be OFF and real_launches 0")
+    for campaign in campaigns.get("campaigns", []):
+        if campaign.get("forecast_budget") is not None:
+            fail(errors, "campaign draft: forecast must stay empty until checked in an account")
+        if campaign.get("status") != "DRAFT_NO_SPEND":
+            fail(errors, "campaign draft: unexpected status")
 
     if errors:
         print("PUBLIC SITE PREFLIGHT: FAIL")
@@ -240,7 +268,7 @@ def main() -> int:
             print(f"- {item}")
         return 1
     print(f"PUBLIC SITE PREFLIGHT: PASS ({len(pages)} HTML pages)")
-    print("Checks: links, files, sitemap, canonical, robots, CSP, mail composer, mobile/keyboard/print markers, form labels, WCAG text contrast, pricing, brand, secrets, contacts")
+    print("Checks: links, files, sitemap, canonical, robots, CSP, mail composer, mobile/keyboard/print markers, form labels, WCAG text contrast, pricing, categories, campaigns OFF, brand, secrets, contacts")
     return 0
 
 
