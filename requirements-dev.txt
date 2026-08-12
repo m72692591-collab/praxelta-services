@@ -1,0 +1,6 @@
+beautifulsoup4==4.13.4
+pdfplumber==0.11.7
+pypdf==6.0.0
+pypdfium2==4.30.0
+pytest==8.4.1
+reportlab==4.4.3
