@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "checked_at": "2026-08-13",
+  "budget_rub": 0,
+  "rules": {
+    "unknown_cost": "BLOCKED",
+    "publish_service_only_after_supply_ready": true,
+    "minimum_supply": "3 active masters or 1 verified service partner with reserve",
+    "no_false_executor_claim": true,
+    "no_duplicate_ads": true
+  },
+  "channels": [
+    {"code":"AVITO","role":["CLIENT_DEMAND","MASTER_RESEARCH"],"status":"CABINET_AND_RULE_REVIEW_REQUIRED","free_status":"UNKNOWN_COST_BLOCKED","official_url":"https://www.avito.ru/business","next_action":"check existing account, category price and allowed account model in the live cabinet","publication_gate":"SUPPLY_READY + truthful price + moderation + zero-ruble placement"},
+    {"code":"YANDEX_EXECUTORS","role":["CLIENT_DEMAND","MASTER_PROFILE"],"status":"IDENTITY_AND_DOCUMENTS_REQUIRED","free_status":"PROFILE_RESEARCH_ALLOWED","official_url":"https://yandex.ru/support/uslugi-masters/ru/registration/registration-guide","next_action":"link the verified Yandex Business card only for an actual executor or organization; identity check is personal","publication_gate":"VERIFIED_EXECUTOR + documents + supply"},
+    {"code":"YANDEX_BUSINESS","role":["CLIENT_DEMAND"],"status":"UNDER_MODERATION","free_status":"FREE_CARD","official_url":"https://business.yandex.ru/","next_action":"wait for public card URL and complete only truthful profile fields","publication_gate":"PUBLIC_PROFILE_URL"},
+    {"code":"VK_COMMUNITY","role":["CLIENT_DEMAND","MASTER_INBOUND","CONTENT"],"status":"REGISTRATION_REVIEW","free_status":"ORGANIC_FREE","official_url":"https://vk.com/groups","next_action":"check duplicate, create one business community and publish separate client/master sections","publication_gate":"HUMANITY_PASS + working reply channel"},
+    {"code":"YOULA","role":["CLIENT_DEMAND"],"status":"LIVE_LIMIT_AND_PRICE_REVIEW_REQUIRED","free_status":"UNKNOWN_COST_BLOCKED","official_url":"https://help.youla.ru/","next_action":"check whether one truthful service ad can be published for 0 rubles; paid tariff has auto-renewal and stays blocked","publication_gate":"SUPPLY_READY + exact zero price + unique ad"},
+    {"code":"PROFI_RU","role":["MASTER_PROFILE","ORDER_RESPONSE"],"status":"VERIFIED_MASTER_ONLY","free_status":"RESPONSES_MAY_BE_PAID","official_url":"https://help.profi.ru/ru/articles/3346646-я-тут-впервые-что-к-чему","next_action":"use only for a real master profile; do not create a fictitious universal executor","publication_gate":"MASTER_IDENTITY + specialization + exact response price"},
+    {"code":"YOUDO","role":["MASTER_PROFILE","ORDER_RESPONSE"],"status":"VERIFICATION_AND_COST_REVIEW_REQUIRED","free_status":"POTENTIALLY_PAID_BLOCKED","official_url":"https://youdo.com/","next_action":"review identity, verification and response cost for each real master","publication_gate":"MASTER_VERIFIED + zero-ruble action"},
+    {"code":"2GIS","role":["CLIENT_DEMAND"],"status":"NO_CONFIRMED_LOCATION","free_status":"FREE_REFERENCE_CARD","official_url":"https://help.2gis.ru/question/kak-dobavit-kompaniyu-v-2gis","next_action":"add only after a real location or another explicitly eligible model is confirmed","publication_gate":"REAL_ELIGIBLE_LOCATION"},
+    {"code":"ZOON","role":["CLIENT_DEMAND"],"status":"ORGANIZATION_ELIGIBILITY_REVIEW","free_status":"BASE_LISTING_RESEARCH","official_url":"https://zoon.ru/support/voprosy_o_zoon/kak_dobavit_moyu_organizatsiyu_na_zun/","next_action":"check that an online service organization without a reception point is eligible","publication_gate":"ELIGIBLE_ORGANIZATION + PUBLIC_CONTACT"},
+    {"code":"TELEGRAM","role":["CLIENT_DEMAND","MASTER_INBOUND","CONTENT"],"status":"PUBLIC_PROFILES_ACTIVE_TRANSPORT_OFF","free_status":"ORGANIC_FREE","official_url":"https://t.me/praxelta_services_ru","next_action":"publish human-reviewed client and master invitations; responses remain manual until backend approval","publication_gate":"HUMANITY_PASS + manual response owner"},
+    {"code":"DZEN","role":["CONTENT","CLIENT_DEMAND"],"status":"ACCOUNT_REVIEW_REQUIRED","free_status":"ORGANIC_RESEARCH","official_url":"https://dzen.ru/","next_action":"check duplicate and create a channel only if the free terms are clear","publication_gate":"PROFILE_ACTIVE + HUMANITY_PASS"},
+    {"code":"LOCAL_PARTNERS","role":["MASTER_INBOUND","SUPPLIER_INBOUND","REFERRALS"],"status":"PLAYBOOK_READY","free_status":"FREE_RELATIONSHIP_CHANNEL","official_url":null,"next_action":"approach training centers, stores and service centers only through permitted business channels","publication_gate":"RECIPIENT_AND_MESSAGE_APPROVAL + OPT_OUT"}
+  ]
+}

@@ -242,8 +242,11 @@ def main() -> int:
     wave_one = [item for item in category_registry["categories"] if item["wave"] == 1]
     if len(wave_one) != 6:
         fail(errors, f"service-categories.json: expected 6 wave-one categories, got {len(wave_one)}")
-    if len(category_registry["categories"]) != 13:
-        fail(errors, "service-categories.json: expected 13 configured categories")
+    category_codes = [item["code"] for item in category_registry["categories"]]
+    if len(category_codes) != len(set(category_codes)):
+        fail(errors, "service-categories.json: category codes must be unique")
+    if "tv_electronics_repair" not in category_codes:
+        fail(errors, "service-categories.json: missing television and electronics research category")
     for category in wave_one:
         for city_slug in ("saratov", "engels"):
             name = f"services-{city_slug}-{category['code']}.html"

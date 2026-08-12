@@ -18,6 +18,8 @@ python -m http.server 8000
 
 Ближайший денежный продукт и границы работы при бюджете 0 ₽ зафиксированы в `docs/ZERO_BUDGET_MONETIZATION.md`.
 
+План выхода на Авито и альтернативные площадки: `docs/AVITO_ZERO_BUDGET_LAUNCH.md`. Черновики объявлений находятся в `avito-ad-drafts.json`, а статусы и финансовые ограничения каналов — в `marketplace-channel-matrix.json`. Это подготовленные материалы, не опубликованные объявления.
+
 PDF создаются командой `python scripts/generate_pdfs.py`. Зависимости для проверок перечислены в `requirements-dev.txt`.
 
 ## Границы
