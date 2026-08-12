@@ -1,0 +1,51 @@
+{
+  "schema": "symbiosis_root_humanity_gate_receipt/1",
+  "content_id": "praxelta_site_home_2026-08-12_human",
+  "copy_path": "C:\\Users\\m1981\\Documents\\Codex\\2026-08-12\\proxelta-sales-kit\\work\\praxelta-deploy-20260812-01\\index.html",
+  "copy_sha256": "5AC8764D38ACF9E778FD02186A1DCFB4667C053F824B0E8C3C7B778F3233E78D",
+  "plain_meaning": "ПРАКСЕЛЬТА помогает небольшому бизнесу понятнее представить услугу, улучшить текст и подготовить первый ответ на обращение.",
+  "observable_action": "Предприниматель выбирает услугу или письменно описывает задачу и добавляет публичную ссылку либо обезличенный пример.",
+  "independent_reviewer": "Gemini Flash-Lite via authorized web session, two editorial passes on 2026-08-12",
+  "accepted_elements": [
+    "убрать инженерные псевдотермины из названий услуг",
+    "сохранить прямой H1 о понятной подаче услуги и первом ответе",
+    "заменить абстрактный CTA на просьбу коротко описать задачу",
+    "оставить название Telegram без смены бренда"
+  ],
+  "rejected_phrases": [
+    "без потери заявок",
+    "правильный текст",
+    "навести порядок в продажах",
+    "от рекламы до ответа",
+    "путь покупателя в первом магазине",
+    "разбор повторяющейся задачи за пять дней",
+    "показать текущее узкое место",
+    "фиксация задач и честный результат"
+  ],
+  "spoken_readthrough": "PASS",
+  "platforms_checked": [
+    "site_desktop",
+    "site_mobile_390x844",
+    "site_navigation_cta",
+    "site_service_cards",
+    "telegram_public_description",
+    "max_public_description"
+  ],
+  "editorial_dimensions": {
+    "clarity": "PASS",
+    "precision": "PASS",
+    "liveliness": "PASS",
+    "richness_without_pomposity": "PASS",
+    "whole_piece_composition": "PASS"
+  },
+  "addressee": {
+    "speaker": "ПРАКСЕЛЬТА / Михаил как исполнитель",
+    "reader": "владелец небольшого местного бизнеса или руководитель небольшой команды",
+    "purpose": "понять услугу, увидеть точный пилот и начать разговор с короткого описания задачи",
+    "person_and_tone_consistent": "PASS"
+  },
+  "on_screen_copy_checked": true,
+  "final_status": "HUMANITY_PASS",
+  "owner_authored_text_changed": false,
+  "external_publication_writes": 0
+}
