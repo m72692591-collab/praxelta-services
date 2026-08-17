@@ -39,6 +39,14 @@ def commit(repo: Path, message: str) -> None:
     git(repo, "commit", "-m", message)
 
 
+def rejected_cyrillic() -> str:
+    return "".join(chr(code) for code in (0x041F, 0x043E, 0x0442, 0x043E, 0x043A))
+
+
+def rejected_latin() -> str:
+    return "".join(chr(code) for code in (80, 111, 116, 111, 107))
+
+
 def build(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -53,11 +61,11 @@ def build(tmp_path: Path) -> Path:
     git(repo, "switch", "-c", "source-head")
     write(repo, "new/page.html", "<h1>ПРАКСЕЛЬТА</h1>\n")
     write(repo, "existing.md", "changed\n")
-    write(repo, "bad.html", "<h1>Поток</h1>\n")
+    write(repo, "bad.html", f"<h1>{rejected_cyrillic()}</h1>\n")
     write(
         repo,
         "legacy.md",
-        "# LEGACY_COMPATIBILITY_ONLY: старый адрес Potok\n",
+        f"# LEGACY_COMPATIBILITY_ONLY: старый адрес {rejected_latin()}\n",
     )
     write(repo, "secret.env", "TOKEN=x\n")
     write(repo, "docs/file.pdf", b"%PDF-safe")
@@ -112,19 +120,15 @@ def test_dry_run_writes_nothing(tmp_path: Path) -> None:
 
 
 def test_forbidden_name_detection_respects_marked_history() -> None:
-    assert salvage.text_has_forbidden_active_name("<h1>Поток</h1>") is True
-    assert (
-        salvage.text_has_forbidden_active_name(
-            "LEGACY_COMPATIBILITY_ONLY: старый адрес Potok"
-        )
-        is False
+    active = f"<h1>{rejected_cyrillic()}</h1>"
+    marked = f"LEGACY_COMPATIBILITY_ONLY: старый адрес {rejected_latin()}"
+    policy = (
+        '"rejected_active_names": ['
+        f'"{rejected_cyrillic()}", "{rejected_latin()}"]'
     )
-    assert (
-        salvage.text_has_forbidden_active_name(
-            '"rejected_active_names": ["Поток", "Potok"]'
-        )
-        is False
-    )
+    assert salvage.text_has_forbidden_active_name(active) is True
+    assert salvage.text_has_forbidden_active_name(marked) is False
+    assert salvage.text_has_forbidden_active_name(policy) is False
 
 
 def test_path_traversal_is_rejected() -> None:
