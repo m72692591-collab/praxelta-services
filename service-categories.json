@@ -189,6 +189,19 @@
       "pricing_models": ["SUBSCRIPTION", "WHITE_LABEL"], "supplier_types": ["расходные материалы", "инструменты"],
       "search_intents": ["обслуживание офиса", "мелкий ремонт магазина"], "supply_status": "RESEARCH", "demand_status": "RESEARCH",
       "allowed_platforms": ["SITE_PREP"], "forbidden_claims": ["закроем любые хозяйственные задачи"]
+    },
+    {
+      "code": "tv_electronics_repair", "name": "Ремонт телевизоров и домашней электроники", "parent": "electronics", "wave": 2,
+      "client_types": ["B2C"], "launch_cities": [],
+      "typical_problems": ["телевизор не включается", "нет изображения", "есть звук, но нет изображения"],
+      "required_questions": ["тип устройства", "марка и модель", "что происходит", "есть ли запах гари"],
+      "required_credentials": ["подтверждённый рабочий контакт", "подтверждённая специализация по телевизорам или домашней электронике"],
+      "risk": "YELLOW",
+      "safety_rules": ["не советовать вскрывать подключённое к сети устройство", "при запахе гари рекомендовать отключить устройство от сети, если это безопасно"],
+      "pricing_models": ["FIXED_ACCEPTED_LEAD"], "supplier_types": ["электронные компоненты", "модули телевизоров", "расходные материалы"],
+      "search_intents": ["ремонт телевизора", "телевизор не включается", "нет изображения на телевизоре"],
+      "supply_status": "RESEARCH", "demand_status": "RESEARCH", "allowed_platforms": ["SITE_PREP", "AVITO_REVIEW_REQUIRED"],
+      "forbidden_claims": ["починим любой телевизор", "точная цена без диагностики", "любая деталь в наличии"]
     }
   ]
 }
