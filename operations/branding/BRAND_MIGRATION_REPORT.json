@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "canonical_brand": "ПРАКСЕЛЬТА / PRAXELTA",
+  "status": "FAIL",
+  "active_violation_count": 1,
+  "review_required_count": 14,
+  "finding_count": 16,
+  "findings": [
+    {
+      "path": "brand_registry.json",
+      "line": 15,
+      "text": "\"Поток\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "brand_registry.json",
+      "line": 16,
+      "text": "\"ПОТОК\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "brand_registry.json",
+      "line": 17,
+      "text": "\"поток\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "brand_registry.json",
+      "line": 18,
+      "text": "\"Potok\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "brand_registry.json",
+      "line": 19,
+      "text": "\"POTOK\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "brand_registry.json",
+      "line": 20,
+      "text": "\"potok\"",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "for-contractors.html",
+      "line": 24,
+      "text": "</header><main class=\"local-page market-page\"><section class=\"local-hero market-hero\"><p class=\"eyebrow\">Мастерам и сервисным компаниям</p><h1>Получайте только те задачи, которые готовы рассмотреть</h1><p class=\"lead\">Вы заранее задаёте города, районы, категории, марки, график и лимит. Перед принятием видны описание, срочность, эксклюзивность и цена заявки — но не контакт клиента.</p><p class=\"pil",
+      "classification": "ACTIVE_VIOLATION"
+    },
+    {
+      "path": "BRAND_CANON.md",
+      "line": 7,
+      "text": "REJECTED_COMMON_NAME: Поток / Potok",
+      "classification": "ALLOWED_LEGACY_OR_POLICY"
+    },
+    {
+      "path": "codex/PRAXELTA_CODEX_ONE_PROMPT_FULL_AUTOMATION_RU.md",
+      "line": 383,
+      "text": "10. продолжить остальные площадки, не блокируя весь поток;",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "codex/PRAXELTA_CODEX_ONE_PROMPT_FULL_AUTOMATION_RU.md",
+      "line": 638,
+      "text": "- можно поставить поток на паузу;",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "codex/PRAXELTA_CODEX_ONE_PROMPT_FULL_AUTOMATION_RU.md",
+      "line": 893,
+      "text": "Человеку присылается один список только тех действий, которые требуют его участия. Один заблокированный поток не останавливает остальные.",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "docs/MASTER_ACQUISITION_PLAYBOOK.md",
+      "line": 3,
+      "text": "Разрешённый поток: публичная страница, рекомендации, магазины и поставщики, учебные центры, сервисные компании, профессиональные сообщества с правилами размещения, официальные каталоги и ограниченное ручное исследование публичных бизнес-профилей.",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "line": 9,
+      "text": "Соседний локальный проект `praxelta-ops` использует FastAPI, SQLAlchemy и SQLite. Его поток:",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "docs/PRAXELTA_LEAD_MARKETPLACE_PROJECT_RU.md",
+      "line": 208,
+      "text": "- обещать гарантированный доход или поток;",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "scripts/render_service_network.py",
+      "line": 127,
+      "text": "+ \"\"\"<section><p class=\"eyebrow\">Воронка подключения</p><h2>От анкеты до тестовых заявок</h2><ol class=\"timeline\"><li>Анкета и подтверждение рабочего контакта.</li><li>Проверка юридического статуса, категорий и документов.</li><li>Тестовый режим под ручным контролем.</li><li>Первые синтетические или отдельно разрешённые заявки.</li><li>Активный статус с лимитами и возможностью поставить поток на п",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "scripts/audit_brand_terms.py",
+      "line": 61,
+      "text": "pattern = re.compile(r\"(?<![\\w-])(?:поток|potok)(?![\\w-])\", re.IGNORECASE)",
+      "classification": "REVIEW_REQUIRED"
+    }
+  ]
+}
