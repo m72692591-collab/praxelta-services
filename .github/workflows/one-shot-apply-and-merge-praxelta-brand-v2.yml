@@ -1,0 +1,162 @@
+name: One-shot apply and merge PRAXELTA brand v2
+
+on:
+  push:
+    branches:
+      - governance/praxelta-canonical-surface-v2-20260818
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: one-shot-praxelta-brand-v2
+  cancel-in-progress: false
+
+jobs:
+  apply-verify-and-merge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: governance/praxelta-canonical-surface-v2-20260818
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply only classified active-brand replacements
+        run: |
+          python -m py_compile \
+            scripts/canonicalize_praxelta_surface.py \
+            tests/test_canonicalize_praxelta_surface.py
+          python -m pytest tests/test_canonicalize_praxelta_surface.py -q
+          mkdir -p operations/branding
+          python scripts/canonicalize_praxelta_surface.py \
+            --root . \
+            --report operations/branding/PRAXELTA_BRAND_MIGRATION_V2.json \
+            --apply
+
+      - name: Verify zero active violations and preserve review contexts
+        run: |
+          python scripts/canonicalize_praxelta_surface.py \
+            --root . \
+            --report operations/branding/PRAXELTA_BRAND_AFTER_V2.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          before = json.loads(Path('operations/branding/PRAXELTA_BRAND_MIGRATION_V2.json').read_text(encoding='utf-8'))
+          after = json.loads(Path('operations/branding/PRAXELTA_BRAND_AFTER_V2.json').read_text(encoding='utf-8'))
+          assert before['mass_unclassified_replacement_used'] is False
+          assert before['historical_lines_rewritten'] is False
+          assert after['remaining_active_violation_count'] == 0
+          assert Path('PROJECT_IDENTITY.md').is_file()
+          assert Path('BRAND_CANON_V2.json').is_file()
+          PY
+          git diff --check
+
+      - name: Attempt exact GitHub description update and record factual outcome
+        id: metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          gh api \
+            --method PATCH \
+            repos/m72692591-collab/praxelta-services \
+            -f description='Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ' \
+            > /tmp/metadata-update.json 2> /tmp/metadata-error.txt
+          update_code=$?
+          set -e
+          current="$(gh api repos/m72692591-collab/praxelta-services --jq '.description // ""')"
+          printf '%s\n' "$current" > operations/branding/GITHUB_DESCRIPTION_AFTER.txt
+          if [ "$current" = 'Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ' ]; then
+            echo 'verified=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'verified=false' >> "$GITHUB_OUTPUT"
+          fi
+          echo "update_code=$update_code" >> "$GITHUB_OUTPUT"
+
+      - name: Create one exact metadata blocker when permission is insufficient
+        if: steps.metadata.outputs.verified != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          title='[P0 METADATA] Установить каноническое описание ПРАКСЕЛЬТЫ'
+          number="$(gh issue list \
+            --repo m72692591-collab/praxelta-services \
+            --state open \
+            --search "$title in:title" \
+            --json number,title \
+            --jq '.[] | select(.title == "'"$title"'") | .number' \
+            | head -n 1)"
+          current="$(cat operations/branding/GITHUB_DESCRIPTION_AFTER.txt)"
+          body="Файлы репозитория приведены к бренду ПРАКСЕЛЬТА, но GitHub description остаётся отдельной metadata-поверхностью. Требуемое точное значение: \`Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ\`. Текущее API-значение: \`${current}\`. Закрывать только после повторного API-чтения точной строки."
+          if [ -z "$number" ]; then
+            gh issue create \
+              --repo m72692591-collab/praxelta-services \
+              --title "$title" \
+              --body "$body"
+          else
+            gh issue edit "$number" \
+              --repo m72692591-collab/praxelta-services \
+              --body "$body"
+          fi
+
+      - name: Close metadata blocker after exact read-back proof
+        if: steps.metadata.outputs.verified == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          for title in \
+            '[P0 METADATA] Установить каноническое описание ПРАКСЕЛЬТЫ' \
+            '[P0 METADATA] Заменить описание репозитория на каноническое ПРАКСЕЛЬТА'; do
+            number="$(gh issue list \
+              --repo m72692591-collab/praxelta-services \
+              --state open \
+              --search "$title in:title" \
+              --json number,title \
+              --jq '.[] | select(.title == "'"$title"'") | .number' \
+              | head -n 1)"
+            if [ -n "$number" ]; then
+              gh issue close "$number" \
+                --repo m72692591-collab/praxelta-services \
+                --comment 'Повторный GitHub API read-back подтвердил точное каноническое описание ПРАКСЕЛЬТЫ.'
+            fi
+          done
+
+      - name: Remove one-shot workflow and commit evidence
+        run: |
+          rm .github/workflows/one-shot-apply-and-merge-praxelta-brand-v2.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Привести активные поверхности к бренду ПРАКСЕЛЬТА'
+          git push origin HEAD:governance/praxelta-canonical-surface-v2-20260818
+
+      - name: Open and merge verified governance PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          pr_url="$(gh pr create \
+            --repo m72692591-collab/praxelta-services \
+            --base main \
+            --head governance/praxelta-canonical-surface-v2-20260818 \
+            --title 'Закрепить ПРАКСЕЛЬТУ как единственный активный бренд' \
+            --body 'Точечно заменены только классифицированные активные brand declarations. Исторические и review-контексты не переписаны. Добавлены BRAND_CANON_V2, тесты, постоянный CI и фактическая попытка обновления GitHub description.')"
+          pr_number="${pr_url##*/}"
+          gh pr merge "$pr_number" \
+            --repo m72692591-collab/praxelta-services \
+            --squash \
+            --subject 'Закрепить ПРАКСЕЛЬТУ как единственный активный бренд' \
+            --body 'Канонический бренд, безопасная классифицированная миграция, tests/CI и metadata read-back gate.'
