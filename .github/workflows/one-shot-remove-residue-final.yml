@@ -1,0 +1,92 @@
+name: One-shot remove final PRAXELTA workflow residue
+
+on:
+  push:
+    branches:
+      - "ops/remove-one-shot-residue-final-20260818"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: one-shot-remove-final-praxelta-residue
+  cancel-in-progress: false
+
+jobs:
+  clean-verify-and-merge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout exact cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: ops/remove-one-shot-residue-final-20260818
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Delete only ephemeral one-shot workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          find .github/workflows -maxdepth 1 -type f \
+            \( -name 'one-shot-*.yml' -o -name 'one-shot-*.yaml' \) \
+            -print -delete
+          ! find .github/workflows -maxdepth 1 -type f \
+            \( -name 'one-shot-*.yml' -o -name 'one-shot-*.yaml' \) \
+            | grep -q .
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Re-run available brand and public-site checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f scripts/audit_brand_terms.py ]; then
+            python -m py_compile scripts/audit_brand_terms.py
+            python scripts/audit_brand_terms.py --root . --report /tmp/praxelta-brand-audit.json
+          fi
+          if [ -f scripts/check_public_site.py ]; then
+            python scripts/check_public_site.py
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          if Path('brand_registry.json').is_file():
+              registry = json.loads(Path('brand_registry.json').read_text(encoding='utf-8'))
+              assert registry['canonical_brand']['canonical_ru'] == 'ПРАКСЕЛЬТА'
+              assert registry['canonical_brand']['canonical_latin'] == 'PRAXELTA'
+              assert registry['legacy_repository']['status'] == 'LEGACY_COMPATIBILITY_ONLY'
+          PY
+          git diff --check
+
+      - name: Commit cleanup without deleting branches or public source files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Удалить только временные one-shot workflows ПРАКСЕЛЬТЫ'
+          git push origin HEAD:ops/remove-one-shot-residue-final-20260818
+
+      - name: Open and merge verified cleanup PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          number="$(gh pr list --repo m72692591-collab/praxelta-services --state open --head ops/remove-one-shot-residue-final-20260818 --json number --jq '.[0].number // empty')"
+          if [ -z "$number" ]; then
+            url="$(gh pr create \
+              --repo m72692591-collab/praxelta-services \
+              --base main \
+              --head ops/remove-one-shot-residue-final-20260818 \
+              --title 'Удалить финальный остаток временных one-shot workflows ПРАКСЕЛЬТЫ' \
+              --body 'Удаляются только временные migration helpers. Активный бренд, публичные файлы, ветки и история сохраняются; перед merge выполняются доступные brand/public-site checks.')"
+            number="${url##*/}"
+          fi
+          gh pr merge "$number" \
+            --repo m72692591-collab/praxelta-services \
+            --squash \
+            --subject 'Удалить финальный остаток временных one-shot workflows ПРАКСЕЛЬТЫ' \
+            --body 'Удалены только временные helpers; brand/public-site checks выполнены. Ветки и история не удалялись.'
