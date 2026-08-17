@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "registry_id": "PRAXELTA_EPHEMERAL_WORKFLOW_RETIREMENT_V1",
+  "canonical_branch": "main",
+  "base_commit": "3dbe0b6fb8c3673b8701aed00c996acbce040f98",
+  "policy": {
+    "one_shot_workflows_allowed_in_main": false,
+    "git_history_preserved": true,
+    "branch_deletion_performed": false,
+    "product_content_changed": false,
+    "destructive_git_used": false
+  },
+  "retired_workflows": [
+    {
+      "path": ".github/workflows/one-shot-consolidate-praxelta.yml",
+      "blob_sha": "9cf71b6f10a47128fd28d35b1ff8f5f39dd94fc5",
+      "status": "RETIRED_FROM_MAIN",
+      "reason": "Consolidation already produced permanent brand, migration and quality assets; self-merging one-shot is no longer canonical."
+    },
+    {
+      "path": ".github/workflows/one-shot-normalize-praxelta-metadata.yml",
+      "blob_sha": "3b8bdca9e7d2ae1ad793e3cf41f972f27b31eb32",
+      "status": "RETIRED_FROM_MAIN",
+      "reason": "Repository description update is blocked by GitHub App administration permission and is tracked as an exact metadata blocker."
+    },
+    {
+      "path": ".github/workflows/one-shot-praxelta-final-order-v2.yml",
+      "blob_sha": "b82b2b032afcb22cf4d01150ab0a7388f88a51b9",
+      "status": "RETIRED_FROM_MAIN",
+      "reason": "Permanent brand audit, quality CI and repository hygiene replace the one-time final-order orchestrator."
+    }
+  ]
+}

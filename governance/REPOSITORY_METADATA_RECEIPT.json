@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-08-17T16:48:56.302622+00:00",
+  "repository": "m72692591-collab/praxelta-services",
+  "status": "BLOCKED_BY_REPOSITORY_ADMINISTRATION_PERMISSION",
+  "patch_exit_code": 1,
+  "expected_description": "ПРАКСЕЛЬТА — управляемое продвижение локальных услуг и учёт обращений",
+  "actual_description": "Публичная витрина услуг ПОТОК",
+  "expected_homepage": "https://m72692591-collab.github.io/praxelta-services/",
+  "actual_homepage": "https://m72692591-collab.github.io/praxelta-services/",
+  "verified": false,
+  "error_summary": "GitHub App token returned Resource not accessible by integration (HTTP 403).",
+  "secrets_recorded": false,
+  "file_content_changes_required": false,
+  "next_gate": "Update repository description through a repository-administration-capable channel and verify it by a fresh API read."
+}
