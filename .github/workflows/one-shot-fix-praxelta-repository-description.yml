@@ -1,0 +1,99 @@
+name: One-shot fix PRAXELTA repository description
+
+on:
+  push:
+    branches:
+      - governance/praxelta-metadata-fix-20260817
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: one-shot-praxelta-repository-description
+  cancel-in-progress: false
+
+jobs:
+  update-and-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Attempt exact repository metadata update
+        id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          response="$(gh api \
+            --method PATCH \
+            repos/m72692591-collab/praxelta-services \
+            -f description='Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ' \
+            2>&1)"
+          code=$?
+          set -e
+          printf '%s\n' "$response" > metadata-update-response.txt
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Read metadata back from GitHub
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          description="$(gh api repos/m72692591-collab/praxelta-services --jq '.description // ""')"
+          printf '%s\n' "$description" > metadata-description-after.txt
+          if [ "$description" = 'Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ' ]; then
+            echo "verified=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "verified=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Close the metadata blocker only after exact API proof
+        if: steps.verify.outputs.verified == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          title='[P0 METADATA] Заменить описание репозитория на каноническое ПРАКСЕЛЬТА'
+          number="$(gh issue list \
+            --repo m72692591-collab/praxelta-services \
+            --state open \
+            --search "$title in:title" \
+            --json number,title \
+            --jq '.[] | select(.title == "'"$title"'") | .number' \
+            | head -n 1)"
+          if [ -n "$number" ]; then
+            gh issue close "$number" \
+              --repo m72692591-collab/praxelta-services \
+              --comment 'GitHub API повторно вернул точное описание: `Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ`.'
+          fi
+
+      - name: Preserve one exact blocker comment when administration permission is unavailable
+        if: steps.verify.outputs.verified != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATE_EXIT: ${{ steps.update.outputs.exit_code }}
+        shell: bash
+        run: |
+          title='[P0 METADATA] Заменить описание репозитория на каноническое ПРАКСЕЛЬТА'
+          number="$(gh issue list \
+            --repo m72692591-collab/praxelta-services \
+            --state open \
+            --search "$title in:title" \
+            --json number,title \
+            --jq '.[] | select(.title == "'"$title"'") | .number' \
+            | head -n 1)"
+          if [ -n "$number" ]; then
+            current="$(cat metadata-description-after.txt)"
+            response="$(head -c 1000 metadata-update-response.txt | tr '\n' ' ')"
+            gh issue comment "$number" \
+              --repo m72692591-collab/praxelta-services \
+              --body "Автоматическая PATCH-попытка не дала подтверждённого результата. Exit: \`${UPDATE_EXIT}\`. Текущее API-описание: \`${current}\`. Ответ: \`${response}\`. Файлы и история не изменялись; задача остаётся открытой."
+          fi
+
+      - name: Fail only after preserving factual evidence
+        if: steps.verify.outputs.verified != 'true'
+        run: |
+          echo 'Repository metadata still violates the canonical PRAXELTA naming rule.' >&2
+          exit 1
