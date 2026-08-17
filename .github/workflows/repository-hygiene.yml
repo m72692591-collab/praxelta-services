@@ -1,0 +1,172 @@
+name: PRAXELTA repository hygiene
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "governance/**"
+      - "scripts/validate_repository_hygiene.py"
+      - "tests/test_repository_hygiene.py"
+      - ".gitignore"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+      - "governance/**"
+      - "scripts/validate_repository_hygiene.py"
+      - "tests/test_repository_hygiene.py"
+      - ".gitignore"
+  workflow_dispatch:
+  schedule:
+    - cron: "47 */6 * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: praxelta-repository-hygiene-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile and test hygiene guard
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python -m py_compile \
+            scripts/validate_repository_hygiene.py \
+            tests/test_repository_hygiene.py
+          python -m unittest tests/test_repository_hygiene.py -v
+
+      - name: Validate permanent repository tree
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          mkdir -p repository-hygiene-evidence
+          python scripts/validate_repository_hygiene.py \
+            --root . \
+            --report repository-hygiene-evidence/tree.json
+          python scripts/audit_brand_terms.py \
+            --root . \
+            --report repository-hygiene-evidence/brand.json \
+            --strict
+          git diff --check
+
+      - name: Read live repository metadata without changing it
+        id: metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/m72692591-collab/praxelta-services \
+            --jq '{description: (.description // ""), homepage: (.homepage // ""), archived: .archived, default_branch: .default_branch}' \
+            > repository-hygiene-evidence/metadata.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          data = json.loads(Path('repository-hygiene-evidence/metadata.json').read_text(encoding='utf-8'))
+          expected_description = 'ПРАКСЕЛЬТА — управляемое продвижение локальных услуг и учёт обращений'
+          expected_homepage = 'https://m72692591-collab.github.io/praxelta-services/'
+          exact = (
+              data['description'] == expected_description
+              and data['homepage'] == expected_homepage
+              and data['default_branch'] == 'main'
+              and data['archived'] is False
+          )
+          with Path(os.environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as stream:
+              stream.write(f"verified={'true' if exact else 'false'}\n")
+          print({'metadata_verified': exact, **data})
+          PY
+
+      - name: Create or update one exact metadata blocker
+        if: steps.metadata.outputs.verified != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          title='[P0 METADATA] Заменить описание репозитория на каноническое ПРАКСЕЛЬТА'
+          issue="$(gh issue list \
+            --repo m72692591-collab/praxelta-services \
+            --state open \
+            --search "$title in:title" \
+            --json number,title \
+            --jq '.[] | select(.title == "'"$title"'") | .number' \
+            | head -n 1)"
+          body_file='repository-hygiene-evidence/metadata-issue.md'
+          {
+            echo 'Текущие файлы проходят permanent hygiene gate, но GitHub metadata остаётся отдельной публичной поверхностью.'
+            echo
+            echo 'Требуемое описание:'
+            echo
+            echo '`ПРАКСЕЛЬТА — управляемое продвижение локальных услуг и учёт обращений`'
+            echo
+            echo 'Текущее API-состояние:'
+            echo
+            echo '```json'
+            cat repository-hygiene-evidence/metadata.json
+            echo '```'
+            echo
+            echo 'GitHub Actions token не получает repository administration permission. Файлы, ветки и история не изменяются; задача закрывается только после точного повторного API-чтения.'
+          } > "$body_file"
+          if [ -z "$issue" ]; then
+            gh issue create \
+              --repo m72692591-collab/praxelta-services \
+              --title "$title" \
+              --body-file "$body_file"
+          else
+            gh issue edit "$issue" \
+              --repo m72692591-collab/praxelta-services \
+              --body-file "$body_file"
+          fi
+
+      - name: Close metadata blocker after exact API proof
+        if: steps.metadata.outputs.verified == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          title='[P0 METADATA] Заменить описание репозитория на каноническое ПРАКСЕЛЬТА'
+          issue="$(gh issue list \
+            --repo m72692591-collab/praxelta-services \
+            --state open \
+            --search "$title in:title" \
+            --json number,title \
+            --jq '.[] | select(.title == "'"$title"'") | .number' \
+            | head -n 1)"
+          if [ -n "$issue" ]; then
+            gh issue close "$issue" \
+              --repo m72692591-collab/praxelta-services \
+              --comment 'API вернул точные канонические metadata. Permanent hygiene gate подтверждён.'
+          fi
+
+      - name: Upload immutable evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-repository-hygiene-${{ github.run_number }}
+          path: repository-hygiene-evidence
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Keep metadata fail-closed after publishing evidence
+        if: github.event_name != 'pull_request' && steps.metadata.outputs.verified != 'true'
+        run: |
+          echo 'Repository metadata is still not canonical; see the published evidence and single blocker issue.' >&2
+          exit 1
