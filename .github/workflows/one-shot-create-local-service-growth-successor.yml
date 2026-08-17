@@ -1,0 +1,93 @@
+name: One-shot create local service growth successor
+
+on:
+  push:
+    branches:
+      - salvage/local-service-growth-v2-20260818
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: one-shot-praxelta-growth-successor
+  cancel-in-progress: false
+
+jobs:
+  salvage-and-open-draft:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: salvage/local-service-growth-v2-20260818
+          fetch-depth: 0
+          show-progress: false
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+
+      - name: Fetch and pin old PR 1 source
+        run: |
+          git fetch --no-tags origin +refs/heads/feature/local-service-growth:refs/remotes/origin/source-pr-1
+          test "$(git rev-parse refs/remotes/origin/source-pr-1)" = fa4cda15af8b244d2aee4f17939f8be698ca4f85
+          git merge-base --is-ancestor 2f61f92793f487c5be0b2698a82be9004e3f23dd fa4cda15af8b244d2aee4f17939f8be698ca4f85
+
+      - name: Run tool tests
+        run: |
+          python -m py_compile scripts/safe_salvage_from_branch.py tests/test_safe_salvage_from_branch.py
+          python -m pytest tests/test_safe_salvage_from_branch.py -q
+
+      - name: Apply only target-only files that pass naming and safety gates
+        run: |
+          python scripts/safe_salvage_from_branch.py \
+            --root . \
+            --source-base 2f61f92793f487c5be0b2698a82be9004e3f23dd \
+            --source-head fa4cda15af8b244d2aee4f17939f8be698ca4f85 \
+            --current-ref HEAD \
+            --manifest operations/salvage/local-service-growth-v2/manifest.json \
+            --apply
+
+      - name: Verify manifest and active branding
+        run: |
+          python - <<'PY'
+          import hashlib,json,re
+          from pathlib import Path
+          p=Path('operations/salvage/local-service-growth-v2/manifest.json'); d=json.loads(p.read_text(encoding='utf-8'))
+          assert d['source_base_sha']=='2f61f92793f487c5be0b2698a82be9004e3f23dd'
+          assert d['source_head_sha']=='fa4cda15af8b244d2aee4f17939f8be698ca4f85'
+          assert d['destructive_actions_performed'] is False and d['current_files_overwritten'] is False and d['source_deletions_applied'] is False
+          copied=[r for r in d['records'] if r['status']=='TARGET_ONLY_COPIED']; assert copied
+          forbidden=re.compile(r'(?iu)(?<![а-яa-z0-9])(поток|potok)(?![а-яa-z0-9])')
+          markers=('legacy_compatibility_only','устаревш','старый адрес','историческ','перенаправ')
+          for row in copied:
+              path=Path(row['path']); assert path.exists(); assert hashlib.sha256(path.read_bytes()).hexdigest()==row['sha256']
+              if path.suffix.casefold() in {'.md','.txt','.json','.yaml','.yml','.py','.js','.html','.css'}:
+                  for line in path.read_text(encoding='utf-8').splitlines():
+                      if forbidden.search(line) and not any(m in line.casefold() for m in markers): raise AssertionError(f'active rejected name: {path}')
+          Path('operations/salvage/local-service-growth-v2/SUMMARY.md').write_text('\n'.join([
+            '# Свежий successor продвижения ПРАКСЕЛЬТЫ','',f'- Target-only copied: **{len(copied)}**',f'- Diverged preserved: **{d["counts"].get("DIVERGED",0)}**',f'- Blocked naming/safety: **{d["counts"].get("BLOCKED_ACTIVE_NAME",0)+d["counts"].get("BLOCKED",0)}**','','Текущие файлы не перезаписывались. Расходящиеся файлы требуют отдельной смысловой интеграции.'])+'\n',encoding='utf-8')
+          PY
+
+      - name: Run all available repository checks without claiming deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f scripts/check_public_site.py ]; then python scripts/check_public_site.py; fi
+          if [ -d tests ]; then python -m pytest -q; fi
+          git diff --check
+
+      - name: Remove one-shot workflow and commit candidate
+        run: |
+          rm .github/workflows/one-shot-create-local-service-growth-successor.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Подготовить свежий successor продвижения ПРАКСЕЛЬТЫ без перезаписи текущих файлов'
+          git push origin HEAD:salvage/local-service-growth-v2-20260818
+
+      - name: Open draft successor and close only old orchestration PR
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          url="$(gh pr create --repo m72692591-collab/praxelta-services --base main --head salvage/local-service-growth-v2-20260818 --draft --title '[DRAFT SALVAGE] Интегрировать безопасное продвижение ПРАКСЕЛЬТЫ V2' --body-file operations/salvage/local-service-growth-v2/SUMMARY.md)"
+          number="${url##*/}"
+          gh pr close 1 --repo m72692591-collab/praxelta-services --comment "Заменён свежим draft successor #${number}. Старая ветка, PDF и evidence сохранены; blind merge не выполнялся."
