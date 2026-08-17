@@ -5,6 +5,8 @@ on:
     paths:
       - "scripts/safe_salvage_from_branch.py"
       - "tests/test_safe_salvage_from_branch.py"
+      - "scripts/validate_local_growth_resolution.py"
+      - "tests/test_local_growth_resolution.py"
       - ".github/workflows/praxelta-growth-successor-v3.yml"
       - "operations/salvage/local-service-growth-v3/**"
       - "docs/**"
@@ -25,26 +27,25 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: praxelta-growth-successor-v3-${{ github.head_ref || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   SOURCE_BASE_SHA: "7775b2dce8116bc77163dd7c0762974fb763244d"
   SOURCE_HEAD_SHA: "fa4cda15af8b244d2aee4f17939f8be698ca4f85"
 
 jobs:
-  integrate-target-only:
+  validate-complete-integration:
     if: github.event_name == 'workflow_dispatch' || github.head_ref == 'salvage/local-service-growth-v3-20260818'
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 35
     steps:
-      - name: Checkout exact successor branch
+      - name: Checkout tested revision
         uses: actions/checkout@v4
         with:
-          ref: salvage/local-service-growth-v3-20260818
           fetch-depth: 0
           show-progress: false
 
@@ -56,148 +57,72 @@ jobs:
       - name: Install test runtime
         run: python -m pip install --disable-pip-version-check --no-input pytest
 
-      - name: Fetch and pin the old PR 1 source
+      - name: Fetch and pin historical PR 1 source
         run: |
           git fetch --no-tags origin +refs/heads/feature/local-service-growth:refs/remotes/origin/source-pr-1
           test "$(git rev-parse refs/remotes/origin/source-pr-1)" = "$SOURCE_HEAD_SHA"
           test "$(git merge-base "$SOURCE_BASE_SHA" "$SOURCE_HEAD_SHA")" = "$SOURCE_BASE_SHA"
 
-      - name: Verify fail-closed salvage tool
+      - name: Compile and run salvage and resolution regressions
         run: |
           python -m py_compile \
             scripts/safe_salvage_from_branch.py \
-            tests/test_safe_salvage_from_branch.py
-          python -m pytest tests/test_safe_salvage_from_branch.py -q
+            tests/test_safe_salvage_from_branch.py \
+            scripts/validate_local_growth_resolution.py \
+            tests/test_local_growth_resolution.py
+          python -m pytest \
+            tests/test_safe_salvage_from_branch.py \
+            tests/test_local_growth_resolution.py \
+            -q
 
-      - name: Apply only safe target-only source files
+      - name: Reproduce exact 38 present plus 13 diverged inventory
         run: |
+          mkdir -p praxelta-growth-successor-report
           python scripts/safe_salvage_from_branch.py \
             --root . \
             --source-base "$SOURCE_BASE_SHA" \
             --source-head "$SOURCE_HEAD_SHA" \
             --current-ref HEAD \
-            --manifest /tmp/praxelta-local-growth-salvage.json \
-            --apply
-
-      - name: Build convergent integration evidence
-        run: |
-          mkdir -p operations/salvage/local-service-growth-v3
+            --manifest praxelta-growth-successor-report/reproduced-salvage.json
           python - <<'PY'
           import json
           from pathlib import Path
-
-          data = json.loads(
-              Path('/tmp/praxelta-local-growth-salvage.json').read_text(
-                  encoding='utf-8'
-              )
-          )
-          records = data['records']
-          integrated_by_path = {
-              row['path']: {
-                  'path': row['path'],
-                  'source_blob': row['source_blob'],
-                  'sha256': row['sha256'],
-                  'status': row['status'],
-              }
-              for row in records
-              if row['status'] in {'TARGET_ONLY_COPIED', 'ALREADY_PRESENT'}
-          }
-          integrated = sorted(
-              integrated_by_path.values(), key=lambda row: row['path']
-          )
-          diverged = sorted(
-              row['path'] for row in records if row['status'] == 'DIVERGED'
-          )
-          blocked = sorted(
-              [
-                  {
-                      'path': row['path'],
-                      'status': row['status'],
-                      'reason': row['reason'],
-                  }
-                  for row in records
-                  if row['status'] in {'BLOCKED', 'BLOCKED_ACTIVE_NAME'}
-              ],
-              key=lambda row: row['path'],
-          )
-          deletions = sorted(
-              row['path']
-              for row in records
-              if row['status'] == 'SOURCE_DELETION'
-          )
-          payload = {
-              'schema_version': 3,
-              'source_base_sha': data['source_base_sha'],
-              'source_head_sha': data['source_head_sha'],
-              'integrated_source_files': integrated,
-              'diverged_paths_requiring_semantic_resolution': diverged,
-              'blocked_paths': blocked,
-              'source_deletions_not_applied': deletions,
-              'active_brand': {'ru': 'ПРАКСЕЛЬТА', 'latin': 'PRAXELTA'},
-              'product_launch_status': (
-                  'READY_FOR_OWNER_PRODUCT_GATE'
-                  if not diverged
-                  else 'BLOCKED_UNTIL_DIVERGED_PATHS_RESOLVED'
-              ),
-              'deployment_performed': False,
-              'live_lead_collection_enabled': False,
-              'payments_enabled': False,
-              'paid_actions_performed': False,
-              'current_files_overwritten_automatically': False,
-              'branches_deleted': False,
-              'history_rewritten': False,
-          }
-          destination = Path(
-              'operations/salvage/local-service-growth-v3/'
-              'INTEGRATION_STATUS.json'
-          )
-          destination.write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
-              encoding='utf-8',
-          )
-
-          lines = [
-              '# Интеграция направления продвижения ПРАКСЕЛЬТЫ V3',
-              '',
-              f"- Интегрировано или уже присутствует: **{len(integrated)}** файлов.",
-              f"- Требуют смыслового решения: **{len(diverged)}** файлов.",
-              f"- Заблокировано naming/safety gate: **{len(blocked)}** файлов.",
-              f"- Удаления источника не применены: **{len(deletions)}** файлов.",
-              '',
-              'Текущие файлы не перезаписывались автоматически. Deployment, '
-              'live leads, payments и платные действия не выполнялись.',
-              '',
-              '## Diverged paths',
-              '',
-          ]
-          lines.extend(f'- `{path}`' for path in diverged)
-          Path(
-              'operations/salvage/local-service-growth-v3/SUMMARY.md'
-          ).write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          path = Path('praxelta-growth-successor-report/reproduced-salvage.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          counts = data['counts']
+          assert counts.get('ALREADY_PRESENT', 0) == 38, counts
+          assert counts.get('DIVERGED', 0) == 13, counts
+          assert counts.get('SOURCE_DELETION', 0) == 0, counts
+          assert counts.get('BLOCKED', 0) == 0, counts
+          assert counts.get('BLOCKED_ACTIVE_NAME', 0) == 0, counts
+          assert data['destructive_actions_performed'] is False
+          assert data['current_files_overwritten'] is False
           PY
 
-      - name: Verify active brand and repository checks
+      - name: Validate all 13 semantic dispositions against both Git trees
+        run: |
+          python scripts/validate_local_growth_resolution.py \
+            --root . \
+            --source-ref refs/remotes/origin/source-pr-1 \
+            --report praxelta-growth-successor-report/resolution.json
+
+      - name: Verify brand, public site and complete repository tests
         shell: bash
         run: |
           set -euo pipefail
           python scripts/audit_brand_terms.py \
             --root . \
-            --report /tmp/praxelta-brand.json \
+            --report praxelta-growth-successor-report/brand.json \
             --strict
           python scripts/check_public_site.py
           python -m pytest -q
           git diff --check
 
-      - name: Commit convergent target-only integration
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          if git diff --cached --quiet; then
-            echo 'Successor is converged; no new commit required.'
-          else
-            git commit -m 'Интегрировать безопасные target-only материалы ПРАКСЕЛЬТЫ V3'
-            git push origin HEAD:salvage/local-service-growth-v3-20260818
-          fi
+      - name: Upload immutable integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-growth-successor-v3-${{ github.run_number }}
+          path: praxelta-growth-successor-report
+          if-no-files-found: error
+          retention-days: 90
