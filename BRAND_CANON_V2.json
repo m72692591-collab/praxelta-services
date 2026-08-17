@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "status": "ACTIVE_CANONICAL_BRAND",
+  "canonical_brand_ru": "ПРАКСЕЛЬТА",
+  "canonical_brand_latin": "PRAXELTA",
+  "repository": "m72692591-collab/praxelta-services",
+  "separate_from": "ANIMA TACTUS",
+  "shared_sensitive_user_data_allowed": false,
+  "forbidden_active_names": [
+    "Поток",
+    "Potok"
+  ],
+  "legacy_repository": {
+    "repository": "m72692591-collab/potok-services",
+    "status": "LEGACY_COMPATIBILITY_REDIRECT_ONLY",
+    "new_development_allowed": false,
+    "active_marketing_allowed": false,
+    "lead_collection_allowed": false
+  },
+  "repository_metadata": {
+    "required_description": "Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ",
+    "exact_api_verification_required": true
+  },
+  "migration_safety": {
+    "mass_unclassified_replacement_allowed": false,
+    "historical_text_rewrite_allowed": false,
+    "branch_deletion_allowed": false,
+    "history_rewrite_allowed": false
+  }
+}
