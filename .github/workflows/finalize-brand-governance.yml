@@ -1,0 +1,69 @@
+name: Finalize PRAXELTA brand governance
+
+on:
+  push:
+    branches:
+      - "ops/brand-governance-20260817"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: finalize-praxelta-brand
+  cancel-in-progress: false
+
+jobs:
+  verify-and-merge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ops/brand-governance-20260817
+          fetch-depth: 0
+          show-progress: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify canonical brand and repository content
+        run: |
+          python -m py_compile scripts/check_brand.py
+          python scripts/check_brand.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('governance/brand.json').read_text(encoding='utf-8'))
+          assert data['canonical_brand'] == 'ПРАКСЕЛЬТА'
+          assert data['legacy_repository_role'] == 'compatibility_redirect_only'
+          assert Path('PROJECT_IDENTITY.md').is_file()
+          PY
+          git diff --check
+
+      - name: Remove finalizer and push exact final head
+        id: final
+        run: |
+          set -euo pipefail
+          rm .github/workflows/finalize-brand-governance.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Завершить закрепление уникального бренда ПРАКСЕЛЬТА"
+          git push origin HEAD:ops/brand-governance-20260817
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Merge exact verified PR without deleting branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ steps.final.outputs.sha }}
+        run: |
+          set -euo pipefail
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --head ops/brand-governance-20260817 --json number --jq '.[0].number // empty')"
+          if [ -z "$pr" ]; then exit 0; fi
+          actual="$(gh pr view "$pr" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)"
+          test "$actual" = "$HEAD_SHA"
+          gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --squash \
+            --subject "Закрепить уникальный бренд ПРАКСЕЛЬТА" \
+            --body "Добавляет каноническое имя, публичную политику и постоянный CI-guard без удаления исторических материалов."
