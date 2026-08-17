@@ -1,0 +1,53 @@
+name: PRAXELTA brand audit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - governance/praxelta-brand-canon-20260817
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile auditor
+        run: python -m py_compile scripts/audit_brand_terms.py
+
+      - name: Build factual migration report
+        run: python scripts/audit_brand_terms.py --root . --report brand-audit-report.json
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-brand-audit-${{ github.run_number }}
+          path: brand-audit-report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Explain current gate
+        run: |
+          python - <<'PY'
+          import json
+          report = json.load(open('brand-audit-report.json', encoding='utf-8'))
+          print('Canonical brand: ПРАКСЕЛЬТА / PRAXELTA')
+          print('Current status:', report['status'])
+          print('Active violations:', report['active_violation_count'])
+          print('Review required:', report['review_required_count'])
+          print('This first migration workflow reports facts; strict blocking is enabled after active files are corrected.')
+          PY
