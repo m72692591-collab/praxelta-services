@@ -45,8 +45,16 @@ jobs:
       - name: Run JavaScript smoke tests
         run: node scripts/test_service_network_js.mjs
 
-      - name: Run Python tests
-        run: python -m pytest -q
+      - name: Run Python tests when present
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) \
+            ! -path './.git/*' | grep -q .; then
+            python -m pytest -q
+          else
+            echo 'No Python test files are present; deterministic public-site and JavaScript checks remain mandatory.'
+          fi
 
       - name: Reject whitespace errors
         run: git diff --check
