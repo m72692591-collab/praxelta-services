@@ -1,0 +1,95 @@
+name: PRAXELTA brand governance v2
+
+on:
+  pull_request:
+    paths:
+      - "BRAND_CANON_V2.json"
+      - "PROJECT_IDENTITY.md"
+      - "README.md"
+      - "index.html"
+      - "scripts/canonicalize_praxelta_surface.py"
+      - "tests/test_canonicalize_praxelta_surface.py"
+      - ".github/workflows/praxelta-brand-governance-v2.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "BRAND_CANON_V2.json"
+      - "PROJECT_IDENTITY.md"
+      - "README.md"
+      - "index.html"
+      - "scripts/canonicalize_praxelta_surface.py"
+      - "tests/test_canonicalize_praxelta_surface.py"
+      - ".github/workflows/praxelta-brand-governance-v2.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "13 4 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: praxelta-brand-governance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile and test canonicalizer
+        run: |
+          python -m py_compile \
+            scripts/canonicalize_praxelta_surface.py \
+            tests/test_canonicalize_praxelta_surface.py
+          python -m pytest tests/test_canonicalize_praxelta_surface.py -q
+
+      - name: Verify canonical brand contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('BRAND_CANON_V2.json').read_text(encoding='utf-8'))
+          assert data['schema_version'] == 2
+          assert data['canonical_brand_ru'] == 'ПРАКСЕЛЬТА'
+          assert data['canonical_brand_latin'] == 'PRAXELTA'
+          assert data['separate_from'] == 'ANIMA TACTUS'
+          assert data['shared_sensitive_user_data_allowed'] is False
+          assert data['legacy_repository']['status'] == 'LEGACY_COMPATIBILITY_REDIRECT_ONLY'
+          assert data['legacy_repository']['new_development_allowed'] is False
+          assert data['migration_safety']['mass_unclassified_replacement_allowed'] is False
+          assert data['migration_safety']['historical_text_rewrite_allowed'] is False
+          PY
+
+      - name: Audit active surface declarations
+        run: |
+          mkdir -p praxelta-brand-report
+          python scripts/canonicalize_praxelta_surface.py \
+            --root . \
+            --report praxelta-brand-report/report.json
+          python - <<'PY'
+          import json
+          report = json.load(open('praxelta-brand-report/report.json', encoding='utf-8'))
+          assert report['remaining_active_violation_count'] == 0
+          assert report['mass_unclassified_replacement_used'] is False
+          assert report['historical_lines_rewritten'] is False
+          PY
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-brand-governance-${{ github.run_number }}
+          path: praxelta-brand-report
+          if-no-files-found: warn
+          retention-days: 30
