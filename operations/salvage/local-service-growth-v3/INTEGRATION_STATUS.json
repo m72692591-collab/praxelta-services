@@ -1,0 +1,264 @@
+{
+  "schema_version": 3,
+  "source_base_sha": "7775b2dce8116bc77163dd7c0762974fb763244d",
+  "source_head_sha": "fa4cda15af8b244d2aee4f17939f8be698ca4f85",
+  "integrated_source_files": [
+    {
+      "path": ".gitignore",
+      "source_blob": "eb64d24f0f933dfaa230edf0fc4f4626c497176c",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "HUMANITY_GATE_LOCAL_GROWTH_2026-08-13.json",
+      "source_blob": "6dadcf69af561eecfcf69f04d05dba90761b0d5b",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/CITY_RESEARCH_MATRIX.md",
+      "source_blob": "04e5cb7b4b85f27ba47256df463995176ff6d0e9",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/CONTENT_PLAN_30_DAYS.md",
+      "source_blob": "e305d81b329a252133837b32ab9d36514651823b",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/DEPLOYMENT_CHECKLIST.md",
+      "source_blob": "b41629e0ceb03c24513a1614485796f727ab5815",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/HUMANITY_GATE_LOCAL_GROWTH.md",
+      "source_blob": "e7984e2bce5d7c11cef198c7e0d5049eef042f5e",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/LEAD_MAGNET_SOCIAL_SERIES.md",
+      "source_blob": "8ca27eb4ffe5e437212e32d08272ca5567cbeb4a",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/LOCAL_GROWTH_PRODUCT.md",
+      "source_blob": "228bf506e166927bafe51fe3e165cf6d8b3b946a",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/ORDER_TEMPLATE.md",
+      "source_blob": "6c0755f367ad467e2cfbabea293a17702c5a0810",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/PAID_CAMPAIGN_DRAFT.md",
+      "source_blob": "dd04e68f21e47c3488f592271f70fcf76368ec88",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/PARTNER_PACKAGE.md",
+      "source_blob": "c3266578bda1edc72b4da37899f6b007eeaba9d0",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/PRICING_SOURCE_OF_TRUTH.md",
+      "source_blob": "c76f5e2ad4bef57e321ab21f8f6dcb1809c5cfbc",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/PRIVATE_OPS_BOUNDARY.md",
+      "source_blob": "ffc44923d80af2a76db7f7da516d190ae4baca7c",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "docs/PUBLIC_SITE_CHANGES.md",
+      "source_blob": "4baaabee42d3fb0711d3036e9aefd33916d9f680",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-checklist.html",
+      "source_blob": "c50257e4ab1a162de118ad282e2f76bf4f4d01f3",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-commercial.html",
+      "source_blob": "6038a5675db6b620368d0de951646d71fb8978fc",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-engels.html",
+      "source_blob": "5cf598ac3fda778ac06d13ce197686c559e1f30f",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-penza.html",
+      "source_blob": "2afd8146544b30a1b9f72e9dcf3351a001562452",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-sample.html",
+      "source_blob": "6f755f2bbb6407c32a052554f3754ff6ca9731b6",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-saratov.html",
+      "source_blob": "7371bfe1c1574a267ea4a0b47a25840c0cb4cf28",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-tambov.html",
+      "source_blob": "5be33c9b5981d984d268fd7314cd484fbd60bdc7",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-teaser.html",
+      "source_blob": "0bc5f10d674f5e30cdff738b2ca2f46a435dffbc",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-tyumen.html",
+      "source_blob": "99fea5cc0dba82905a01feeb806a32d78f52d823",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth-voronezh.html",
+      "source_blob": "fc914a5e6c641439fe4d18f9e866e3eec295b367",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "local-growth.html",
+      "source_blob": "f236d6d70ec4e55badff6acee7002289b396bbd3",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "offer.html",
+      "source_blob": "0c8baf807dcb9b8e4ef52a48a90843dd92e20b89",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "order.js",
+      "source_blob": "1eb2d95052348d1da89d004ee75e3ce4e0dca060",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "payment-fail.html",
+      "source_blob": "86836a7bda04770276b8c0ffe4e6c7aedd892662",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "payment-success.html",
+      "source_blob": "d32f992ebf50769242c7b8901a02ec2a20a28ccd",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "pricing.json",
+      "source_blob": "c6591b73ccc79d42ffb563370b8cf33dd0db01e6",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "privacy.html",
+      "source_blob": "f9565c556a81c434f3fb26fe85819643db90f591",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "refund.html",
+      "source_blob": "b36727e250e59abd4e0cf0d343f25c31e9ba8084",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "source_blob": "a7a8ab236b226ad057f60c9b3cc23f4d5f7cc0a9",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "sample.html",
+      "source_blob": "951dc88f7795f331614632dcb48c4b8e9f279d95",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "scripts/normalize_page_heads.py",
+      "source_blob": "9261da976e8ef5b2d83eae38b3fe198b681e1f2f",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "scripts/render_local_growth.py",
+      "source_blob": "75c9941c53c84f2f437517b61c946b832f226e9c",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "scripts/render_pdf_qa.py",
+      "source_blob": "5774048e032ca9bd68ab276c77c2f3d1f7480af0",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    },
+    {
+      "path": "terms.html",
+      "source_blob": "4b6b6940f390c69b8f2fb3f92247d4e32f3e0af5",
+      "sha256": null,
+      "status": "ALREADY_PRESENT"
+    }
+  ],
+  "diverged_paths_requiring_semantic_resolution": [
+    "AGENTS.md",
+    "README.md",
+    "SECURITY.md",
+    "docs/IMPLEMENTATION_PLAN.md",
+    "docs/OUTREACH_COPYBOOK.md",
+    "index.html",
+    "output/pdf/praxelta-7-points-checklist.pdf",
+    "output/pdf/praxelta-local-growth-commercial.pdf",
+    "output/pdf/praxelta-local-growth-teaser.pdf",
+    "scripts/check_public_site.py",
+    "scripts/generate_pdfs.py",
+    "sitemap.xml",
+    "styles.css"
+  ],
+  "blocked_paths": [],
+  "source_deletions_not_applied": [],
+  "active_brand": {
+    "ru": "ПРАКСЕЛЬТА",
+    "latin": "PRAXELTA"
+  },
+  "product_launch_status": "BLOCKED_UNTIL_DIVERGED_PATHS_RESOLVED",
+  "deployment_performed": false,
+  "live_lead_collection_enabled": false,
+  "payments_enabled": false,
+  "paid_actions_performed": false,
+  "current_files_overwritten_automatically": false,
+  "branches_deleted": false,
+  "history_rewritten": false
+}
