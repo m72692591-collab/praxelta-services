@@ -1,0 +1,49 @@
+name: PRAXELTA brand governance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "ops/brand-governance-20260817"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: praxelta-brand-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-brand:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile guard
+        run: python -m py_compile scripts/check_brand.py
+
+      - name: Check canonical unique brand
+        run: python scripts/check_brand.py
+
+      - name: Validate configuration
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('governance/brand.json').read_text(encoding='utf-8'))
+          assert data['canonical_brand'] == 'ПРАКСЕЛЬТА'
+          assert data['legacy_repository_role'] == 'compatibility_redirect_only'
+          assert data['allow_ordinary_lowercase_word'] is True
+          PY
+          git diff --check
