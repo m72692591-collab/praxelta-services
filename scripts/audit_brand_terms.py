@@ -8,8 +8,26 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-TEXT_SUFFIXES = {".md", ".html", ".htm", ".json", ".js", ".css", ".txt", ".yml", ".yaml", ".py"}
+TEXT_SUFFIXES = {
+    ".md",
+    ".html",
+    ".htm",
+    ".json",
+    ".js",
+    ".css",
+    ".txt",
+    ".yml",
+    ".yaml",
+    ".py",
+}
 SKIP_PREFIXES = {".git", "audit", "reports"}
+POLICY_EVIDENCE_PATHS = {
+    "BRAND_CANON.md",
+    "PROJECT_IDENTITY.md",
+    "brand_registry.json",
+    "governance/EPHEMERAL_WORKFLOW_RETIREMENT_V1.json",
+    "governance/REPOSITORY_METADATA_RECEIPT.json",
+}
 ALLOWED_MARKERS = {
     "LEGACY_COMPATIBILITY_ONLY",
     "REJECTED_COMMON_NAME",
@@ -17,6 +35,7 @@ ALLOWED_MARKERS = {
     "устарел",
     "старое название",
     "запрещ",
+    "не использ",
     "перенаправ",
 }
 ACTIVE_HINTS = {
@@ -52,16 +71,27 @@ def has_allowed_marker(line: str) -> bool:
     return any(marker.casefold() in folded for marker in ALLOWED_MARKERS)
 
 
+def is_policy_evidence_path(relative: str) -> bool:
+    return relative in POLICY_EVIDENCE_PATHS
+
+
 def looks_active(line: str) -> bool:
     folded = line.casefold().strip()
     return folded.startswith("#") or any(hint in folded for hint in ACTIVE_HINTS)
 
 
 def audit(root: Path) -> list[Finding]:
-    pattern = re.compile(r"(?<![\w-])(?:поток|potok)(?![\w-])", re.IGNORECASE)
+    pattern = re.compile(
+        r"(?<![\w-])(?:поток|potok)(?![\w-])",
+        re.IGNORECASE,
+    )
     findings: list[Finding] = []
     for path in root.rglob("*"):
-        if not path.is_file() or path.suffix.casefold() not in TEXT_SUFFIXES or is_skipped(path, root):
+        if (
+            not path.is_file()
+            or path.suffix.casefold() not in TEXT_SUFFIXES
+            or is_skipped(path, root)
+        ):
             continue
         try:
             text = path.read_text(encoding="utf-8-sig")
@@ -71,13 +101,15 @@ def audit(root: Path) -> list[Finding]:
         for number, line in enumerate(text.splitlines(), start=1):
             if not pattern.search(line):
                 continue
-            if has_allowed_marker(line):
+            if is_policy_evidence_path(relative) or has_allowed_marker(line):
                 classification = "ALLOWED_LEGACY_OR_POLICY"
             elif looks_active(line):
                 classification = "ACTIVE_VIOLATION"
             else:
                 classification = "REVIEW_REQUIRED"
-            findings.append(Finding(relative, number, line.strip()[:400], classification))
+            findings.append(
+                Finding(relative, number, line.strip()[:400], classification)
+            )
     return findings
 
 
@@ -90,8 +122,12 @@ def main() -> int:
 
     root = Path(args.root).resolve()
     findings = audit(root)
-    active = [item for item in findings if item.classification == "ACTIVE_VIOLATION"]
-    review = [item for item in findings if item.classification == "REVIEW_REQUIRED"]
+    active = [
+        item for item in findings if item.classification == "ACTIVE_VIOLATION"
+    ]
+    review = [
+        item for item in findings if item.classification == "REVIEW_REQUIRED"
+    ]
     payload = {
         "schema_version": 1,
         "canonical_brand": "ПРАКСЕЛЬТА / PRAXELTA",
@@ -102,8 +138,24 @@ def main() -> int:
         "findings": [asdict(item) for item in findings],
     }
     report = root / args.report
-    report.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(json.dumps({key: payload[key] for key in ("status", "active_violation_count", "review_required_count", "finding_count")}, ensure_ascii=False))
+    report.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    print(
+        json.dumps(
+            {
+                key: payload[key]
+                for key in (
+                    "status",
+                    "active_violation_count",
+                    "review_required_count",
+                    "finding_count",
+                )
+            },
+            ensure_ascii=False,
+        )
+    )
     if args.strict and active:
         return 1
     return 0
