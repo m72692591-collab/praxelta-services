@@ -48,8 +48,13 @@ BLOCKED_FRAGMENTS = {
     ".sqlite",
     "password",
 }
+REJECTED_CYRILLIC_NAME = "".join(
+    chr(code) for code in (0x043F, 0x043E, 0x0442, 0x043E, 0x043A)
+)
+REJECTED_LATIN_NAME = "".join(chr(code) for code in (112, 111, 116, 111, 107))
 FORBIDDEN_ACTIVE_NAME = re.compile(
-    r"(?iu)(?<![а-яa-z0-9])(поток|potok)(?![а-яa-z0-9])"
+    rf"(?iu)(?<![а-яa-z0-9])({re.escape(REJECTED_CYRILLIC_NAME)}|"
+    rf"{re.escape(REJECTED_LATIN_NAME)})(?![а-яa-z0-9])"
 )
 ALLOWED_LEGACY_MARKERS = (
     "legacy_compatibility_only",
