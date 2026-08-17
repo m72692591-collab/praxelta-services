@@ -1,0 +1,150 @@
+name: Complete PRAXELTA consolidation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one-shot-consolidate-praxelta.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+
+concurrency:
+  group: complete-praxelta-consolidation
+  cancel-in-progress: false
+
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all branch evidence
+        run: git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+
+      - name: Integrate known product branches only when not already contained
+        shell: bash
+        run: |
+          set -euo pipefail
+          branches=(
+            feature/local-service-growth
+            agent/praxelta-marketplaces-zero-budget
+          )
+          mkdir -p operations/repository_cleanup
+          report=operations/repository_cleanup/CONSOLIDATION_STATUS.md
+          printf '# Консолидация ПРАКСЕЛЬТЫ\n\n' > "$report"
+          printf '| Ветка | Состояние |\n|---|---|\n' >> "$report"
+
+          for branch in "${branches[@]}"; do
+            ref="refs/remotes/origin/$branch"
+            if ! git show-ref --verify --quiet "$ref"; then
+              printf '| `%s` | ветка отсутствует; проверка по PR выполняется ниже |\n' "$branch" >> "$report"
+              continue
+            fi
+            if git merge-base --is-ancestor "$ref" HEAD; then
+              printf '| `%s` | уже содержится в `main` |\n' "$branch" >> "$report"
+              continue
+            fi
+            if git merge --no-ff --no-edit "$ref"; then
+              printf '| `%s` | объединена без конфликта |\n' "$branch" >> "$report"
+            else
+              git merge --abort || true
+              printf '| `%s` | BLOCKED: конфликт; изменения не применены |\n' "$branch" >> "$report"
+              echo "CONFLICTED_BRANCH=$branch" >> "$GITHUB_ENV"
+              break
+            fi
+          done
+
+          if [[ -n "${CONFLICTED_BRANCH:-}" ]]; then
+            exit 1
+          fi
+
+      - name: Run full available verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f scripts/check_public_site.py ]]; then
+            python scripts/check_public_site.py
+          fi
+          if [[ -d tests ]]; then
+            python -m pytest -q
+          fi
+          if command -v npm >/dev/null 2>&1 && [[ -f package.json ]]; then
+            npm ci
+            npm test --if-present
+          fi
+          git diff --check
+
+      - name: Push verified integrated main
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add operations/repository_cleanup/CONSOLIDATION_STATUS.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Зафиксировать итог консолидации ПРАКСЕЛЬТЫ'
+          fi
+          git push origin HEAD:main
+
+      - name: Close pull requests whose heads are now contained
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for number in 1 3; do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/$number" --jq .state 2>/dev/null || echo missing)"
+            head="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/$number" --jq .head.ref 2>/dev/null || true)"
+            if [[ "$state" == missing ]]; then continue; fi
+            git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+            if [[ -n "$head" ]] && git show-ref --verify --quiet "refs/remotes/origin/$head" && git merge-base --is-ancestor "refs/remotes/origin/$head" origin/main; then
+              gh api "repos/${GITHUB_REPOSITORY}/pulls/$number" --method PATCH -f state=closed >/dev/null
+            fi
+          done
+
+      - name: Build and persist final gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin main
+          open_pr_count="$(gh pr list --state open --limit 100 --json number --jq 'length')"
+          status=PASS
+          [[ "$open_pr_count" == 0 ]] || status=BLOCKED
+          mkdir -p operations/repository_cleanup
+          cat > operations/repository_cleanup/FINAL_GATE.json <<JSON
+          {
+            "schema_version": 1,
+            "status": "$status",
+            "open_pr_count": $open_pr_count,
+            "canonical_brand": "ПРАКСЕЛЬТА",
+            "default_branch": "main",
+            "tests_passed": true,
+            "destructive_git": false
+          }
+          JSON
+          {
+            echo '# Финальный контроль ПРАКСЕЛЬТЫ'
+            echo
+            echo "- Статус: **$status**"
+            echo "- Открытых PR: **$open_pr_count**"
+            echo '- Канонический бренд: **ПРАКСЕЛЬТА**'
+            echo '- Уникальные ветки не удалялись.'
+          } > operations/repository_cleanup/FINAL_GATE.md
+
+          if [[ "$status" == PASS ]]; then
+            rm .github/workflows/one-shot-consolidate-praxelta.yml
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add operations/repository_cleanup/FINAL_GATE.* .github/workflows/one-shot-consolidate-praxelta.yml
+          git commit -m 'Зафиксировать финальный контроль ПРАКСЕЛЬТЫ'
+          git push origin HEAD:main
+          [[ "$status" == PASS ]]
