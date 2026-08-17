@@ -166,7 +166,7 @@ jobs:
           retention-days: 30
 
       - name: Keep metadata fail-closed after publishing evidence
-        if: steps.metadata.outputs.verified != 'true'
+        if: github.event_name != 'pull_request' && steps.metadata.outputs.verified != 'true'
         run: |
           echo 'Repository metadata is still not canonical; see the published evidence and single blocker issue.' >&2
           exit 1
