@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "canonical_brand": "ПРАКСЕЛЬТА",
+  "legacy_repository": "potok-services",
+  "legacy_repository_role": "compatibility_redirect_only",
+  "forbidden_public_brand_forms": [
+    "ПОТОК",
+    "Поток"
+  ],
+  "allow_ordinary_lowercase_word": true
+}
