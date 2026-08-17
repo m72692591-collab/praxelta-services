@@ -1,0 +1,61 @@
+name: One-shot normalize first sale scope
+
+on:
+  push:
+    branches:
+      - "sales/first-express-case-20260817"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-normalize-first-sale-scope
+  cancel-in-progress: true
+
+jobs:
+  normalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sales/first-express-case-20260817
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Remove stale boiler-client dependency
+        shell: python
+        run: |
+          from pathlib import Path
+
+          replacements = {
+              Path("docs/FIRST_SALE_PACK_2026-08-17.md"): {
+                  "## 5. Сообщение тёплому контакту — ремонт котлов": "## 5. Сообщение тёплому контакту — локальная услуга",
+                  "Хочу начать с реального кейса по ремонту бытовых котлов, потому что понимаю вашу услугу и уже вижу несколько мест, которые можно проверить без отключения рекламы и без доступа к паролям.": "Хочу начать с реального кейса локального сервисного бизнеса и вижу несколько мест, которые можно проверить без отключения рекламы и без доступа к паролям.",
+                  "- неясно, ремонтируется ли конкретная модель котла;": "- неясно, какие конкретно модели, виды работ или ограничения входят в услугу;",
+              },
+              Path("docs/FIRST_SALE_SPRINT_2026-08-17.md"): {
+                  "1. Тёплый контакт: ремонт бытовых котлов и отопления.\n2. Сантехники.\n3. Электрики.\n4. Ремонт бытовой техники.\n5. Кондиционеры и вентиляция.\n6. Мастер на час и другие локальные сервисные компании.": "1. Локальная сервисная компания с действующей публичной карточкой или объявлением.\n2. Сантехники.\n3. Электрики.\n4. Ремонт бытовой техники.\n5. Кондиционеры и вентиляция.\n6. Мастер на час и другие локальные сервисные компании.",
+                  "- первым поставить тёплый контакт по бытовым котлам и отоплению;": "- первым поставить контакт, который уже дал явное согласие получить мини-разбор;",
+                  "- отправить сообщение тёплому контакту;": "- отправить первое сообщение контакту с подтверждённым согласием либо через разрешённый правилами площадки канал;",
+              },
+          }
+
+          for path, mapping in replacements.items():
+              text = path.read_text(encoding="utf-8")
+              for old, new in mapping.items():
+                  if old not in text:
+                      raise SystemExit(f"Expected text was not found in {path}: {old}")
+                  text = text.replace(old, new)
+              path.write_text(text, encoding="utf-8")
+
+      - name: Remove workflow and commit normalized documents
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/one-shot-normalize-first-sale-scope.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FIRST_SALE_PACK_2026-08-17.md docs/FIRST_SALE_SPRINT_2026-08-17.md
+          git commit -m "Убрать зависимость первой продажи от ушедшего котельного клиента"
+          git push origin HEAD:sales/first-express-case-20260817
