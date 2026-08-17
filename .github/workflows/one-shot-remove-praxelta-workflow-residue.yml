@@ -1,0 +1,85 @@
+name: One-shot remove PRAXELTA workflow residue
+
+on:
+  push:
+    branches:
+      - "ops/remove-one-shot-residue-20260818"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: one-shot-remove-praxelta-workflow-residue
+  cancel-in-progress: false
+
+jobs:
+  clean-verify-and-merge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: ops/remove-one-shot-residue-20260818
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Remove only ephemeral one-shot workflows
+        run: |
+          find .github/workflows -maxdepth 1 -type f \
+            \( -name 'one-shot-*.yml' -o -name 'one-shot-*.yaml' \) \
+            -print -delete
+          ! find .github/workflows -maxdepth 1 -type f \
+            \( -name 'one-shot-*.yml' -o -name 'one-shot-*.yaml' \) \
+            | grep -q .
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Re-run available brand and public-site checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f scripts/audit_brand_terms.py ]; then
+            python -m py_compile scripts/audit_brand_terms.py
+            python scripts/audit_brand_terms.py --root . --report /tmp/praxelta-brand-audit.json
+          fi
+          if [ -f scripts/check_public_site.py ]; then
+            python scripts/check_public_site.py
+          fi
+          mapfile -t tests < <(find tests -type f -name 'test_*.py' 2>/dev/null | sort || true)
+          if [ "${#tests[@]}" -gt 0 ]; then
+            python -m pytest "${tests[@]}" -q
+          fi
+          git diff --check
+
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Удалить только остаточные one-shot workflows ПРАКСЕЛЬТЫ'
+          git push origin HEAD:ops/remove-one-shot-residue-20260818
+
+      - name: Open and merge cleanup PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          number="$(gh pr list --repo m72692591-collab/praxelta-services --state open --head ops/remove-one-shot-residue-20260818 --json number --jq '.[0].number // empty')"
+          if [ -z "$number" ]; then
+            url="$(gh pr create \
+              --repo m72692591-collab/praxelta-services \
+              --base main \
+              --head ops/remove-one-shot-residue-20260818 \
+              --title 'Удалить временные one-shot workflows ПРАКСЕЛЬТЫ' \
+              --body 'Удаляются только временные migration helpers. Публичные файлы, история и продуктовые материалы не удаляются; перед merge выполняются доступные brand/public-site checks.')"
+            number="${url##*/}"
+          fi
+          gh pr merge "$number" \
+            --repo m72692591-collab/praxelta-services \
+            --squash \
+            --subject 'Удалить временные one-shot workflows ПРАКСЕЛЬТЫ' \
+            --body 'Удалены только временные migration helpers; brand/public-site checks выполнены. Ветки и история сохранены.'
