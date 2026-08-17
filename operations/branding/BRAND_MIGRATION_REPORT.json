@@ -3,8 +3,8 @@
   "canonical_brand": "ПРАКСЕЛЬТА / PRAXELTA",
   "status": "FAIL",
   "active_violation_count": 1,
-  "review_required_count": 14,
-  "finding_count": 16,
+  "review_required_count": 28,
+  "finding_count": 31,
   "findings": [
     {
       "path": "brand_registry.json",
@@ -100,6 +100,96 @@
       "path": "scripts/audit_brand_terms.py",
       "line": 61,
       "text": "pattern = re.compile(r\"(?<![\\w-])(?:поток|potok)(?![\\w-])\", re.IGNORECASE)",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 12,
+      "text": "\"text\": \"\\\"Поток\\\",\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 18,
+      "text": "\"text\": \"\\\"ПОТОК\\\",\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 24,
+      "text": "\"text\": \"\\\"поток\\\",\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 30,
+      "text": "\"text\": \"\\\"Potok\\\",\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 36,
+      "text": "\"text\": \"\\\"POTOK\\\",\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 42,
+      "text": "\"text\": \"\\\"potok\\\"\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 54,
+      "text": "\"text\": \"REJECTED_COMMON_NAME: Поток / Potok\",",
+      "classification": "ALLOWED_LEGACY_OR_POLICY"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 60,
+      "text": "\"text\": \"10. продолжить остальные площадки, не блокируя весь поток;\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 66,
+      "text": "\"text\": \"- можно поставить поток на паузу;\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 72,
+      "text": "\"text\": \"Человеку присылается один список только тех действий, которые требуют его участия. Один заблокированный поток не останавливает остальные.\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 78,
+      "text": "\"text\": \"Разрешённый поток: публичная страница, рекомендации, магазины и поставщики, учебные центры, сервисные компании, профессиональные сообщества с правилами размещения, официальные каталоги и ограниченное ручное исследование публичных бизнес-профилей.\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 84,
+      "text": "\"text\": \"Соседний локальный проект `praxelta-ops` использует FastAPI, SQLAlchemy и SQLite. Его поток:\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 90,
+      "text": "\"text\": \"- обещать гарантированный доход или поток;\",",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 96,
+      "text": "\"text\": \"+ \\\"\\\"\\\"<section><p class=\\\"eyebrow\\\">Воронка подключения</p><h2>От анкеты до тестовых заявок</h2><ol class=\\\"timeline\\\"><li>Анкета и подтверждение рабочего контакта.</li><li>Проверка юридического статуса, категорий и документов.</li><li>Тестовый режим под ручным контролем.</li><li>Первые синтетические или отдельно разрешённые заявки.</li><li>Активный статус с лимитами и возможностью пост",
+      "classification": "REVIEW_REQUIRED"
+    },
+    {
+      "path": "operations/branding/BRAND_MIGRATION_REPORT.json",
+      "line": 102,
+      "text": "\"text\": \"pattern = re.compile(r\\\"(?<![\\\\w-])(?:поток|potok)(?![\\\\w-])\\\", re.IGNORECASE)\",",
       "classification": "REVIEW_REQUIRED"
     }
   ]
