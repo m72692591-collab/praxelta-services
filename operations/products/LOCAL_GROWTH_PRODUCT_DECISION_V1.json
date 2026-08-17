@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "decision_id": "PRAXELTA_LOCAL_GROWTH_ACTIVE_PRODUCT_V1",
+  "decision_date": "2026-08-18",
+  "decision_source": "OWNER_DIRECTIVE_COMPLETE_ALL_REMAINING_GATES",
+  "status": "ACTIVE_PRODUCT",
+  "project": {
+    "brand_ru": "ПРАКСЕЛЬТА",
+    "brand_latin": "PRAXELTA",
+    "repository": "m72692591-collab/praxelta-services",
+    "independent_from": "ANIMA TACTUS"
+  },
+  "product": {
+    "name": "Управляемое продвижение и учёт обращений",
+    "entry_offer": {
+      "tariff_id": "express",
+      "name": "Экспресс",
+      "price_rub": 7900,
+      "duration_days": 7,
+      "scope": "Разбор и усиление до трёх объявлений, отчёт и план на 30 дней",
+      "price_status": "CONFIRMED_TEST_ENTRY_OFFER",
+      "guaranteed_results": false
+    },
+    "other_tariffs_status": "PUBLISHED_CATALOG_REQUIRES_SEPARATE_ORDER_CONFIRMATION",
+    "medical_service": false,
+    "financial_guarantee": false,
+    "lead_guarantee": false
+  },
+  "launch_model": {
+    "status": "ACTIVE_PRODUCT_PRELAUNCH",
+    "budget_rub": 0,
+    "static_public_information_allowed": true,
+    "consent_first_contact_allowed": true,
+    "manual_written_order_allowed": true,
+    "mass_unsolicited_outreach_allowed": false,
+    "automated_live_lead_collection_allowed": false,
+    "production_backend_enabled": false,
+    "live_payments_enabled": false,
+    "paid_advertising_enabled": false,
+    "deployment_receipt_required": true,
+    "first_real_client_receipt_required": true
+  },
+  "data_and_separation": {
+    "share_customer_data_with_anima_tactus": false,
+    "share_payment_credentials_with_anima_tactus": false,
+    "assume_common_merchant_account": false,
+    "sensitive_data_collection_enabled": false,
+    "contact_data_requires_explicit_consent": true
+  },
+  "responsibility": {
+    "product_owner": "m72692591-collab",
+    "inbound_contact_mode": "EXPLICIT_CONTACT_OR_MAILTO_ONLY_UNTIL_BACKEND_APPROVAL",
+    "support_sla_status": "MUST_BE_CONFIRMED_IN_EACH_WRITTEN_ORDER",
+    "third_party_costs": "SEPARATE_AND_PREAPPROVED"
+  },
+  "required_before_external_launch_claim": [
+    "current main contains the complete V3 integration and diverged resolution",
+    "brand audit PASS",
+    "public-site preflight PASS",
+    "all repository tests PASS",
+    "public URL returns the exact current release",
+    "deployment receipt binds URL source commit and content hash",
+    "contact route is verified without collecting data silently"
+  ],
+  "required_before_first_paid_order": [
+    "written order with exact scope price duration and exclusions",
+    "seller and tax mode confirmed",
+    "privacy terms refund and support contact confirmed",
+    "customer consent recorded",
+    "payment method approved separately",
+    "no guarantee of leads revenue or ranking"
+  ],
+  "current_switches": {
+    "product_direction_active": true,
+    "price_7900_confirmed": true,
+    "deployment_claim_allowed": false,
+    "live_leads_claim_allowed": false,
+    "first_client_claim_allowed": false,
+    "revenue_claim_allowed": false,
+    "live_payments_enabled": false,
+    "paid_actions_enabled": false
+  },
+  "historical_evidence": {
+    "source_pr": 1,
+    "source_branch_preserved": true,
+    "blind_merge_performed": false,
+    "branches_deleted": false,
+    "history_rewritten": false
+  }
+}
