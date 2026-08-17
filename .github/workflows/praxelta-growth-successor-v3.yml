@@ -7,8 +7,11 @@ on:
       - "tests/test_safe_salvage_from_branch.py"
       - "scripts/validate_local_growth_resolution.py"
       - "tests/test_local_growth_resolution.py"
+      - "scripts/validate_local_growth_product_decision.py"
+      - "tests/test_local_growth_product_decision.py"
       - ".github/workflows/praxelta-growth-successor-v3.yml"
       - "operations/salvage/local-service-growth-v3/**"
+      - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V1.json"
       - "docs/**"
       - "local-growth*"
       - "pricing.json"
@@ -63,16 +66,19 @@ jobs:
           test "$(git rev-parse refs/remotes/origin/source-pr-1)" = "$SOURCE_HEAD_SHA"
           test "$(git merge-base "$SOURCE_BASE_SHA" "$SOURCE_HEAD_SHA")" = "$SOURCE_BASE_SHA"
 
-      - name: Compile and run salvage and resolution regressions
+      - name: Compile and run salvage, resolution and product-decision regressions
         run: |
           python -m py_compile \
             scripts/safe_salvage_from_branch.py \
             tests/test_safe_salvage_from_branch.py \
             scripts/validate_local_growth_resolution.py \
-            tests/test_local_growth_resolution.py
+            tests/test_local_growth_resolution.py \
+            scripts/validate_local_growth_product_decision.py \
+            tests/test_local_growth_product_decision.py
           python -m pytest \
             tests/test_safe_salvage_from_branch.py \
             tests/test_local_growth_resolution.py \
+            tests/test_local_growth_product_decision.py \
             -q
 
       - name: Reproduce exact 38 present plus 13 diverged inventory
@@ -105,6 +111,12 @@ jobs:
             --root . \
             --source-ref refs/remotes/origin/source-pr-1 \
             --report praxelta-growth-successor-report/resolution.json
+
+      - name: Validate owner product decision without claiming launch
+        run: |
+          python scripts/validate_local_growth_product_decision.py \
+            --root . \
+            --report praxelta-growth-successor-report/product-decision.json
 
       - name: Verify brand, public site and complete repository tests
         shell: bash
