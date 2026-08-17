@@ -1,0 +1,130 @@
+name: One-shot fix PRAXELTA project identity
+
+on:
+  push:
+    branches:
+      - "fix/praxelta-project-identity-20260818"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: one-shot-fix-praxelta-project-identity
+  cancel-in-progress: false
+
+jobs:
+  fix-verify-and-merge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/praxelta-project-identity-20260818
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Restore canonical project identity
+        run: |
+          cat > PROJECT_IDENTITY.md <<'MD'
+          # Идентичность проекта ПРАКСЕЛЬТА
+
+          ## Действующее имя
+
+          - Русское написание: **ПРАКСЕЛЬТА**
+          - Латинское написание: **PRAXELTA**
+          - Репозиторий: `m72692591-collab/praxelta-services`
+          - Роль: отдельный активный коммерческий проект владельца
+
+          ПРАКСЕЛЬТА не является частью публичного бренда ANIMA TACTUS и не должна смешивать с ним аудиторию, чувствительные данные, рекламу, продукты или финансовую модель.
+
+          ## Запрещённое активное имя
+
+          Распространённое старое название «Поток» и написание `Potok` не используются как активный бренд, продукт, тариф, раздел сайта, рекламная кампания, рабочее пространство или новая техническая сущность.
+
+          Историческое упоминание допускается только с явной маркировкой `LEGACY_COMPATIBILITY_ONLY` и указанием преемника ПРАКСЕЛЬТА.
+
+          ## Старый адрес совместимости
+
+          Репозиторий `m72692591-collab/potok-services` не является самостоятельным действующим проектом. Его разрешённая роль — минимальное безопасное перенаправление старых ссылок на ПРАКСЕЛЬТУ.
+
+          ## Защита материалов
+
+          - авторские и уникальные материалы не переписываются массовой заменой;
+          - исторические ветки и файлы не удаляются до доказанного переноса;
+          - публикация, расход, заявка и продажа считаются выполненными только по фактическому URL, ID, операции или receipt;
+          - при бюджете 0 ₽ неизвестная стоимость блокирует внешнее действие;
+          - новое публичное имя требует проверки уникальности и решения владельца.
+
+          ## Каноническое описание GitHub
+
+          ```text
+          Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ
+          ```
+
+          Изменение GitHub-description проверяется отдельно через повторное чтение API; этот файл не подменяет метаданные репозитория.
+          MD
+
+      - name: Verify no active common-name branding remains in identity and README
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          identity = Path('PROJECT_IDENTITY.md').read_text(encoding='utf-8')
+          readme = Path('README.md').read_text(encoding='utf-8')
+          assert identity.startswith('# Идентичность проекта ПРАКСЕЛЬТА')
+          assert 'ПРАКСЕЛЬТА' in readme
+          assert identity.strip() != 'noop'
+          active_heading = re.compile(r'(?im)^#.*(?<![а-яa-z0-9])(поток|potok)(?![а-яa-z0-9])')
+          assert not active_heading.search(readme)
+          assert 'LEGACY_COMPATIBILITY_ONLY' in identity
+          assert 'ANIMA TACTUS' in identity
+          PY
+          git diff --check
+
+      - name: Run existing public-site preflight when available
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f scripts/check_public_site.py ]; then
+            python scripts/check_public_site.py
+          fi
+
+      - name: Remove one-shot workflow and commit verified repair
+        run: |
+          rm .github/workflows/one-shot-fix-project-identity.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add PROJECT_IDENTITY.md .github/workflows/one-shot-fix-project-identity.yml
+          git commit -m 'Восстановить каноническую идентичность ПРАКСЕЛЬТЫ'
+          git push origin HEAD:fix/praxelta-project-identity-20260818
+
+      - name: Open and merge exact repair PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr_number="$(gh pr list \
+            --repo m72692591-collab/praxelta-services \
+            --state open \
+            --head fix/praxelta-project-identity-20260818 \
+            --json number \
+            --jq '.[0].number // empty')"
+          if [ -z "$pr_number" ]; then
+            pr_url="$(gh pr create \
+              --repo m72692591-collab/praxelta-services \
+              --base main \
+              --head fix/praxelta-project-identity-20260818 \
+              --title 'Восстановить каноническую идентичность ПРАКСЕЛЬТЫ' \
+              --body 'Исправляет случайный технический файл `noop`. Фиксирует ПРАКСЕЛЬТУ как отдельный активный проект, старый адрес как LEGACY_COMPATIBILITY_ONLY и не меняет витрину, цены, заявки или историю.')"
+            pr_number="${pr_url##*/}"
+          fi
+          test "$(gh pr view "$pr_number" --repo m72692591-collab/praxelta-services --json headRefName --jq .headRefName)" = fix/praxelta-project-identity-20260818
+          gh pr merge "$pr_number" \
+            --repo m72692591-collab/praxelta-services \
+            --squash \
+            --subject 'Восстановить каноническую идентичность ПРАКСЕЛЬТЫ' \
+            --body 'Проверен README, PROJECT_IDENTITY, preflight и отсутствие активного возврата старого общего имени.'
