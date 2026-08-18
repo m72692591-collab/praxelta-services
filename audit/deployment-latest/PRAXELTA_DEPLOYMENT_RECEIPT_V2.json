@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "verified_at_utc": "2026-08-18T06:36:30.293110+00:00",
+  "status": "DEPLOYMENT_VERIFIED",
+  "project": "ПРАКСЕЛЬТА",
+  "public_url": "https://m72692591-collab.github.io/praxelta-services/",
+  "source_commit": "495a5bded52d4ba3ea1bb8d5df3ef188207f5ce9",
+  "live_manifest_sha256": "38187f464816707b67870c44a14ce8550d2121ac7957a37d9c6b227c4b0c00dc",
+  "source_index_sha256": "e4c914f113d768d04ee98e43a64c882e7cb3d43c0f1b3ef4de5499fd6f9404d2",
+  "live_index_sha256": "e4c914f113d768d04ee98e43a64c882e7cb3d43c0f1b3ef4de5499fd6f9404d2",
+  "brand_verified": true,
+  "https_verified": true,
+  "exact_source_commit_verified": true,
+  "production_backend_enabled": false,
+  "automated_live_lead_collection_enabled": false,
+  "live_payments_enabled": false,
+  "first_real_client_verified": false,
+  "revenue_verified": false,
+  "customer_data_exported": false
+}
