@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests; block-all-mixed-content">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="Закрытый пилот ПРАКСЕЛЬТЫ: сформируйте безопасное описание поездки и отправьте его без передачи паспортных и платёжных данных.">
+  <title>Закрытый пилот подбора поездки — ПРАКСЕЛЬТА</title>
+  <link rel="canonical" href="https://m72692591-collab.github.io/praxelta-services/travel-pilot.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="Закрытый пилот подбора поездки — ПРАКСЕЛЬТА">
+  <meta property="og:description" content="Соберите параметры поездки за две минуты. Паспорт, карта, адрес и сканы не требуются.">
+  <meta property="og:url" content="https://m72692591-collab.github.io/praxelta-services/travel-pilot.html">
+  <meta property="og:image" content="https://m72692591-collab.github.io/praxelta-services/praxelta-logo.png">
+  <meta property="og:image:alt" content="Логотип ПРАКСЕЛЬТА">
+  <link rel="icon" type="image/png" href="praxelta-icon.png">
+  <link rel="stylesheet" href="styles.css?v=edd3e578">
+  <link rel="stylesheet" href="travel-pilot.css?v=20260819">
+  <script src="travel-pilot.js?v=20260819" defer></script>
+</head>
+<body>
+  <div class="status">
+    <span>ЗАКРЫТЫЙ ПИЛОТ · без оплаты</span>
+    <span>Паспорт и карта не требуются</span>
+  </div>
+
+  <header class="nav">
+    <a class="brand" href="index.html" aria-label="ПРАКСЕЛЬТА — на главную">
+      <strong>ПРАКСЕЛЬТА<span aria-hidden="true">.</span></strong>
+    </a>
+    <nav aria-label="Навигация по пилоту">
+      <a href="#request">Сформировать запрос</a>
+      <a href="travel-selection.html">Попробовать демо</a>
+      <a href="travel-selection-privacy.html">Данные</a>
+      <a href="travel-selection-terms.html">Условия</a>
+      <a href="travel-selection-disclosure.html">Раскрытие</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero travel-pilot-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Первый закрытый пилот</p>
+        <h1>Опишите поездку за две минуты — <em>без звонка и передачи документов</em></h1>
+        <p class="lead">Страница формирует готовое письмо из безопасных параметров. Вы проверяете текст и сами решаете, отправлять его или нет. Ответы не уходят на сервер и не сохраняются на сайте.</p>
+        <div class="offer-line">
+          <strong>Участие — бесплатно</strong>
+          <span>реальное бронирование пока не выполняется</span>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="#request">Сформировать запрос</a>
+          <a class="button secondary" href="travel-selection.html">Сначала проверить демо</a>
+        </div>
+        <p class="micro">ПРАКСЕЛЬТА не принимает оплату туриста, не бронирует от своего имени и не просит паспортные или банковские данные.</p>
+      </div>
+
+      <aside class="route-card" aria-label="Что произойдёт после заполнения">
+        <div class="route-head"><span>БЕЗОПАСНЫЙ ПУТЬ</span><b>01 / 04</b></div>
+        <div class="route">
+          <article><span>01</span><div><b>Заполните параметры</b><small>город, даты, состав и бюджет</small></div></article>
+          <i aria-hidden="true"></i>
+          <article><span>02</span><div><b>Получите текст</b><small>он создаётся только в браузере</small></div></article>
+          <i aria-hidden="true"></i>
+          <article><span>03</span><div><b>Проверьте письмо</b><small>можно изменить или не отправлять</small></div></article>
+          <i aria-hidden="true"></i>
+          <article class="hot"><span>04</span><div><b>Получите ответ</b><small>без обещания цены и наличия</small></div></article>
+        </div>
+      </aside>
+    </section>
+
+    <section class="proof" aria-label="Правила пилота">
+      <div><b>Без скрытой отправки</b><span>только после вашего действия в почте</span></div>
+      <div><b>Минимум данных</b><span>без фамилии, паспорта, карты и адреса</span></div>
+      <div><b>Честная граница</b><span>это запрос на подбор, а не бронирование</span></div>
+    </section>
+
+    <section class="section" id="request" aria-labelledby="travel-pilot-title">
+      <div class="section-head split">
+        <div>
+          <p class="eyebrow">Заявка в закрытый пилот</p>
+          <h2 id="travel-pilot-title">Сформируйте безопасное письмо</h2>
+        </div>
+        <p>Поля обрабатываются только на вашем устройстве. Кнопка откроет почтовое приложение с уже заполненным черновиком.</p>
+      </div>
+
+      <div class="travel-pilot-shell">
+        <form class="travel-pilot-form" id="travel-pilot-form" onsubmit="return false">
+          <div class="travel-pilot-grid">
+            <label>
+              Город отправления
+              <input id="pilot-departure" name="departure" type="text" value="Саратов" maxlength="80" autocomplete="off" required>
+            </label>
+            <label>
+              Вид отдыха
+              <select id="pilot-type" name="type">
+                <option value="море">Море</option>
+                <option value="поездка по России">Поездка по России</option>
+                <option value="город">Город</option>
+                <option value="экскурсии">Экскурсии</option>
+                <option value="санаторий">Санаторий</option>
+                <option value="природа">Природа</option>
+              </select>
+            </label>
+            <label>
+              Начало периода
+              <input id="pilot-start" name="start" type="date" required>
+            </label>
+            <label>
+              Окончание периода
+              <input id="pilot-end" name="end" type="date" required>
+            </label>
+            <label>
+              Допустимый сдвиг, дней
+              <input id="pilot-flexibility" name="flexibility" type="number" min="0" max="14" value="3" inputmode="numeric">
+            </label>
+            <label>
+              Максимальный общий бюджет, ₽
+              <input id="pilot-budget" name="budget" type="number" min="10000" max="20000000" step="1000" value="180000" inputmode="numeric" required>
+            </label>
+            <label>
+              Взрослые
+              <input id="pilot-adults" name="adults" type="number" min="1" max="10" value="2" inputmode="numeric">
+            </label>
+            <label>
+              Дети
+              <input id="pilot-children" name="children" type="number" min="0" max="10" value="0" inputmode="numeric">
+            </label>
+            <label>
+              Документы
+              <select id="pilot-documents" name="documents">
+                <option value="только поездки по России">Только поездки по России</option>
+                <option value="есть загранпаспорт">Есть загранпаспорт</option>
+                <option value="есть действующая виза">Есть действующая виза</option>
+                <option value="нужно уточнить требования">Нужно уточнить требования</option>
+              </select>
+            </label>
+            <label>
+              Главный приоритет
+              <select id="pilot-priority" name="priority">
+                <option value="минимальная общая стоимость">Минимальная общая стоимость</option>
+                <option value="прямой маршрут">Прямой маршрут</option>
+                <option value="питание">Питание</option>
+                <option value="условия для детей">Условия для детей</option>
+                <option value="тишина">Тишина</option>
+                <option value="рейтинг размещения">Рейтинг размещения</option>
+              </select>
+            </label>
+            <label class="wide">
+              Дополнительное пожелание без персональных данных
+              <textarea id="pilot-note" name="note" maxlength="300" rows="4" placeholder="Например: нужен спокойный отель недалеко от моря"></textarea>
+            </label>
+          </div>
+
+          <div class="travel-pilot-actions">
+            <button class="button primary" id="travel-pilot-create" type="button">Создать письмо</button>
+            <button class="button ghost" id="travel-pilot-copy" type="button" disabled>Скопировать текст</button>
+            <span class="travel-pilot-error" id="travel-pilot-error" role="alert"></span>
+          </div>
+          <p class="micro">Не вводите фамилии, телефоны, адрес, паспортные данные, номера карт, сканы, пароли или сведения о здоровье.</p>
+        </form>
+
+        <div class="travel-pilot-preview" id="travel-pilot-preview" tabindex="-1" aria-live="polite">
+          <h3>Черновик ещё не создан</h3>
+          <p>После заполнения здесь появится точный текст и кнопка открытия почты. Ничего не отправится автоматически.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="pilot-boundary-title">
+      <div class="section-head split">
+        <div><p class="eyebrow">Граница пилота</p><h2 id="pilot-boundary-title">Что вы получите</h2></div>
+        <p>Ответ может содержать ориентиры, вопросы для уточнения и ссылки на официальных продавцов только после их отдельной проверки. Цена и наличие подтверждаются исключительно на стороне продавца.</p>
+      </div>
+      <div class="service-grid">
+        <article><h3>До трёх направлений</h3><p>Короткое объяснение, чем варианты отличаются по бюджету и удобству.</p></article>
+        <article><h3>Следующий шаг</h3><p>Что проверить перед переходом к продавцу: даты, состав услуги, документы и возврат.</p></article>
+        <article><h3>Без давления</h3><p>Пилот не оформляет заказ и не требует оплаты. От ответа можно отказаться.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><strong>ПРАКСЕЛЬТА.</strong><span>Закрытый пилот информационного подбора поездки</span></div>
+    <nav aria-label="Связанные страницы">
+      <a href="travel-selection.html">Автономное демо</a>
+      <a href="travel-selection-privacy.html">Обработка данных</a>
+      <a href="travel-selection-terms.html">Условия</a>
+      <a href="travel-selection-disclosure.html">Раскрытие</a>
+    </nav>
+  </footer>
+</body>
+</html>
