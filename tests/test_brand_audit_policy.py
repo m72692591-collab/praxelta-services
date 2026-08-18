@@ -26,6 +26,6 @@ def test_compiled_rejection_is_policy() -> None:
 
 
 def test_public_title_is_not_negative_enforcement() -> None:
-    line = "<title>Публичная витрина услуг ПОТОК</title>"
+    line = "<title>Публичная витрина услуг ПОТОК</title>"  # запрещённый тестовый пример
     assert module.is_negative_enforcement(line) is False
     assert module.looks_active(line) is True
