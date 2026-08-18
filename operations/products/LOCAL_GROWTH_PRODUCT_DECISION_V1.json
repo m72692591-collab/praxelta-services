@@ -70,10 +70,22 @@
     "payment method approved separately",
     "no guarantee of leads revenue or ranking"
   ],
+  "deployment": {
+    "status": "VERIFIED_CURRENT_MAIN_ON_GITHUB_PAGES",
+    "receipt": "operations/deployment/GITHUB_PAGES_DEPLOYMENT_V1.json",
+    "public_url": "https://m72692591-collab.github.io/praxelta-services/",
+    "source_commit": "16790128f2f5d2cafcd9f4605052a124e8665b12",
+    "verified_files": [
+      "index.html",
+      "styles.css",
+      "sitemap.xml",
+      "pricing.json"
+    ]
+  },
   "current_switches": {
     "product_direction_active": true,
     "price_7900_confirmed": true,
-    "deployment_claim_allowed": false,
+    "deployment_claim_allowed": true,
     "live_leads_claim_allowed": false,
     "first_client_claim_allowed": false,
     "revenue_claim_allowed": false,
