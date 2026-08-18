@@ -1,0 +1,128 @@
+name: PRAXELTA repository metadata admin update
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_description:
+        description: "Exact repository description"
+        required: true
+        default: "Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ"
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  REPOSITORY_SLUG: m72692591-collab/praxelta-services
+  EXPECTED_HOMEPAGE: https://m72692591-collab.github.io/praxelta-services/
+  EXPECTED_DEFAULT_BRANCH: main
+
+concurrency:
+  group: praxelta-repository-metadata-admin-update
+  cancel-in-progress: false
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: repository-administration
+    steps:
+      - name: Refuse missing administration credential
+        shell: bash
+        env:
+          ADMIN_TOKEN: ${{ secrets.PRAXELTA_REPO_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$ADMIN_TOKEN"
+
+      - name: Read before state without recording the credential
+        shell: bash
+        env:
+          ADMIN_TOKEN: ${{ secrets.PRAXELTA_REPO_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p repository-metadata-evidence
+          curl --fail --silent --show-error \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/$REPOSITORY_SLUG" \
+            > "$RUNNER_TEMP/before.json"
+
+      - name: Patch exact description and preserve homepage
+        shell: bash
+        env:
+          ADMIN_TOKEN: ${{ secrets.PRAXELTA_REPO_ADMIN_TOKEN }}
+          EXPECTED_DESCRIPTION: ${{ inputs.expected_description }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' > "$RUNNER_TEMP/payload.json"
+          import json, os
+          print(json.dumps({
+              'description': os.environ['EXPECTED_DESCRIPTION'],
+              'homepage': os.environ['EXPECTED_HOMEPAGE'],
+          }, ensure_ascii=False))
+          PY
+          curl --fail --silent --show-error \
+            --request PATCH \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -H 'Content-Type: application/json' \
+            --data-binary @"$RUNNER_TEMP/payload.json" \
+            "https://api.github.com/repos/$REPOSITORY_SLUG" \
+            > "$RUNNER_TEMP/patch-response.json"
+
+      - name: Perform a fresh independent API read and build sanitized receipt
+        shell: bash
+        env:
+          ADMIN_TOKEN: ${{ secrets.PRAXELTA_REPO_ADMIN_TOKEN }}
+          EXPECTED_DESCRIPTION: ${{ inputs.expected_description }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/$REPOSITORY_SLUG" \
+            > "$RUNNER_TEMP/after.json"
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          before = json.loads(Path(os.environ['RUNNER_TEMP'], 'before.json').read_text(encoding='utf-8'))
+          after = json.loads(Path(os.environ['RUNNER_TEMP'], 'after.json').read_text(encoding='utf-8'))
+          expected_description = os.environ['EXPECTED_DESCRIPTION']
+          assert after['description'] == expected_description, (after['description'], expected_description)
+          assert after['homepage'] == os.environ['EXPECTED_HOMEPAGE']
+          assert after['default_branch'] == os.environ['EXPECTED_DEFAULT_BRANCH']
+          receipt = {
+              'schema_version': 1,
+              'repository': os.environ['REPOSITORY_SLUG'],
+              'status': 'VERIFIED',
+              'verified_at_utc': datetime.now(timezone.utc).isoformat(),
+              'before_description': before.get('description'),
+              'expected_description': expected_description,
+              'actual_description': after.get('description'),
+              'homepage': after.get('homepage'),
+              'default_branch': after.get('default_branch'),
+              'repository_id': after.get('id'),
+              'secrets_recorded': False,
+              'token_recorded': False,
+              'private_url_recorded': False,
+          }
+          Path('repository-metadata-evidence/REPOSITORY_METADATA_RECEIPT.json').write_text(
+              json.dumps(receipt, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Upload immutable sanitized evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-repository-metadata-${{ github.run_number }}
+          path: repository-metadata-evidence
+          if-no-files-found: error
+          retention-days: 90
