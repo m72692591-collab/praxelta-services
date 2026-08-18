@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "receipt_id": "PRAXELTA_GITHUB_PAGES_DEPLOYMENT_V1",
+  "verified_at_utc": "2026-08-18T16:34:00Z",
+  "repository": "m72692591-collab/praxelta-services",
+  "branch": "main",
+  "source_commit": "bf932580f38498594abf6571c9a885df0cd5d36b",
+  "public_url": "https://m72692591-collab.github.io/praxelta-services/",
+  "host": "GITHUB_PAGES",
+  "verification": {
+    "http_fetch_succeeded": true,
+    "exact_files": {
+      "index.html": {
+        "sha256": "f0c409dc34d20ed16f5ca327998372b9490af16f1a1a9183ef283f7a6512eac6",
+        "live_matches_repository": true
+      },
+      "styles.css": {
+        "sha256": "b0f0277345a1641055750c7cf5f6cd86ef99ca21c960d395875fa820e22d2c04",
+        "live_matches_repository": true
+      },
+      "sitemap.xml": {
+        "sha256": "6fa9335d4d48ddd9f69e209cd841c98bdeecba8ed33452f00d3d634e7be4ae72",
+        "live_matches_repository": true
+      },
+      "pricing.json": {
+        "sha256": "839d9c7dedb0fb0c9342264022905d93f3db4eb15c63f7e5ba450d588f076dc5",
+        "live_matches_repository": true
+      }
+    },
+    "canonical_brand_visible": true,
+    "active_rejected_name_in_index": false
+  },
+  "claims": {
+    "deployment_verified": true,
+    "current_main_release_verified": true,
+    "automated_live_leads_enabled": false,
+    "production_backend_enabled": false,
+    "live_payments_enabled": false,
+    "first_real_client_verified": false,
+    "revenue_verified": false
+  },
+  "safety": {
+    "customer_data_collected_during_verification": false,
+    "credentials_recorded": false,
+    "paid_actions_performed": false,
+    "branches_deleted": false,
+    "history_rewritten": false
+  }
+}
