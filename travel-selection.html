@@ -7,16 +7,18 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex,follow">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="Предварительная публичная витрина информационного подбора поездки ПРАКСЕЛЬТЫ. Бронирование, оплата и партнёрские ссылки пока отключены.">
-  <title>ПРАКСЕЛЬТА · подбор поездки — предварительный запуск</title>
+  <meta name="description" content="Работающий автономный демонстрационный подбор поездки ПРАКСЕЛЬТЫ. Данные не отправляются; бронирование, оплата и партнёрские ссылки пока отключены.">
+  <title>ПРАКСЕЛЬТА · подбор поездки — работающий prelaunch</title>
   <link rel="canonical" href="https://m72692591-collab.github.io/praxelta-services/travel-selection.html">
   <link rel="icon" type="image/png" href="praxelta-icon.png">
   <link rel="stylesheet" href="styles.css?v=edd3e578">
+  <link rel="stylesheet" href="travel-selection.css?v=20260819">
+  <script src="travel-selection.js?v=20260819" defer></script>
 </head>
 <body>
   <div class="status">
-    <span>PRELAUNCH · бюджет 0 ₽</span>
-    <span>Бронирование и оплата отключены</span>
+    <span>WORKING PRELAUNCH · бюджет 0 ₽</span>
+    <span>Данные не отправляются · бронирование отключено</span>
   </div>
 
   <header class="nav">
@@ -24,6 +26,7 @@
       <strong>ПРАКСЕЛЬТА<span aria-hidden="true">.</span></strong>
     </a>
     <nav aria-label="Навигация по направлению">
+      <a href="#demo">Попробовать</a>
       <a href="#how">Как устроено</a>
       <a href="#boundary">Граница ответственности</a>
       <a href="travel-selection-privacy.html">Данные</a>
@@ -37,16 +40,16 @@
       <div class="hero-copy">
         <p class="eyebrow">Новое направление ПРАКСЕЛЬТЫ</p>
         <h1>Три понятных варианта поездки <em>без звонка менеджера</em></h1>
-        <p class="lead">Планируемый сервис задаёт восемь коротких вопросов, сопоставляет бюджет и предпочтения и показывает до трёх вариантов. Оформление всегда происходит непосредственно у выбранного продавца.</p>
+        <p class="lead">Работающий демонстрационный сервис сопоставляет бюджет и предпочтения и показывает до трёх вариантов. Расчёт выполняется только в браузере; ответы не уходят на сервер.</p>
         <div class="offer-line">
-          <strong>Статус — технический prelaunch</strong>
-          <span>Реальные предложения не подключены</span>
+          <strong>Статус — работающий prelaunch</strong>
+          <span>Внутри только синтетические примеры</span>
         </div>
         <div class="actions">
-          <a class="button primary" href="#how">Посмотреть сценарий</a>
-          <a class="button secondary" href="index.html">Вернуться на главную</a>
+          <a class="button primary" href="#demo">Попробовать подбор</a>
+          <a class="button secondary" href="#how">Посмотреть устройство</a>
         </div>
-        <p class="micro">На этой странице нет активных партнёрских ссылок, сбора данных, оплаты, бронирования или рекламного трекинга.</p>
+        <p class="micro">На странице нет активных партнёрских ссылок, сетевой отправки, оплаты, бронирования или рекламного трекинга.</p>
       </div>
 
       <aside class="route-card" aria-label="Сценарий подбора">
@@ -59,23 +62,109 @@
           <i aria-hidden="true"></i>
           <article><span>02</span><div><b>Приоритеты</b><small>цена, дети, питание, удобство</small></div></article>
           <i aria-hidden="true"></i>
-          <article><span>03</span><div><b>Сравнение</b><small>до трёх вариантов с датой проверки</small></div></article>
+          <article><span>03</span><div><b>Сравнение</b><small>до трёх объяснимых вариантов</small></div></article>
           <i aria-hidden="true"></i>
-          <article class="hot"><span>04</span><div><b>Переход</b><small>договор и оплата только у продавца</small></div></article>
+          <article class="hot"><span>04</span><div><b>Production</b><small>оформление только у продавца</small></div></article>
         </div>
       </aside>
     </section>
 
     <section class="proof" aria-label="Принципы направления">
-      <div><b>Минимум данных</b><span>без паспорта, карты, адреса и сканов</span></div>
-      <div><b>Проверяемая цена</b><span>время проверки указывается рядом</span></div>
-      <div><b>Ясный продавец</b><span>оплата и договор не у ПРАКСЕЛЬТЫ</span></div>
+      <div><b>Никакой отправки</b><span>расчёт полностью в браузере</span></div>
+      <div><b>Объяснимый выбор</b><span>видно, почему вариант выше</span></div>
+      <div><b>Честный статус</b><span>синтетические примеры явно обозначены</span></div>
+    </section>
+
+    <section class="section" id="demo" aria-labelledby="travel-demo-title">
+      <div class="section-head split">
+        <div>
+          <p class="eyebrow">Работающая демонстрация</p>
+          <h2 id="travel-demo-title">Получите три синтетических варианта</h2>
+        </div>
+        <p>Форма проверяет интерфейс и алгоритм. Она не сохраняет ответы, не формирует заявку и не показывает реальную цену.</p>
+      </div>
+
+      <div class="travel-demo-shell">
+        <form class="travel-demo-form" aria-describedby="travel-demo-note" onsubmit="return false">
+          <div class="travel-demo-grid">
+            <label>
+              Город отправления
+              <select id="travel-departure" name="departure">
+                <option value="Саратов">Саратов</option>
+                <option value="Москва">Москва</option>
+              </select>
+            </label>
+            <label>
+              Вид отдыха
+              <select id="travel-type" name="type">
+                <option value="море">Море</option>
+                <option value="город">Город</option>
+                <option value="экскурсии">Экскурсии</option>
+                <option value="санаторий">Санаторий</option>
+                <option value="природа">Природа</option>
+              </select>
+            </label>
+            <label>
+              Начало
+              <input id="travel-start" name="start" type="date" value="2026-09-10" required>
+            </label>
+            <label>
+              Окончание
+              <input id="travel-end" name="end" type="date" value="2026-09-20" required>
+            </label>
+            <label>
+              Допустимый сдвиг дат
+              <input id="travel-flexibility" name="flexibility" type="number" min="0" max="14" value="3" inputmode="numeric">
+            </label>
+            <label>
+              Общий бюджет, ₽
+              <input id="travel-budget" name="budget" type="number" min="10000" max="20000000" step="1000" value="180000" inputmode="numeric" required>
+            </label>
+            <label>
+              Взрослые
+              <input id="travel-adults" name="adults" type="number" min="1" max="10" value="2" inputmode="numeric">
+            </label>
+            <label>
+              Дети
+              <input id="travel-children" name="children" type="number" min="0" max="10" value="1" inputmode="numeric">
+            </label>
+            <label>
+              Документы
+              <select id="travel-documents" name="documents">
+                <option value="загранпаспорт">Есть загранпаспорт</option>
+                <option value="только РФ">Только поездки по России</option>
+                <option value="есть виза">Есть виза</option>
+              </select>
+            </label>
+            <label>
+              Главный приоритет
+              <select id="travel-priority" name="priority">
+                <option value="цена">Цена</option>
+                <option value="питание">Питание</option>
+                <option value="прямой маршрут">Прямой маршрут</option>
+                <option value="тишина">Тишина</option>
+                <option value="рейтинг">Рейтинг</option>
+              </select>
+            </label>
+          </div>
+          <div class="travel-demo-actions">
+            <button class="button primary" id="travel-demo-run" type="button">Подобрать три варианта</button>
+            <span class="travel-demo-error" id="travel-demo-error" role="alert"></span>
+          </div>
+          <p class="micro" id="travel-demo-note">Не вводите фамилии, номера документов, банковские данные, адрес или сведения о здоровье.</p>
+        </form>
+
+        <div class="travel-demo-results" id="travel-demo-results" tabindex="-1" aria-live="polite">
+          <h3>Здесь появится результат</h3>
+          <p class="travel-demo-warning">Нажмите кнопку после проверки параметров. Первые результаты — только синтетическая демонстрация алгоритма.</p>
+        </div>
+      </div>
     </section>
 
     <section class="section" id="how">
       <div class="section-head split">
         <div>
-          <p class="eyebrow">Как будет работать</p>
+          <p class="eyebrow">Как будет работать production</p>
           <h2>Автоматический подбор вместо каталога из сотен позиций</h2>
         </div>
         <p>Сервис не обещает минимальную цену. Он объясняет, почему вариант попал в подборку, и оставляет окончательную проверку продавцу.</p>
@@ -83,18 +172,18 @@
       <div class="service-grid">
         <article>
           <div class="tag-row"><span>1–2 минуты</span></div>
-          <h3>Восемь безопасных вопросов</h3>
-          <p>Город отправления, примерные даты, гибкость, количество путешественников, общий бюджет, документы, вид отдыха и главные приоритеты.</p>
+          <h3>Безопасные параметры</h3>
+          <p>Город отправления, даты, гибкость, количество путешественников, общий бюджет, документы, вид отдыха и главный приоритет.</p>
         </article>
         <article>
           <div class="tag-row"><span>До трёх вариантов</span></div>
           <h3>Объяснимое сравнение</h3>
-          <p>Бюджет, удобство отправления, семейные условия, питание, тишина, прямой путь, рейтинг и свежесть данных учитываются отдельно.</p>
+          <p>Бюджет, отправление, семейные условия, питание, тишина, прямой путь, рейтинг и свежесть данных учитываются отдельно.</p>
         </article>
         <article>
           <div class="tag-row"><span>У продавца</span></div>
           <h3>Самостоятельное оформление</h3>
-          <p>Пользователь переходит на сайт продавца и там проверяет состав услуги, окончательную цену, договор, оплату и правила возврата.</p>
+          <p>После production пользователь переходит к продавцу и там проверяет состав услуги, окончательную цену, договор, оплату и возврат.</p>
         </article>
       </div>
     </section>
@@ -110,7 +199,7 @@
       <div class="sample-cta">
         <div>
           <span>PRODUCTION GATE</span>
-          <strong>Запуск откроется только после подключения официальных инструментов, проверки маркировки и правовых документов</strong>
+          <strong>Реальные предложения откроются только после подключения официальных инструментов, проверки маркировки и правовых документов</strong>
         </div>
         <a class="button primary" href="travel-selection-disclosure.html">Прочитать раскрытие →</a>
       </div>
@@ -118,7 +207,7 @@
   </main>
 
   <footer>
-    <div><strong>ПРАКСЕЛЬТА.</strong><span>Предварительная витрина направления подбора поездки</span></div>
+    <div><strong>ПРАКСЕЛЬТА.</strong><span>Работающая автономная демонстрация подбора поездки</span></div>
     <nav aria-label="Юридические страницы направления">
       <a href="travel-selection-privacy.html">Обработка данных</a>
       <a href="travel-selection-terms.html">Условия использования</a>
