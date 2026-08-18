@@ -12,12 +12,12 @@
     "shared_public_brand_allowed": false
   },
   "rejected_active_names": [
-    "Поток",
-    "ПОТОК",
-    "поток",
-    "Potok",
-    "POTOK",
-    "potok"
+    "\u041f\u043e\u0442\u043e\u043a",
+    "\u041f\u041e\u0422\u041e\u041a",
+    "\u043f\u043e\u0442\u043e\u043a",
+    "\u0050\u006f\u0074\u006f\u006b",
+    "\u0050\u004f\u0054\u004f\u004b",
+    "\u0070\u006f\u0074\u006f\u006b"
   ],
   "legacy_repository": {
     "repository": "m72692591-collab/potok-services",
