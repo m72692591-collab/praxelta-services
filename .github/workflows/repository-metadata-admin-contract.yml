@@ -1,0 +1,41 @@
+name: PRAXELTA repository metadata admin contract
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/repository-metadata-admin-update.yml"
+      - ".github/workflows/repository-metadata-admin-contract.yml"
+      - "tests/test_repository_metadata_admin_workflow.py"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/repository-metadata-admin-update.yml"
+      - ".github/workflows/repository-metadata-admin-contract.yml"
+      - "tests/test_repository_metadata_admin_workflow.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: praxelta-metadata-admin-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run workflow contract tests without administration credential
+        run: |
+          python -m pip install --disable-pip-version-check --no-input pytest
+          python -m py_compile tests/test_repository_metadata_admin_workflow.py
+          python -m pytest tests/test_repository_metadata_admin_workflow.py -q
+          git diff --check
