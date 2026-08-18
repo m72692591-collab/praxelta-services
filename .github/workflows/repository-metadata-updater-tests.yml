@@ -1,0 +1,69 @@
+name: PRAXELTA repository metadata updater tests
+
+on:
+  pull_request:
+    paths:
+      - "RUN_UPDATE_GITHUB_DESCRIPTION.cmd"
+      - "scripts/update_github_description.ps1"
+      - "tests/test_repository_metadata_updater.py"
+      - ".github/workflows/repository-metadata-updater-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "RUN_UPDATE_GITHUB_DESCRIPTION.cmd"
+      - "scripts/update_github_description.ps1"
+      - "tests/test_repository_metadata_updater.py"
+      - ".github/workflows/repository-metadata-updater-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: praxelta-metadata-updater-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run contract tests only
+        run: |
+          python -m pip install --disable-pip-version-check --no-input pytest
+          python -m py_compile tests/test_repository_metadata_updater.py
+          python -m pytest tests/test_repository_metadata_updater.py -q
+          git diff --check
+
+  powershell-parse:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+      - name: Parse without touching repository settings
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'scripts/update_github_description.ps1'),
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            throw 'PowerShell parse failed.'
+          }
+          $launcher = Get-Content -Raw -LiteralPath 'RUN_UPDATE_GITHUB_DESCRIPTION.cmd'
+          if ($launcher -notmatch 'update_github_description\.ps1') {
+            throw 'CMD launcher does not call the canonical updater.'
+          }
