@@ -75,6 +75,20 @@ def is_policy_evidence_path(relative: str) -> bool:
     return relative in POLICY_EVIDENCE_PATHS
 
 
+def is_negative_enforcement(line: str) -> bool:
+    """Recognize code that rejects a legacy name instead of presenting it publicly."""
+    folded = line.casefold().strip()
+    grep_rejection = (
+        (folded.startswith("! grep") or folded.startswith("if ! grep"))
+        and ("-eq" in folded or "-e" in folded)
+    )
+    compiled_rejection = (
+        ("forbidden" in folded or "rejected" in folded)
+        and ("re.compile" in folded or "regexp" in folded)
+    )
+    return grep_rejection or compiled_rejection
+
+
 def looks_active(line: str) -> bool:
     folded = line.casefold().strip()
     return folded.startswith("#") or any(hint in folded for hint in ACTIVE_HINTS)
@@ -101,7 +115,11 @@ def audit(root: Path) -> list[Finding]:
         for number, line in enumerate(text.splitlines(), start=1):
             if not pattern.search(line):
                 continue
-            if is_policy_evidence_path(relative) or has_allowed_marker(line):
+            if (
+                is_policy_evidence_path(relative)
+                or has_allowed_marker(line)
+                or is_negative_enforcement(line)
+            ):
                 classification = "ALLOWED_LEGACY_OR_POLICY"
             elif looks_active(line):
                 classification = "ACTIVE_VIOLATION"
