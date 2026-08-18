@@ -8,6 +8,16 @@
 
 Закрытый рабочий контур находится в локальном `praxelta-ops` и не публикуется в этом репозитории. В нём подготовлены SQLite, Telegram long polling, ранжирование, импорт официальных JSON/CSV-фидов, агрегированная локальная панель, удаление данных, suppression, журналы проверок и блокировка рекламы без ERID.
 
+В режиме `PRELAUNCH` или `PRIVATE_TEST` Telegram-контур отвечает только ID владельца из локального allowlist и не создаёт записи посторонних пользователей. Также подготовлены read-only Finance API и Links API Travelpayouts: токен хранится только локально, ссылки создаются как `DRAFT_NOT_PUBLISHED` и не отправляются автоматически.
+
+## Проверки закрытого MVP
+
+- 18 unit-тестов — PASS;
+- синтетический end-to-end — PASS с квитанцией и SHA-256;
+- локальная панель — PASS на `127.0.0.1`;
+- отрицательные gates — PASS;
+- публичные GitHub `brand audit` и `public quality` — PASS.
+
 ## Текущие gates
 
 | Gate | Статус |
@@ -15,7 +25,9 @@
 | Публичная prelaunch-ветка | ON |
 | Публичный deploy | OFF |
 | Telegram token | WAITING_FOR_ACCESS |
+| Admin Telegram ID | WAITING_FOR_ACCESS |
 | Партнёрский проект | WAITING_FOR_OWNER_LEGAL_ACCEPTANCE |
+| API token / Project ID / Partner ID | WAITING_FOR_ACCESS |
 | Реальные предложения | WAITING_FOR_ACCESS |
 | Реальные отправки | OFF |
 | Реальные деньги | OFF |
