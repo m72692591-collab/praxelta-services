@@ -1,0 +1,263 @@
+name: Deploy and verify PRAXELTA Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "*.html"
+      - "*.css"
+      - "*.js"
+      - "*.json"
+      - "*.xml"
+      - "output/pdf/**"
+      - "scripts/check_public_site.py"
+      - "scripts/test_service_network_js.mjs"
+      - ".github/workflows/deploy-praxelta-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  issues: write
+
+concurrency:
+  group: praxelta-pages-production
+  cancel-in-progress: false
+
+env:
+  PUBLIC_URL: https://m72692591-collab.github.io/praxelta-services/
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact main commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install deterministic test dependencies
+        run: python -m pip install --disable-pip-version-check --no-input -r requirements-dev.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run full preflight
+        run: |
+          python scripts/check_public_site.py
+          node scripts/test_service_network_js.mjs
+          python -m pytest -q
+          git diff --check
+
+      - name: Build public-only static artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site/output/pdf
+          find . -maxdepth 1 -type f \
+            \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.json' -o -name '*.xml' -o -name '*.txt' -o -name '*.svg' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' -o -name '*.ico' \) \
+            -exec cp '{}' _site/ \;
+          if [ -d output/pdf ]; then cp -a output/pdf/. _site/output/pdf/; fi
+          touch _site/.nojekyll
+          test -s _site/index.html
+          test -s _site/styles.css
+          if grep -RIE '(password|secret|token|credential|session)[[:space:]_-]*[:=]' _site --exclude='*.pdf'; then
+            echo 'Secret-like assignment found in public artifact.' >&2
+            exit 1
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          forbidden=re.compile(r'(?iu)(?<![а-яa-z0-9])(поток|potok)(?![а-яa-z0-9])')
+          markers=('legacy_compatibility_only','rejected_active_name','запрещ','устаревш','историческ','старый адрес','перенаправ')
+          for path in Path('_site').rglob('*'):
+              if not path.is_file() or path.suffix.casefold() not in {'.html','.css','.js','.json','.xml','.txt'}:
+                  continue
+              for line in path.read_text(encoding='utf-8',errors='replace').splitlines():
+                  if forbidden.search(line) and not any(marker in line.casefold() for marker in markers):
+                      raise SystemExit(f'Active rejected name in public artifact: {path}')
+          PY
+
+      - name: Record source artifact manifest
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root=Path('_site')
+          files=[]
+          for path in sorted(item for item in root.rglob('*') if item.is_file()):
+              data=path.read_bytes()
+              files.append({
+                  'path': path.relative_to(root).as_posix(),
+                  'size_bytes': len(data),
+                  'sha256': hashlib.sha256(data).hexdigest(),
+              })
+          commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          payload={
+              'schema_version': 1,
+              'generated_at_utc': datetime.now(timezone.utc).isoformat(),
+              'project': 'ПРАКСЕЛЬТА',
+              'release_status': 'STATIC_ARTIFACT_VERIFIED_DEPLOYMENT_PENDING',
+              'source_commit': commit,
+              'public_url': 'https://m72692591-collab.github.io/praxelta-services/',
+              'file_count': len(files),
+              'files': files,
+              'production_backend_enabled': False,
+              'automated_live_lead_collection_enabled': False,
+              'live_payments_enabled': False,
+              'paid_actions_enabled': False,
+              'customer_data_exported': False,
+          }
+          (root/'PRAXELTA_RELEASE_MANIFEST.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy exact artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  verify:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact source for hash comparison
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Verify live release with retries
+        shell: bash
+        run: |
+          set -euo pipefail
+          success=false
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --location \
+              --retry 2 --retry-delay 2 \
+              -H 'Cache-Control: no-cache' \
+              "$PUBLIC_URL?verify=$GITHUB_SHA-$attempt" \
+              -o live-index.html; then
+              if grep -q 'ПРАКСЕЛЬТА' live-index.html && \
+                 ! grep -Eqi '(>Поток<|>Potok<|Публичная витрина услуг ПОТОК)' live-index.html; then
+                success=true
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$success" = true
+
+      - name: Create exact deployment receipt
+        run: |
+          mkdir -p deployment-evidence
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          live=Path('live-index.html').read_bytes()
+          source=Path('index.html').read_bytes()
+          commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          payload={
+              'schema_version': 1,
+              'verified_at_utc': datetime.now(timezone.utc).isoformat(),
+              'status': 'DEPLOYMENT_VERIFIED',
+              'project': 'ПРАКСЕЛЬТА',
+              'public_url': 'https://m72692591-collab.github.io/praxelta-services/',
+              'source_commit': commit,
+              'source_index_sha256': hashlib.sha256(source).hexdigest(),
+              'live_index_sha256': hashlib.sha256(live).hexdigest(),
+              'brand_verified': True,
+              'https_verified': True,
+              'production_backend_enabled': False,
+              'automated_live_lead_collection_enabled': False,
+              'live_payments_enabled': False,
+              'first_real_client_verified': False,
+              'revenue_verified': False,
+              'customer_data_exported': False,
+          }
+          Path('deployment-evidence/PRAXELTA_DEPLOYMENT_RECEIPT.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Upload deployment evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-deployment-receipt-${{ github.run_number }}
+          path: deployment-evidence
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish latest receipt to audit branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='audit/deployment-latest'
+          worktree="$RUNNER_TEMP/praxelta-deployment-receipt"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch --no-tags origin "+refs/heads/$branch:refs/remotes/origin/$branch"
+            git worktree add --detach "$worktree" "refs/remotes/origin/$branch"
+            git -C "$worktree" switch -C "$branch" "refs/remotes/origin/$branch"
+          else
+            git worktree add -b "$branch" "$worktree" HEAD
+          fi
+          mkdir -p "$worktree/audit/deployment-latest"
+          cp deployment-evidence/PRAXELTA_DEPLOYMENT_RECEIPT.json "$worktree/audit/deployment-latest/"
+          git -C "$worktree" config user.name github-actions[bot]
+          git -C "$worktree" config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git -C "$worktree" add audit/deployment-latest
+          if ! git -C "$worktree" diff --cached --quiet; then
+            git -C "$worktree" commit -m 'Обновить фактическую deployment receipt ПРАКСЕЛЬТЫ'
+            git -C "$worktree" push origin "HEAD:$branch"
+          fi
+
+      - name: Record deployment gate in issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title='[DEPLOYMENT VERIFIED] ПРАКСЕЛЬТА public release'
+          body='Публичный URL проверен после deployment: https://m72692591-collab.github.io/praxelta-services/. Exact source commit и SHA-256 live/source index сохранены в audit/deployment-latest и immutable artifact. Это подтверждает только статическую публикацию; production backend, automated live leads, live payments, first real client и revenue остаются OFF.'
+          number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --repo "$GITHUB_REPOSITORY" --body "$body"
+            gh issue close "$number" --repo "$GITHUB_REPOSITORY" --reason completed
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi
