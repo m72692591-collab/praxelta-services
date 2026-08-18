@@ -1,0 +1,87 @@
+name: One-shot promote PRAXELTA deployment validator V2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/validate_local_growth_product_decision_v2.py"
+      - "tests/test_local_growth_product_decision_v2.py"
+      - "operations/deployment/GITHUB_PAGES_DEPLOYMENT_V1.json"
+      - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V1.json"
+      - ".github/workflows/one-shot-promote-deployment-validator-v2.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-promote-praxelta-deployment-validator-v2
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test runtime
+        run: python -m pip install --disable-pip-version-check --no-input pytest
+
+      - name: Verify V2 files before promotion
+        run: |
+          python -m py_compile \
+            scripts/validate_local_growth_product_decision_v2.py \
+            tests/test_local_growth_product_decision_v2.py
+          python -m pytest tests/test_local_growth_product_decision_v2.py -q
+          python scripts/validate_local_growth_product_decision_v2.py --root .
+
+      - name: Promote V2 to canonical paths and remove staging/helper files
+        run: |
+          cp scripts/validate_local_growth_product_decision_v2.py \
+            scripts/validate_local_growth_product_decision.py
+          cp tests/test_local_growth_product_decision_v2.py \
+            tests/test_local_growth_product_decision.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_local_growth_product_decision.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace(
+              'scripts/validate_local_growth_product_decision_v2.py',
+              'scripts/validate_local_growth_product_decision.py',
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
+          rm scripts/validate_local_growth_product_decision_v2.py
+          rm tests/test_local_growth_product_decision_v2.py
+          rm .github/workflows/one-shot-promote-deployment-validator-v2.yml
+
+      - name: Run canonical product, brand and repository checks
+        run: |
+          python -m py_compile \
+            scripts/validate_local_growth_product_decision.py \
+            tests/test_local_growth_product_decision.py
+          python -m pytest tests/test_local_growth_product_decision.py -q
+          python scripts/validate_local_growth_product_decision.py --root .
+          python scripts/audit_brand_terms.py --root . --report /tmp/brand.json --strict
+          python scripts/check_public_site.py
+          python -m pytest -q
+          git diff --check
+
+      - name: Commit verified promotion
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Привязать продуктовый gate к проверенному GitHub Pages deployment"
+          git push origin HEAD:main
