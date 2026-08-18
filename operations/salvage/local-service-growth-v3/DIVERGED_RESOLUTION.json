@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "resolution_id": "PRAXELTA_LOCAL_SERVICE_GROWTH_V3_DIVERGED_RESOLUTION",
+  "created_date": "2026-08-18",
+  "source": {
+    "repository": "m72692591-collab/praxelta-services",
+    "base_sha": "7775b2dce8116bc77163dd7c0762974fb763244d",
+    "head_sha": "fa4cda15af8b244d2aee4f17939f8be698ca4f85",
+    "historical_pr": 1
+  },
+  "current_canonical": {
+    "branch": "main",
+    "commit_sha": "c15554ac11a62f3765b2ede99681e4d537645a0d",
+    "active_brand_ru": "ПРАКСЕЛЬТА",
+    "active_brand_latin": "PRAXELTA"
+  },
+  "decision": "PRESERVE_CURRENT_CANONICAL_FOR_ALL_DIVERGED_PATHS",
+  "reasoning_standard": [
+    "Текущий файл уже существует и не может быть перезаписан автоматически.",
+    "Текущий канон содержит более поздние brand, privacy, consent, service-network, campaign-OFF и security gates.",
+    "Полезные target-only материалы старого PR уже присутствуют в current main или были отдельно перенесены.",
+    "Старый blob сохраняется в Git-истории и PR #1 как evidence, но не становится активным каноном."
+  ],
+  "resolutions": [
+    {
+      "path": "AGENTS.md",
+      "source_blob": "9dec4211858448140f9adaf54e064aa3c9d5c099",
+      "current_blob": "9628faba8f854a3bbc83d8ecab1884be19f43467",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий файл закрепляет ПРАКСЕЛЬТУ, запрет старого активного имени, deployment/payment/lead-form gates и fail-closed privacy/security правила для всего расширенного проекта."
+    },
+    {
+      "path": "README.md",
+      "source_blob": "872817a3d5e03e7f2c25c1933846d18ded1fa89d",
+      "current_blob": "8bacde9416fe48106446af7b84bc5924307c29c8",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий README описывает не только локальный growth-пакет, но и действующую service-network архитектуру, consent-first заявки, отсутствие live backend/payments и фактические public/private boundaries."
+    },
+    {
+      "path": "SECURITY.md",
+      "source_blob": "86818e26625fd8292d83893d7ae2b5364950166f",
+      "current_blob": "47c2e613cd954227d76ccb798301ab4ddabdbae6",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий security contract охватывает сайт, сеть мастеров, consent/data flow, pricing, campaigns OFF, PDF artifacts и правила production backend, поэтому он шире и строже старого варианта."
+    },
+    {
+      "path": "docs/IMPLEMENTATION_PLAN.md",
+      "source_blob": "7f7be2a8f31ae8260f4748e9ff9d4c82a63b5cbc",
+      "current_blob": "74561423c382b77def46a118970b30374cb25b2d",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий план включает реестр категорий, согласия, safety/privacy, launch receipts и запрет live-публикации до human gate; это актуальная операционная модель."
+    },
+    {
+      "path": "docs/OUTREACH_COPYBOOK.md",
+      "source_blob": "3eaafd2a9fd2476a67aaf08d321ccc65d78bdacd",
+      "current_blob": "8783c76b4880310c86d0c7020e29caf40bae425a",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий copybook объединяет consent-based first contact для клиентов, мастеров и поставщиков, anti-spam правила, opt-out и запрет выдуманных кейсов или обещаний."
+    },
+    {
+      "path": "index.html",
+      "source_blob": "c7df7eeecdfc192b6c7794158ea9088947944e52",
+      "current_blob": "b9841e994cdab3b21a299f24884ed19ca4a750c3",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущая главная страница уже интегрирует локальный growth, service network, safety/privacy/terms, маршруты мастеров и поставщиков и канонический бренд без включения live backend или оплаты."
+    },
+    {
+      "path": "output/pdf/praxelta-7-points-checklist.pdf",
+      "source_blob": "4e48e9d87cecb0f483d99983e35b6d4f39b29c12",
+      "current_blob": "f3c3954108634c97bdebc9c29cc777cfbde800e9",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий PDF сгенерирован из актуальной PRAXELTA HTML-версии и проверяется действующим PDF/source QA; старый бинарный blob сохраняется только как historical evidence."
+    },
+    {
+      "path": "output/pdf/praxelta-local-growth-commercial.pdf",
+      "source_blob": "956b0b7c4544d7078144b8e4c5e747fed1c4e912",
+      "current_blob": "3b8ed51ce4a48527fd7d866d114ef2a5764106a8",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий коммерческий PDF связан с актуальной страницей, pricing.json, каноническим брендом и structural PDF verification."
+    },
+    {
+      "path": "output/pdf/praxelta-local-growth-teaser.pdf",
+      "source_blob": "7eed16b3fc3ab5da46ef584b1f2922c7768d84e1",
+      "current_blob": "4f13fdfb0e1202955341ef0edb1760a3075c1e6d",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий teaser PDF является производным от актуального source HTML и канонического генератора; он не заменяется старым бинарным артефактом."
+    },
+    {
+      "path": "scripts/check_public_site.py",
+      "source_blob": "710258e7eafdb056d5baad29e93fde58c030320b",
+      "current_blob": "977e0d11714e7d3e008bfecfdcf5b02285e886d8",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий preflight проверяет расширенный набор страниц, service-network consent, campaigns OFF, categories, forms, CSP, sitemap, pricing, contacts, secrets, accessibility и contrast."
+    },
+    {
+      "path": "scripts/generate_pdfs.py",
+      "source_blob": "ec765417223056840b51af04331a76768cbec9bf",
+      "current_blob": "e8b1bc1972480fa6f2c922c43c4dd01a8862b215",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий генератор дополнительно поддерживает market presentation и выполняет structural/text verification для всего актуального PDF-набора."
+    },
+    {
+      "path": "sitemap.xml",
+      "source_blob": "8d7328e1e2e83333ca69df1e2bb5fa4fcb2bb29e",
+      "current_blob": "c5ab97a65c7be178c75148b54a57e3dea8f34560",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущий sitemap включает расширенные service-network, city/category, privacy, safety, supplier и contractor маршруты и является актуальной публичной картой сайта."
+    },
+    {
+      "path": "styles.css",
+      "source_blob": "0c58a273e5dd96981d32f7986872e31e294501ca",
+      "current_blob": "bd4fdb55ab1e78d41a40b47f9ce61878969a9914",
+      "disposition": "CURRENT_CANONICAL_PRESERVED",
+      "rationale": "Текущая таблица стилей обслуживает расширенную публичную витрину, формы, service-network pages, mobile/keyboard/print states и актуальные contrast gates."
+    }
+  ],
+  "summary": {
+    "source_changed_paths": 51,
+    "already_present_or_integrated": 38,
+    "diverged_resolved": 13,
+    "unresolved_diverged": 0,
+    "source_deletions_applied": 0,
+    "current_files_overwritten_automatically": 0,
+    "historical_branch_deleted": false,
+    "history_rewritten": false,
+    "product_launch_unlocked": false,
+    "deployment_performed": false,
+    "live_lead_collection_enabled": false,
+    "payments_enabled": false
+  },
+  "next_gate": {
+    "status": "OWNER_PRODUCT_DECISION_REQUIRED",
+    "decision_options": [
+      "ACTIVE_PRODUCT",
+      "INTERNAL_SERVICE_ONLY",
+      "HISTORICAL_ARCHIVE"
+    ],
+    "active_product_requirements": [
+      "подтвердить действующий оффер и цену",
+      "назначить ответственного за обращения",
+      "утвердить legal/privacy/refund тексты",
+      "выбрать фактический канал запуска",
+      "выполнить отдельный deployment receipt",
+      "не смешивать клиентские данные с ANIMA TACTUS"
+    ]
+  }
+}

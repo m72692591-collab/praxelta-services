@@ -1,0 +1,140 @@
+name: PRAXELTA growth successor V3
+
+on:
+  pull_request:
+    paths:
+      - "scripts/safe_salvage_from_branch.py"
+      - "tests/test_safe_salvage_from_branch.py"
+      - "scripts/validate_local_growth_resolution.py"
+      - "tests/test_local_growth_resolution.py"
+      - "scripts/validate_local_growth_product_decision.py"
+      - "tests/test_local_growth_product_decision.py"
+      - ".github/workflows/praxelta-growth-successor-v3.yml"
+      - "operations/salvage/local-service-growth-v3/**"
+      - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V1.json"
+      - "docs/**"
+      - "local-growth*"
+      - "pricing.json"
+      - "scripts/**"
+      - "output/pdf/**"
+      - "index.html"
+      - "offer.html"
+      - "order.js"
+      - "payment-*.html"
+      - "privacy.html"
+      - "refund.html"
+      - "sample.html"
+      - "sitemap.xml"
+      - "styles.css"
+      - "terms.html"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: praxelta-growth-successor-v3-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_BASE_SHA: "7775b2dce8116bc77163dd7c0762974fb763244d"
+  SOURCE_HEAD_SHA: "fa4cda15af8b244d2aee4f17939f8be698ca4f85"
+
+jobs:
+  validate-complete-integration:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'salvage/local-service-growth-v3-20260818'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout tested revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test runtime
+        run: python -m pip install --disable-pip-version-check --no-input pytest
+
+      - name: Fetch and pin historical PR 1 source
+        run: |
+          git fetch --no-tags origin +refs/heads/feature/local-service-growth:refs/remotes/origin/source-pr-1
+          test "$(git rev-parse refs/remotes/origin/source-pr-1)" = "$SOURCE_HEAD_SHA"
+          test "$(git merge-base "$SOURCE_BASE_SHA" "$SOURCE_HEAD_SHA")" = "$SOURCE_BASE_SHA"
+
+      - name: Compile and run salvage, resolution and product-decision regressions
+        run: |
+          python -m py_compile \
+            scripts/safe_salvage_from_branch.py \
+            tests/test_safe_salvage_from_branch.py \
+            scripts/validate_local_growth_resolution.py \
+            tests/test_local_growth_resolution.py \
+            scripts/validate_local_growth_product_decision.py \
+            tests/test_local_growth_product_decision.py
+          python -m pytest \
+            tests/test_safe_salvage_from_branch.py \
+            tests/test_local_growth_resolution.py \
+            tests/test_local_growth_product_decision.py \
+            -q
+
+      - name: Reproduce exact 38 present plus 13 diverged inventory
+        run: |
+          mkdir -p praxelta-growth-successor-report
+          python scripts/safe_salvage_from_branch.py \
+            --root . \
+            --source-base "$SOURCE_BASE_SHA" \
+            --source-head "$SOURCE_HEAD_SHA" \
+            --current-ref HEAD \
+            --manifest praxelta-growth-successor-report/reproduced-salvage.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('praxelta-growth-successor-report/reproduced-salvage.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          counts = data['counts']
+          assert counts.get('ALREADY_PRESENT', 0) == 38, counts
+          assert counts.get('DIVERGED', 0) == 13, counts
+          assert counts.get('SOURCE_DELETION', 0) == 0, counts
+          assert counts.get('BLOCKED', 0) == 0, counts
+          assert counts.get('BLOCKED_ACTIVE_NAME', 0) == 0, counts
+          assert data['destructive_actions_performed'] is False
+          assert data['current_files_overwritten'] is False
+          PY
+
+      - name: Validate all 13 semantic dispositions against both Git trees
+        run: |
+          python scripts/validate_local_growth_resolution.py \
+            --root . \
+            --source-ref refs/remotes/origin/source-pr-1 \
+            --report praxelta-growth-successor-report/resolution.json
+
+      - name: Validate owner product decision without claiming launch
+        run: |
+          python scripts/validate_local_growth_product_decision.py \
+            --root . \
+            --report praxelta-growth-successor-report/product-decision.json
+
+      - name: Verify brand, public site and complete repository tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/audit_brand_terms.py \
+            --root . \
+            --report praxelta-growth-successor-report/brand.json \
+            --strict
+          python scripts/check_public_site.py
+          python -m pytest -q
+          git diff --check
+
+      - name: Upload immutable integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-growth-successor-v3-${{ github.run_number }}
+          path: praxelta-growth-successor-report
+          if-no-files-found: error
+          retention-days: 90
