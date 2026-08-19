@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "receipt_id": "PRAXELTA_FIRST_PAID_CASE_TRACKER_VALIDATION_V1",
+  "validated_at_utc": "2026-08-19T00:00:00Z",
+  "source_pr": 28,
+  "source_head_before_receipt": "12d981825b9db47765630c79d9d7d1e15daa411b",
+  "validation_mode": "ISOLATED_REPOSITORY_REPLAY",
+  "checks": {
+    "full_pytest": "PASS",
+    "git_diff_check": "PASS",
+    "personal_email_addresses_in_diff": "NONE_FOUND",
+    "personal_phone_numbers_in_diff": "NONE_FOUND",
+    "credentials_or_secret_values_in_diff": "NONE_FOUND",
+    "active_rejected_brand_name_in_diff": "NONE_FOUND",
+    "cold_email_kill_rule": "PRESENT",
+    "paid_status_requires_payment_evidence": "PRESENT",
+    "case_complete_requires_client_evidence": "PRESENT"
+  },
+  "factual_baseline": {
+    "outgoing_messages_10d": 63,
+    "unit": "MESSAGES_NOT_UNIQUE_COMPANIES",
+    "positive_substantive_replies_found": 0,
+    "explicit_rejections_found": 1,
+    "new_cold_drafts_sent": false,
+    "written_order_verified": false,
+    "payment_verified": false,
+    "case_complete_verified": false
+  },
+  "decision": {
+    "cold_email_volume_increase_allowed": false,
+    "new_cold_followups_allowed": false,
+    "delivery_may_be_counted_as_interest": false,
+    "next_route": [
+      "3 warm introductions",
+      "1 live ten-minute conversation",
+      "1 agreed mini-audit",
+      "written order",
+      "provider-confirmed payment"
+    ]
+  },
+  "privacy": {
+    "recipient_addresses_committed": false,
+    "message_contents_committed": false,
+    "customer_data_committed": false,
+    "bank_data_committed": false
+  },
+  "claims": {
+    "warm_contact_found": false,
+    "conversation_completed": false,
+    "mini_audit_completed": false,
+    "order_signed": false,
+    "payment_received": false,
+    "revenue_verified": false
+  }
+}
