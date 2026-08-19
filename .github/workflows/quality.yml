@@ -91,3 +91,7 @@ jobs:
             throw "Wrapper line is unexpectedly long: $longest"
           }
           Write-Host "WINDOWS_SELF_EXTRACT_V13_PASS longest_line=$longest"
+
+      - name: Prove v1.4 finalizer repair with Windows PowerShell 5.1
+        shell: powershell
+        run: .\scripts\test_praxelta_finalizer_repair_v14.ps1
