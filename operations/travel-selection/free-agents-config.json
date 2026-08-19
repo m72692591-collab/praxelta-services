@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "project": "ПРАКСЕЛЬТА · подбор поездки",
+  "mode": "ZERO_BUDGET_PRELAUNCH",
+  "schedule": "daily",
+  "agents": [
+    {
+      "id": "orchestrator",
+      "name": "Маэстро",
+      "purpose": "Собирает один статус, блокеры и следующий безопасный шаг"
+    },
+    {
+      "id": "public_surface_monitor",
+      "name": "Монитор витрины",
+      "purpose": "Проверяет публичные страницы и доступность GitHub Pages"
+    },
+    {
+      "id": "security_gate",
+      "name": "Контур безопасности",
+      "purpose": "Запрещает сеть, скрытое хранение, секреты и незаявленные side effects"
+    },
+    {
+      "id": "content_draft_agent",
+      "name": "Контент-агент",
+      "purpose": "Выбирает один дневной материал только в статусе DRAFT_NO_SEND"
+    },
+    {
+      "id": "commercial_readiness",
+      "name": "Контролёр готовности",
+      "purpose": "Не разрешает реальные ссылки, деньги и рекламу без внешних gates"
+    }
+  ],
+  "public_urls": [
+    "https://m72692591-collab.github.io/praxelta-services/travel-selection.html",
+    "https://m72692591-collab.github.io/praxelta-services/travel-pilot.html",
+    "https://m72692591-collab.github.io/praxelta-services/travel-selection-privacy.html",
+    "https://m72692591-collab.github.io/praxelta-services/travel-selection-terms.html",
+    "https://m72692591-collab.github.io/praxelta-services/travel-selection-disclosure.html"
+  ],
+  "required_public_files": [
+    "travel-selection.html",
+    "travel-selection.js",
+    "travel-selection.css",
+    "travel-pilot.html",
+    "travel-pilot.js",
+    "travel-pilot.css",
+    "travel-pilot-content-pack.json",
+    "travel-selection-privacy.html",
+    "travel-selection-terms.html",
+    "travel-selection-disclosure.html"
+  ],
+  "production_gates": [
+    "TELEGRAM_BOT_TOKEN",
+    "OWNER_TELEGRAM_ID",
+    "TRAVELPAYOUTS_TOKEN",
+    "TRAVELPAYOUTS_PROJECT_ID",
+    "TRAVELPAYOUTS_PARTNER_ID",
+    "OPERATOR_NAME",
+    "LEGAL_RELEASE_ID",
+    "AD_COMPLIANCE_CONFIRMATION"
+  ],
+  "hard_off_switches": [
+    "PUBLIC_BOT",
+    "REAL_SEND",
+    "REAL_MONEY",
+    "REAL_LEAD_TRANSFER",
+    "AD_SPEND",
+    "ALLOW_EXTERNAL_LINKS"
+  ],
+  "policy": {
+    "automatic_posting": false,
+    "automatic_account_registration": false,
+    "automatic_terms_acceptance": false,
+    "automatic_paid_actions": false,
+    "publish_real_prices_without_verified_feed": false,
+    "store_customer_data_in_public_repo": false,
+    "create_daily_draft_artifact": true,
+    "update_single_status_issue": true
+  }
+}
