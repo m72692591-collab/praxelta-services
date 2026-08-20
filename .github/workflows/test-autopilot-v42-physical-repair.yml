@@ -33,7 +33,8 @@ jobs:
             'tests/autopilot-v42/chunks/part-05.b64',
             'tests/autopilot-v42/chunks/part-06.b64',
             'tests/autopilot-v42/chunks/part-07.b64',
-            'tests/autopilot-v42/chunks/part-08.b64'
+            'tests/autopilot-v42/chunks/part-08a.b64',
+            'tests/autopilot-v42/chunks/part-08b.b64'
           )
           $builder = New-Object Text.StringBuilder
           foreach ($path in $paths) {
@@ -143,13 +144,20 @@ jobs:
         run: |
           $out = Join-Path $PWD 'autopilot-v42-physical-repair-evidence'
           New-Item -ItemType Directory -Path $out -Force | Out-Null
-          if (Test-Path -LiteralPath $env:EXACT_CMD) { Copy-Item -LiteralPath $env:EXACT_CMD -Destination $out }
-          foreach ($source in @(
-            (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json'),
-            (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4.ps1'),
-            (Join-Path $env:SELFTEST_DESKTOP 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_ERROR.txt')
-          )) {
-            if (Test-Path -LiteralPath $source -PathType Leaf) { Copy-Item -LiteralPath $source -Destination $out }
+          if (-not [string]::IsNullOrWhiteSpace($env:EXACT_CMD) -and (Test-Path -LiteralPath $env:EXACT_CMD -PathType Leaf)) {
+            Copy-Item -LiteralPath $env:EXACT_CMD -Destination $out
+          }
+          if (-not [string]::IsNullOrWhiteSpace($env:SELFTEST_ROOT)) {
+            foreach ($source in @(
+              (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json'),
+              (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4.ps1')
+            )) {
+              if (Test-Path -LiteralPath $source -PathType Leaf) { Copy-Item -LiteralPath $source -Destination $out }
+            }
+          }
+          if (-not [string]::IsNullOrWhiteSpace($env:SELFTEST_DESKTOP)) {
+            $errorPath = Join-Path $env:SELFTEST_DESKTOP 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_ERROR.txt'
+            if (Test-Path -LiteralPath $errorPath -PathType Leaf) { Copy-Item -LiteralPath $errorPath -Destination $out }
           }
 
       - name: Upload exact Windows validation evidence
