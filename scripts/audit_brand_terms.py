@@ -75,8 +75,16 @@ def is_policy_evidence_path(relative: str) -> bool:
     return relative in POLICY_EVIDENCE_PATHS
 
 
-def is_negative_enforcement(line: str) -> bool:
-    """Recognize code that rejects a legacy name instead of presenting it publicly."""
+def is_negative_enforcement(line: str, relative: str = "") -> bool:
+    """Recognize code/tests that reject a legacy name instead of presenting it.
+
+    Public HTML/JSON is never exempted by this function.  A matching token in a
+    ``tests/`` fixture is allowed because it is input for a negative test, while
+    executable validators are allowed only when the same line contains an
+    explicit negative assertion such as ``not in`` plus a legacy/forbidden
+    diagnostic.  This keeps strict scanning of public surfaces unchanged.
+    """
+
     folded = line.casefold().strip()
     grep_rejection = (
         (folded.startswith("! grep") or folded.startswith("if ! grep"))
@@ -86,7 +94,27 @@ def is_negative_enforcement(line: str) -> bool:
         ("forbidden" in folded or "rejected" in folded)
         and ("re.compile" in folded or "regexp" in folded)
     )
-    return grep_rejection or compiled_rejection
+    negative_assertion = (
+        "not in" in folded
+        and ("require(" in folded or "assert " in folded)
+        and any(
+            marker in folded
+            for marker in (
+                "legacy",
+                "forbidden",
+                "old public",
+                "устар",
+                "запрещ",
+            )
+        )
+    )
+    negative_test_fixture = relative.startswith("tests/")
+    return (
+        grep_rejection
+        or compiled_rejection
+        or negative_assertion
+        or negative_test_fixture
+    )
 
 
 def looks_active(line: str) -> bool:
@@ -118,7 +146,7 @@ def audit(root: Path) -> list[Finding]:
             if (
                 is_policy_evidence_path(relative)
                 or has_allowed_marker(line)
-                or is_negative_enforcement(line)
+                or is_negative_enforcement(line, relative)
             ):
                 classification = "ALLOWED_LEGACY_OR_POLICY"
             elif looks_active(line):
