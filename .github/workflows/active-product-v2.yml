@@ -1,0 +1,123 @@
+name: PRAXELTA active product V2
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "express-order.html"
+      - "express-order.js"
+      - "pricing.json"
+      - "docs/PRICING_SOURCE_OF_TRUTH.md"
+      - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json"
+      - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - "scripts/praxelta_order_ledger.py"
+      - "scripts/validate_active_product_v2.py"
+      - "tests/test_praxelta_order_ledger.py"
+      - "tests/test_validate_active_product_v2.py"
+      - ".gitignore"
+      - ".github/workflows/active-product-v2.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "express-order.html"
+      - "express-order.js"
+      - "pricing.json"
+      - "docs/PRICING_SOURCE_OF_TRUTH.md"
+      - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json"
+      - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - "scripts/praxelta_order_ledger.py"
+      - "scripts/validate_active_product_v2.py"
+      - "tests/test_praxelta_order_ledger.py"
+      - "tests/test_validate_active_product_v2.py"
+      - ".gitignore"
+      - ".github/workflows/active-product-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: praxelta-active-product-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test runtime
+        run: python -m pip install --disable-pip-version-check --no-input pytest
+
+      - name: Compile product, ledger and tests
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            scripts/praxelta_order_ledger.py \
+            scripts/validate_active_product_v2.py \
+            tests/test_praxelta_order_ledger.py \
+            tests/test_validate_active_product_v2.py
+
+      - name: Run exact active-product validator
+        run: |
+          set -euo pipefail
+          mkdir -p active-product-evidence
+          python scripts/validate_active_product_v2.py \
+            --root . \
+            --report active-product-evidence/ACTIVE_PRODUCT_V2_RECEIPT.json
+
+      - name: Run ledger and negative tests
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            tests/test_praxelta_order_ledger.py \
+            tests/test_validate_active_product_v2.py \
+            -q
+
+      - name: Prove local ledger remains outside Git
+        run: |
+          set -euo pipefail
+          temp_root="$RUNNER_TEMP/praxelta-ledger-proof"
+          python scripts/praxelta_order_ledger.py --root "$temp_root" init \
+            > active-product-evidence/LEDGER_INIT_RECEIPT.json
+          test -f "$temp_root/.praxelta-local/order-ledger/orders.sqlite3"
+          test ! -e .praxelta-local
+          git status --porcelain --untracked-files=all > active-product-evidence/GIT_STATUS.txt
+          test ! -s active-product-evidence/GIT_STATUS.txt
+
+      - name: Record exact source and file hashes
+        run: |
+          set -euo pipefail
+          {
+            echo "source_commit=$GITHUB_SHA"
+            sha256sum \
+              index.html \
+              express-order.html \
+              express-order.js \
+              pricing.json \
+              operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json \
+              operations/branding/GITHUB_METADATA_TARGET.json \
+              scripts/praxelta_order_ledger.py
+          } > active-product-evidence/SHA256SUMS.txt
+          git diff --check
+
+      - name: Upload immutable product evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-active-product-v2-${{ github.run_id }}
+          path: active-product-evidence
+          if-no-files-found: error
+          retention-days: 90
