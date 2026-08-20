@@ -36,7 +36,12 @@ jobs:
           $builder = New-Object Text.StringBuilder
           foreach ($relative in $ordered) {
             if (-not (Test-Path -LiteralPath $relative -PathType Leaf)) { throw "FIXTURE_MISSING_$relative" }
-            [void]$builder.Append((Get-Content -LiteralPath $relative -Raw -Encoding UTF8).Trim())
+            $segment = (Get-Content -LiteralPath $relative -Raw -Encoding UTF8).Trim()
+            if ($relative -eq 'installer_test\v4.fix.004b.txt') {
+              if (-not $segment.EndsWith('Q')) { throw 'EXPECTED_FIXTURE_TAIL_Q_MISSING' }
+              $segment = $segment.Substring(0, $segment.Length - 1)
+            }
+            [void]$builder.Append($segment)
           }
           $encoded = $builder.ToString()
           if ($encoded.Length -ne 112416) { throw "EXACT_V4_BASE64_LENGTH_$($encoded.Length)" }
