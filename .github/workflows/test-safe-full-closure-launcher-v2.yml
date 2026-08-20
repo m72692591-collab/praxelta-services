@@ -91,10 +91,12 @@ jobs:
           }
           foreach ($required in @(
             'LOCAL_EXTERNAL_GATES_PUBLIC.zip',
-            'LOCAL_EXTERNAL_GATES_PRIVATE.zip',
-            'POTOK_REPOSITORY_ADMIN_TOKEN',
-            'PRAXELTA_REPO_ADMIN_TOKEN',
-            'MAESTRO_CLOSURE_SELF_TEST_PASS'
+            'private_zip',
+            'public_zip',
+            'praxelta_metadata',
+            'potok_archive',
+            'Complete-GitHubAdminGates',
+            'MAESTRO_CLOSURE_SAFE_V2_SELF_TEST_PASS'
           )) {
             if ($raw -notmatch [Regex]::Escape($required)) {
               throw "Required contract marker missing: $required"
