@@ -27,9 +27,13 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $v5 = Join-Path $PWD 'artifact\PRAXELTA_ONE_CLICK_INSTALL_V5.cmd'
-          if (-not (Test-Path -LiteralPath $v5 -PathType Leaf)) { throw 'V5_ARTIFACT_MISSING' }
+          Write-Host '=== DOWNLOADED ARTIFACT TREE ==='
+          Get-ChildItem -LiteralPath (Join-Path $PWD 'artifact') -Recurse -Force | ForEach-Object { Write-Host $_.FullName }
+          $matches = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'artifact') -Recurse -File -Filter 'PRAXELTA_ONE_CLICK_INSTALL_V5.cmd')
+          if ($matches.Count -ne 1) { throw "V5_ARTIFACT_COUNT_$($matches.Count)" }
+          $v5 = $matches[0].FullName
           $v5Hash = (Get-FileHash -LiteralPath $v5 -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "V5_PATH=$v5"
           Write-Host "V5_HASH=$v5Hash"
 
           $bytes = [IO.File]::ReadAllBytes($v5)
@@ -56,15 +60,19 @@ jobs:
           [IO.File]::WriteAllBytes($outerZip, $payload)
           Expand-Archive -LiteralPath $outerZip -DestinationPath $outer -Force
 
-          $innerZip = Join-Path $outer 'praxelta-travel-ops-0.3.0.zip'
-          if (-not (Test-Path -LiteralPath $innerZip -PathType Leaf)) { throw 'INNER_RELEASE_MISSING' }
+          $innerMatches = @(Get-ChildItem -LiteralPath $outer -Filter 'praxelta-travel-ops-0.3.0.zip' -File -Recurse)
+          if ($innerMatches.Count -ne 1) { throw "INNER_RELEASE_COUNT_$($innerMatches.Count)" }
+          $innerZip = $innerMatches[0].FullName
           $innerHash = (Get-FileHash -LiteralPath $innerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "INNER_HASH=$innerHash"
           if ($innerHash -ne '396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33') {
             throw "INNER_HASH_MISMATCH_$innerHash"
           }
           Expand-Archive -LiteralPath $innerZip -DestinationPath $inner -Force
-          $root = Join-Path $inner 'praxelta-travel-ops-0.3.0'
-          if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw 'INNER_ROOT_MISSING' }
+          $roots = @(Get-ChildItem -LiteralPath $inner -Directory -Filter 'praxelta-travel-ops-0.3.0' -Recurse)
+          if ($roots.Count -ne 1) { throw "INNER_ROOT_COUNT_$($roots.Count)" }
+          $root = $roots[0].FullName
+          Write-Host "INNER_ROOT=$root"
 
           $utf8Bom = New-Object Text.UTF8Encoding($true)
           Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.ps1' | ForEach-Object {
