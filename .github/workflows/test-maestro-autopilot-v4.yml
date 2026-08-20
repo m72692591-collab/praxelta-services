@@ -3,7 +3,7 @@ name: Test MAESTRO Autopilot V4
 on:
   pull_request:
     paths:
-      - "tools/maestro/START_MAESTRO_AUTOPILOT_V4.cmd.gz.b64"
+      - "tools/maestro/autopilot-v4-parts/**"
       - ".github/workflows/test-maestro-autopilot-v4.yml"
   workflow_dispatch:
 
@@ -24,9 +24,15 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $payload = '.\tools\maestro\START_MAESTRO_AUTOPILOT_V4.cmd.gz.b64'
+          $partsRoot = '.\tools\maestro\autopilot-v4-parts'
           $launcher = '.\tools\maestro\START_MAESTRO_AUTOPILOT_V4.cmd'
-          $b64 = (Get-Content -LiteralPath $payload -Raw -Encoding UTF8) -replace '\s', ''
+          $parts = @(Get-ChildItem -LiteralPath $partsRoot -Filter 'part*.b64' -File | Sort-Object Name)
+          if ($parts.Count -ne 9) {
+            throw "Expected 9 ordered payload parts, found $($parts.Count): $(@($parts.Name) -join ', ')"
+          }
+          $b64 = ((@($parts | ForEach-Object {
+            Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8
+          }) -join '') -replace '\s', '')
           $compressed = [Convert]::FromBase64String($b64)
           $input = New-Object IO.MemoryStream(,$compressed)
           $gzip = New-Object IO.Compression.GzipStream($input, [IO.Compression.CompressionMode]::Decompress)
@@ -35,6 +41,7 @@ jobs:
           $expected = 'ea49b1044582e74e03034f463245f5302c4730d609a34605a16bf75eb09cba34'
           $actual = (Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($actual -ne $expected) { throw "Launcher SHA mismatch: expected=$expected actual=$actual" }
+          Write-Host "PAYLOAD_PARTS=$($parts.Count)"
           Write-Host "LAUNCHER_SHA256_OK=$actual"
 
       - name: Extract and parse embedded PowerShell with Windows PowerShell 5.1
