@@ -27,6 +27,15 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
+          $TranscriptPath = Join-Path $PWD 'v5-diagnostic-transcript.txt'
+          $ErrorPath = Join-Path $PWD 'v5-diagnostic-error.txt'
+          Start-Transcript -LiteralPath $TranscriptPath -Force | Out-Null
+          trap {
+            ($_ | Format-List * -Force | Out-String) | Set-Content -LiteralPath $ErrorPath -Encoding UTF8
+            try { Stop-Transcript | Out-Null } catch { }
+            throw $_
+          }
+
           Write-Host '=== DOWNLOADED ARTIFACT TREE ==='
           Get-ChildItem -LiteralPath (Join-Path $PWD 'artifact') -Recurse -Force | ForEach-Object { Write-Host $_.FullName }
           $matches = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'artifact') -Recurse -File -Filter 'PRAXELTA_ONE_CLICK_INSTALL_V5.cmd')
@@ -103,12 +112,16 @@ jobs:
           if ($setupCode -ne 0) { throw "SETUP_FAILED_$setupCode" }
 
           Write-Host 'PRAXELTA_V5_DIRECT_SETUP_DIAGNOSTIC_PASS'
+          Stop-Transcript | Out-Null
 
-      - name: Upload diagnostic tree
+      - name: Upload diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: praxelta-v5-diagnostic-${{ github.run_number }}
-          path: ${{ runner.temp }}\praxelta-v5-diagnostic
+          path: |
+            v5-diagnostic-transcript.txt
+            v5-diagnostic-error.txt
+            ${{ runner.temp }}\praxelta-v5-diagnostic
           if-no-files-found: warn
           retention-days: 14
