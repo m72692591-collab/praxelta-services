@@ -1,0 +1,204 @@
+name: Test MAESTRO Autopilot V4 notice self-heal v4.1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/repair-autopilot-v4-notice-v41.ps1"
+      - ".github/workflows/test-autopilot-v4-selfheal-v41.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51-selfheal:
+    runs-on: windows-2022
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact test commit
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Parse exact repair script with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $scriptPath = '.\scripts\repair-autopilot-v4-notice-v41.ps1'
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            $scriptPath,
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if (@($errors).Count -gt 0) {
+            $rendered = @($errors | ForEach-Object {
+              '{0}:{1} {2}' -f $_.Extent.StartLineNumber, $_.Extent.StartColumnNumber, $_.Message
+            }) -join "`n"
+            throw "Repair script parse failed:`n$rendered"
+          }
+          Write-Host 'AUTOPILOT_V4_SELFHEAL_V41_PARSE_PASS'
+
+      - name: Create exact physical-failure fixture
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'autopilot-v4-selfheal-fixture'
+          $desktop = Join-Path $root 'Desktop'
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          New-Item -ItemType Directory -Path $desktop -Force | Out-Null
+          $installed = Join-Path $root 'MAESTRO_AUTOPILOT_V4.ps1'
+          $fixture = @'
+          [CmdletBinding()]
+          param()
+          Set-StrictMode -Version Latest
+          function Render-Fixture {
+              param($blockerList, $errorLines)
+              $ownerText = @(
+                  'header',
+                  ($blockerList | ForEach-Object { '- ' + [string]$_ }),
+                  '',
+                  'errors',
+                  $errorLines,
+                  'tail'
+              ) -join "`r`n"
+              return $ownerText
+          }
+          '@
+          [IO.File]::WriteAllText($installed, $fixture, (New-Object Text.UTF8Encoding($true)))
+          $summaryPath = Join-Path $root 'summary.json'
+          $humanPath = Join-Path $root 'summary.md'
+          [IO.File]::WriteAllText($humanPath, '# fixture', (New-Object Text.UTF8Encoding($false)))
+          [ordered]@{
+            status = 'BLOCKED_WITH_EXACT_EVIDENCE'
+            blockers = @('BLOCKER_ONE','BLOCKER_TWO')
+            runner_errors = @(
+              [ordered]@{
+                stage = 'fixture-stage'
+                type = 'FixtureException'
+                script_line = 42
+                message = 'exact fixture error'
+              }
+            )
+          } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+          [ordered]@{
+            owner_notification_signature = 'old-signature'
+            consecutive_same_signature = 3
+            last_signature = 'old-hash'
+            last_json = $summaryPath
+            last_report = $humanPath
+            last_run_at_utc = '2026-08-20T00:00:00Z'
+          } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $root 'autopilot-state.json') -Encoding UTF8
+          "FIXTURE_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FIXTURE_DESKTOP=$desktop" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "FIXTURE_ROOT=$root"
+
+      - name: Run exact self-heal against an empty-list and nested-array fixture
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+            -File '.\scripts\repair-autopilot-v4-notice-v41.ps1' `
+            -Mode SelfTest `
+            -InstallRoot $env:FIXTURE_ROOT `
+            -Desktop $env:FIXTURE_DESKTOP `
+            -NoUi
+          if ($LASTEXITCODE -ne 0) { throw "Self-heal exit code: $LASTEXITCODE" }
+
+      - name: Verify patch, exact notice, receipt and idempotency
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = $env:FIXTURE_ROOT
+          $installed = Join-Path $root 'MAESTRO_AUTOPILOT_V4.ps1'
+          $receiptPath = Join-Path $root 'MAESTRO_AUTOPILOT_V4_SELFHEAL_V4_1_RECEIPT.json'
+          $receipt = Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ([string]$receipt.status -ne 'PASS') { throw "Receipt status: $($receipt.status)" }
+          if ([string]$receipt.patch.status -ne 'PATCHED') { throw "First patch status: $($receipt.patch.status)" }
+          if ([int]$receipt.patch.replacements -ne 2) { throw "Replacement count: $($receipt.patch.replacements)" }
+          if (-not (Test-Path -LiteralPath ([string]$receipt.patch.backup) -PathType Leaf)) { throw 'Backup missing.' }
+          $text = [IO.File]::ReadAllText($installed, [Text.Encoding]::UTF8)
+          foreach ($required in @(
+            'MAESTRO_AUTOPILOT_NOTICE_ARRAY_PATCH_V4_1',
+            '}) -join "`r`n"),',
+            '($errorLines -join "`r`n"),'
+          )) {
+            if ($text -notmatch [Regex]::Escape($required)) { throw "Patched marker missing: $required" }
+          }
+          $noticePath = [string]$receipt.notice.path
+          $notice = [IO.File]::ReadAllText($noticePath, [Text.Encoding]::UTF8)
+          foreach ($required in @('BLOCKER_ONE','BLOCKER_TWO','fixture-stage','FixtureException','exact fixture error')) {
+            if ($notice -notmatch [Regex]::Escape($required)) { throw "Notice content missing: $required" }
+          }
+          if ($notice -match 'System\.Object\[\]') { throw 'System.Object[] remains in notice.' }
+          $state = Get-Content -LiteralPath (Join-Path $root 'autopilot-state.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ([string]$state.owner_notification_signature -ne '') { throw 'Notification signature not reset.' }
+          if ([int]$state.consecutive_same_signature -ne 0) { throw 'Consecutive signature counter not reset.' }
+
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+            -File '.\scripts\repair-autopilot-v4-notice-v41.ps1' `
+            -Mode SelfTest `
+            -InstallRoot $root `
+            -Desktop $env:FIXTURE_DESKTOP `
+            -NoUi
+          if ($LASTEXITCODE -ne 0) { throw "Idempotency exit code: $LASTEXITCODE" }
+          $second = Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ([string]$second.patch.status -ne 'ALREADY_PATCHED') { throw "Second patch status: $($second.patch.status)" }
+          Write-Host 'AUTOPILOT_V4_SELFHEAL_V41_FIXTURE_PASS'
+
+      - name: Enforce non-destructive policy
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $raw = [IO.File]::ReadAllText('.\scripts\repair-autopilot-v4-notice-v41.ps1', [Text.Encoding]::UTF8)
+          $forbidden = @(
+            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\breset\b[^\r\n]*--hard',
+            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\bclean\b',
+            '(?i)worktree[^\r\n]*remove[^\r\n]*--force',
+            '(?i)\bpush\b[^\r\n]*--force',
+            '(?i)\bbranch\b[^\r\n]*(?:-D|--delete)'
+          )
+          foreach ($pattern in $forbidden) {
+            if ($raw -match $pattern) { throw "Forbidden destructive command: $pattern" }
+          }
+          Write-Host 'AUTOPILOT_V4_SELFHEAL_V41_NON_DESTRUCTIVE_PASS'
+
+      - name: Create immutable validation receipt
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = '.\autopilot-v4-selfheal-v41-evidence'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          $scriptPath = '.\scripts\repair-autopilot-v4-notice-v41.ps1'
+          [ordered]@{
+            schema_version = 1
+            status = 'PASS'
+            source_commit = $env:GITHUB_SHA
+            script_sha256 = (Get-FileHash -LiteralPath $scriptPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            windows_image = $env:ImageOS
+            powershell_version = $PSVersionTable.PSVersion.ToString()
+            parser = 'PASS'
+            empty_collection_safe = 'PASS'
+            nested_array_notice_render = 'PASS'
+            idempotency = 'PASS'
+            backup = 'PASS'
+            state_reset = 'PASS'
+            non_destructive = 'PASS'
+            branch_deletion = $false
+            force_push = $false
+            history_rewrite = $false
+            git_reset_hard = $false
+            git_clean = $false
+          } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $out 'AUTOPILOT_V4_SELFHEAL_V41_VALIDATION.json') -Encoding UTF8
+          Copy-Item -LiteralPath $scriptPath -Destination (Join-Path $out 'repair-autopilot-v4-notice-v41.ps1')
+          Copy-Item -LiteralPath (Join-Path $env:FIXTURE_ROOT 'MAESTRO_AUTOPILOT_V4_SELFHEAL_V4_1_RECEIPT.json') -Destination (Join-Path $out 'FIXTURE_RECEIPT.json')
+          Copy-Item -LiteralPath (Join-Path $env:FIXTURE_DESKTOP '*') -Destination $out
+
+      - name: Upload immutable Windows validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: autopilot-v4-selfheal-v41-${{ github.run_id }}
+          path: autopilot-v4-selfheal-v41-evidence
+          if-no-files-found: error
+          retention-days: 90
