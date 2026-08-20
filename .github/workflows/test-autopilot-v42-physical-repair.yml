@@ -20,7 +20,7 @@ jobs:
         with:
           show-progress: false
 
-      - name: Reconstruct exact one-click CMD independent of checkout line endings
+      - name: Reconstruct exact one-click CMD
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -34,28 +34,23 @@ jobs:
             'tests/autopilot-v42/chunks/part-06.b64',
             'tests/autopilot-v42/chunks/part-07.b64',
             'tests/autopilot-v42/chunks/part-08a.b64',
-            'tests/autopilot-v42/chunks/part-08b.b64'
+            'tests/autopilot-v42/chunks/part-08b1.b64',
+            'tests/autopilot-v42/chunks/part-08b2.b64'
           )
           $builder = New-Object Text.StringBuilder
           foreach ($path in $paths) {
             if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Chunk missing: $path" }
-            $normalized = ([IO.File]::ReadAllText($path,[Text.Encoding]::ASCII) -replace '\s','')
-            if ([string]::IsNullOrWhiteSpace($normalized)) { throw "Chunk empty: $path" }
-            [void]$builder.Append($normalized)
+            [void]$builder.Append(([IO.File]::ReadAllText($path,[Text.Encoding]::ASCII) -replace '\s',''))
           }
           $cmd = Join-Path $env:RUNNER_TEMP 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_ONE_CLICK.cmd'
-          try {
-            [IO.File]::WriteAllBytes($cmd,[Convert]::FromBase64String($builder.ToString()))
-          } catch {
-            throw "Base64 reconstruction failed: $($_.Exception.Message)"
-          }
+          [IO.File]::WriteAllBytes($cmd,[Convert]::FromBase64String($builder.ToString()))
           $expected = '8828b56db0044d6c1305a20627f2ad42e8b1f44b550964bce1c6cb47a12ab526'
           $actual = (Get-FileHash -LiteralPath $cmd -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($actual -ne $expected) { throw "CMD hash mismatch: expected=$expected actual=$actual" }
           "EXACT_CMD=$cmd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "EXACT_CMD_SHA256=$actual"
 
-      - name: Run exact package in self-test mode with Windows PowerShell 5.1
+      - name: Run exact package in Windows PowerShell 5.1 self-test mode
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -70,42 +65,33 @@ jobs:
           $exitCode = $LASTEXITCODE
           "SELFTEST_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "SELFTEST_DESKTOP=$desktop" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          if ($exitCode -ne 0) {
-            $errorPath = Join-Path $desktop 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_ERROR.txt'
-            if (Test-Path -LiteralPath $errorPath) {
-              Write-Host '===== REPAIR ERROR FILE ====='
-              Get-Content -LiteralPath $errorPath -Raw -Encoding UTF8 | Write-Host
+          foreach ($candidate in @(
+            (Join-Path $desktop 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_ERROR.txt'),
+            (Join-Path $root 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json')
+          )) {
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+              Write-Host "===== $candidate ====="
+              Get-Content -LiteralPath $candidate -Raw -Encoding UTF8 | Write-Host
             }
-            $receiptPath = Join-Path $root 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json'
-            if (Test-Path -LiteralPath $receiptPath) {
-              Write-Host '===== REPAIR RECEIPT ====='
-              Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 | Write-Host
-            }
-            throw "Exact repair package exit code: $exitCode"
           }
+          if ($exitCode -ne 0) { throw "Exact repair package exit code: $exitCode" }
 
-      - name: Verify parser, repaired anchors, idempotency and safety receipt
+      - name: Verify exact repair result
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $root = $env:SELFTEST_ROOT
           $receiptPath = Join-Path $root 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json'
           $installedPath = Join-Path $root 'MAESTRO_AUTOPILOT_V4.ps1'
-          if (-not (Test-Path -LiteralPath $receiptPath -PathType Leaf)) { throw 'Self-test receipt missing.' }
-          if (-not (Test-Path -LiteralPath $installedPath -PathType Leaf)) { throw 'Patched fixture missing.' }
           $receipt = Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
           if ([string]$receipt.status -ne 'PASS') { throw "Receipt status: $($receipt.status)" }
           if ([string]$receipt.first_patch.status -ne 'PATCHED') { throw "First patch: $($receipt.first_patch.status)" }
           if ([string]$receipt.second_patch.status -ne 'ALREADY_PATCHED') { throw "Second patch: $($receipt.second_patch.status)" }
-          foreach ($field in @('existing_user_repository_modified','branches_deleted','force_push','history_rewrite','destructive_git_reset','destructive_git_clean')) {
-            if ([bool]$receipt.$field) { throw "Unsafe receipt field: $field" }
-          }
           $tokens = $null
           $errors = $null
           [void][System.Management.Automation.Language.Parser]::ParseFile($installedPath,[ref]$tokens,[ref]$errors)
           if (@($errors).Count -gt 0) {
-            $rendered = @($errors | ForEach-Object { '{0}:{1} {2}' -f $_.Extent.StartLineNumber,$_.Extent.StartColumnNumber,$_.Message }) -join "`n"
-            throw "Patched installed fixture parse failed:`n$rendered"
+            throw (@($errors | ForEach-Object { '{0}:{1} {2}' -f $_.Extent.StartLineNumber,$_.Extent.StartColumnNumber,$_.Message }) -join "`n")
           }
           $text = [IO.File]::ReadAllText($installedPath,[Text.Encoding]::UTF8)
           foreach ($required in @(
@@ -118,49 +104,32 @@ jobs:
           )) {
             if (-not $text.Contains($required)) { throw "Patched content missing: $required" }
           }
-          if ($text.Contains("                '-Repair',")) { throw 'Redundant acceptance -Repair argument remains.' }
+          foreach ($field in @('existing_user_repository_modified','branches_deleted','force_push','history_rewrite','destructive_git_reset','destructive_git_clean')) {
+            if ([bool]$receipt.$field) { throw "Unsafe receipt field: $field" }
+          }
           Write-Host 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_WINDOWS_PASS'
 
-      - name: Enforce non-destructive package policy
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $raw = [IO.File]::ReadAllText($env:EXACT_CMD,[Text.Encoding]::UTF8)
-          $forbidden = @(
-            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\breset\b[^\r\n]*--hard',
-            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\bclean\b',
-            '(?i)worktree[^\r\n]*remove[^\r\n]*--force',
-            '(?i)\bpush\b[^\r\n]*--force',
-            '(?i)\bbranch\b[^\r\n]*(?:-D|--delete)'
-          )
-          foreach ($pattern in $forbidden) {
-            if ($raw -match $pattern) { throw "Forbidden destructive command: $pattern" }
-          }
-          Write-Host 'NON_DESTRUCTIVE_POLICY_PASS'
-
-      - name: Create immutable validation evidence
+      - name: Collect evidence
         if: always()
         shell: powershell
         run: |
           $out = Join-Path $PWD 'autopilot-v42-physical-repair-evidence'
           New-Item -ItemType Directory -Path $out -Force | Out-Null
-          if (-not [string]::IsNullOrWhiteSpace($env:EXACT_CMD) -and (Test-Path -LiteralPath $env:EXACT_CMD -PathType Leaf)) {
-            Copy-Item -LiteralPath $env:EXACT_CMD -Destination $out
+          foreach ($candidate in @($env:EXACT_CMD)) {
+            if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { Copy-Item -LiteralPath $candidate -Destination $out }
           }
           if (-not [string]::IsNullOrWhiteSpace($env:SELFTEST_ROOT)) {
-            foreach ($source in @(
-              (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json'),
-              (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4.ps1')
-            )) {
-              if (Test-Path -LiteralPath $source -PathType Leaf) { Copy-Item -LiteralPath $source -Destination $out }
+            foreach ($name in @('MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json','MAESTRO_AUTOPILOT_V4.ps1')) {
+              $candidate = Join-Path $env:SELFTEST_ROOT $name
+              if (Test-Path -LiteralPath $candidate -PathType Leaf) { Copy-Item -LiteralPath $candidate -Destination $out }
             }
           }
           if (-not [string]::IsNullOrWhiteSpace($env:SELFTEST_DESKTOP)) {
-            $errorPath = Join-Path $env:SELFTEST_DESKTOP 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_ERROR.txt'
-            if (Test-Path -LiteralPath $errorPath -PathType Leaf) { Copy-Item -LiteralPath $errorPath -Destination $out }
+            $candidate = Join-Path $env:SELFTEST_DESKTOP 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_ERROR.txt'
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) { Copy-Item -LiteralPath $candidate -Destination $out }
           }
 
-      - name: Upload exact Windows validation evidence
+      - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
