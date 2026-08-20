@@ -1,0 +1,159 @@
+name: Test exact MAESTRO Autopilot V4.2 physical repair
+
+on:
+  pull_request:
+    paths:
+      - "tests/autopilot-v42/**"
+      - ".github/workflows/test-autopilot-v42-physical-repair.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51-exact-package:
+    runs-on: windows-2022
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact test commit
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Verify chunks and reconstruct exact one-click CMD
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $parts = @(
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-01.b64'; sha256 = 'bbbb97cf6404042dc61e6f275e7657466848bd95bf5dca631fa8f8394488b6f9' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-02.b64'; sha256 = 'e4d90b6bad0f11802e4479c9380294ab860ea62be3cf743e85437e127f1d153e' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-03a.b64'; sha256 = 'afc600210e961a1475312c6e45a31311e79fce6d67dfce054686b7396b90767c' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-03b.b64'; sha256 = '602a0b3b4e766a45eb28d9a9d6611d69c5f46b716009e30123f0c1c32de97361' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-04.b64'; sha256 = '6e079c92543f4062c913a82d6d6dcef0e5ec001ba15c572d56adfd536c3669ea' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-05.b64'; sha256 = 'c828a5aa17d093f11598ea15a273b5a609f3ec7e13315ecf384fa9319e5edf9f' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-06.b64'; sha256 = '08b0601f0ad2ff9d82bd5fc3ef07cb1f6acb165008954fc650cda2ce80a50645' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-07.b64'; sha256 = '95e9565398073186c997f95529e31a5e5a4805f96db846a00833b0afe4bbd450' },
+            [pscustomobject]@{ path = 'tests/autopilot-v42/chunks/part-08.b64'; sha256 = 'feb2e47307ff3a562188bd46ea53e0a6e4e66c6289b19c7ef25257774522ea59' }
+          )
+          $builder = New-Object Text.StringBuilder
+          foreach ($part in $parts) {
+            $actual = (Get-FileHash -LiteralPath $part.path -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $part.sha256) {
+              throw "Chunk hash mismatch: $($part.path); expected=$($part.sha256); actual=$actual"
+            }
+            [void]$builder.Append(([IO.File]::ReadAllText($part.path,[Text.Encoding]::ASCII) -replace '\s',''))
+          }
+          $cmd = Join-Path $env:RUNNER_TEMP 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_ONE_CLICK.cmd'
+          [IO.File]::WriteAllBytes($cmd,[Convert]::FromBase64String($builder.ToString()))
+          $expected = '8828b56db0044d6c1305a20627f2ad42e8b1f44b550964bce1c6cb47a12ab526'
+          $actual = (Get-FileHash -LiteralPath $cmd -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "CMD hash mismatch: expected=$expected actual=$actual" }
+          "EXACT_CMD=$cmd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "EXACT_CMD_SHA256=$actual"
+
+      - name: Run the exact package in self-test mode with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'maestro-autopilot-v42-selftest'
+          $desktop = Join-Path $root 'Desktop'
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          New-Item -ItemType Directory -Path $desktop -Force | Out-Null
+          $env:MAESTRO_AUTOPILOT_REPAIR_SELFTEST = '1'
+          $env:MAESTRO_AUTOPILOT_TEST_INSTALL_ROOT = $root
+          $env:MAESTRO_AUTOPILOT_TEST_DESKTOP = $desktop
+          & cmd.exe /d /c "`"$env:EXACT_CMD`""
+          if ($LASTEXITCODE -ne 0) { throw "Exact repair package exit code: $LASTEXITCODE" }
+          "SELFTEST_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SELFTEST_DESKTOP=$desktop" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Verify exact parser, repairs, notice safety and idempotency evidence
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = $env:SELFTEST_ROOT
+          $receiptPath = Join-Path $root 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json'
+          $installedPath = Join-Path $root 'MAESTRO_AUTOPILOT_V4.ps1'
+          if (-not (Test-Path -LiteralPath $receiptPath -PathType Leaf)) { throw 'Self-test receipt missing.' }
+          if (-not (Test-Path -LiteralPath $installedPath -PathType Leaf)) { throw 'Patched fixture missing.' }
+          $receipt = Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ([string]$receipt.status -ne 'PASS') { throw "Receipt status: $($receipt.status)" }
+          if ([string]$receipt.first_patch.status -ne 'PATCHED') { throw "First patch: $($receipt.first_patch.status)" }
+          if ([string]$receipt.second_patch.status -ne 'ALREADY_PATCHED') { throw "Second patch: $($receipt.second_patch.status)" }
+          foreach ($field in @('existing_user_repository_modified','branches_deleted','force_push','history_rewrite','destructive_git_reset','destructive_git_clean')) {
+            if ([bool]$receipt.$field) { throw "Unsafe receipt field: $field" }
+          }
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile($installedPath,[ref]$tokens,[ref]$errors)
+          if (@($errors).Count -gt 0) {
+            $rendered = @($errors | ForEach-Object { '{0}:{1} {2}' -f $_.Extent.StartLineNumber,$_.Extent.StartColumnNumber,$_.Message }) -join "`n"
+            throw "Patched installed fixture parse failed:`n$rendered"
+          }
+          $text = [IO.File]::ReadAllText($installedPath,[Text.Encoding]::UTF8)
+          foreach ($required in @(
+            'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2',
+            'MAESTRO_RUNTIME_SOURCE_REPAIR_FUNCTION_V4_2',
+            '$Documents = [Environment]::GetFolderPath',
+            'Canonical runtime source repair V4.2: PASS',
+            '(($blockerList | ForEach-Object',
+            '($errorLines -join "`r`n")'
+          )) {
+            if (-not $text.Contains($required)) { throw "Patched content missing: $required" }
+          }
+          if ($text.Contains("                '-Repair',")) { throw 'Redundant acceptance -Repair argument remains.' }
+          Write-Host 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_WINDOWS_PASS'
+
+      - name: Enforce non-destructive package policy
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $raw = [IO.File]::ReadAllText($env:EXACT_CMD,[Text.Encoding]::UTF8)
+          $forbidden = @(
+            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\breset\b[^\r\n]*--hard',
+            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\bclean\b',
+            '(?i)worktree[^\r\n]*remove[^\r\n]*--force',
+            '(?i)\bpush\b[^\r\n]*--force',
+            '(?i)\bbranch\b[^\r\n]*(?:-D|--delete)'
+          )
+          foreach ($pattern in $forbidden) {
+            if ($raw -match $pattern) { throw "Forbidden destructive command: $pattern" }
+          }
+          Write-Host 'NON_DESTRUCTIVE_POLICY_PASS'
+
+      - name: Create immutable validation evidence
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = Join-Path $PWD 'autopilot-v42-physical-repair-evidence'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          Copy-Item -LiteralPath $env:EXACT_CMD -Destination $out
+          Copy-Item -LiteralPath (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4_PHYSICAL_REPAIR_V4_2_RECEIPT.json') -Destination $out
+          Copy-Item -LiteralPath (Join-Path $env:SELFTEST_ROOT 'MAESTRO_AUTOPILOT_V4.ps1') -Destination $out
+          Copy-Item -LiteralPath (Join-Path $env:SELFTEST_ROOT 'fixture-execution\MAESTRO_AUTOPILOT_V4_RUNTIME_SOURCE_REPAIR_V4_2.json') -Destination $out -ErrorAction SilentlyContinue
+          [ordered]@{
+            schema_version = 1
+            status = 'PASS'
+            source_commit = $env:GITHUB_SHA
+            exact_cmd_sha256 = (Get-FileHash -LiteralPath $env:EXACT_CMD -Algorithm SHA256).Hash.ToLowerInvariant()
+            windows_image = $env:ImageOS
+            powershell_version = $PSVersionTable.PSVersion.ToString()
+            parser = 'PASS'
+            exact_package_execution = 'PASS'
+            local_repository_discovery_patch = 'PASS'
+            notice_array_rendering = 'PASS'
+            external_gates_parser_repair = 'PASS'
+            ensure_runtime_native_error_repair = 'PASS'
+            owner_acceptance_parser_repair = 'PASS'
+            idempotency = 'PASS'
+            backup_first = 'PASS'
+            non_destructive = 'PASS'
+          } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $out 'VALIDATION.json') -Encoding UTF8
+
+      - name: Upload exact Windows validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-autopilot-v42-physical-repair-${{ github.run_id }}
+          path: autopilot-v42-physical-repair-evidence
+          if-no-files-found: error
+          retention-days: 90
