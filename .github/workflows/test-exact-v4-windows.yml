@@ -132,7 +132,7 @@ jobs:
           $v5MarkerText
           "@
           $header = ($header -replace '^          ', '').TrimStart()
-          $headerBytes = [Text.Encoding]::ASCII.GetBytes($header.Replace("`n", "`r`n"))
+          $headerBytes = [Text.Encoding]::ASCII.GetBytes($header)
           $payload = [IO.File]::ReadAllBytes($newOuterZip)
           $stream = [IO.File]::Open($v5, [IO.FileMode]::Create, [IO.FileAccess]::Write)
           try {
