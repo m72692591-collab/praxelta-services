@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests; block-all-mixed-content">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Локальный конструктор запроса на услугу Экспресс ПРАКСЕЛЬТЫ: 7 900 ₽, 7 дней.">
+  <title>Запросить «Экспресс» — ПРАКСЕЛЬТА</title>
+  <link rel="canonical" href="https://m72692591-collab.github.io/praxelta-services/express-order.html">
+  <link rel="icon" type="image/png" href="praxelta-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="express-order.js" defer></script>
+</head>
+<body>
+<header class="site-header market-header">
+  <a class="brand" href="index.html" aria-label="ПРАКСЕЛЬТА — на главную">ПРАКСЕЛЬТА</a>
+  <nav aria-label="Навигация заказа">
+    <a href="index.html">Главная</a>
+    <a href="pricing.html">Тарифы</a>
+    <a href="offer.html">Оферта</a>
+    <a href="privacy.html">Данные</a>
+  </nav>
+</header>
+
+<main class="local-page market-page">
+  <section class="local-hero">
+    <p class="eyebrow">Локальный конструктор · сайт ничего не отправляет</p>
+    <h1>Запрос на «Экспресс»</h1>
+    <p><strong>Продукт:</strong> Управляемое продвижение и учёт обращений.</p>
+    <p class="lead"><strong>7 900 ₽ · 7 дней.</strong> Заполненные данные остаются в текущей вкладке. После проверки вы сами открываете письмо в Gmail или почтовом приложении и решаете, отправлять ли его.</p>
+    <p class="pilot-badge">Нет автоматической заявки, оплаты, CRM-записи или согласия на рекламу</p>
+  </section>
+
+  <form id="express-order-form" class="market-form" novalidate>
+    <fieldset>
+      <legend>Задача</legend>
+      <div class="form-grid">
+        <label>Имя или организация
+          <input name="customer_name" autocomplete="organization" maxlength="120" required>
+        </label>
+        <label>Город или регион
+          <input name="region" autocomplete="address-level1" maxlength="120" required>
+        </label>
+        <label>Сфера бизнеса
+          <input name="business_type" maxlength="160" placeholder="Например, ремонт бытовых котлов" required>
+        </label>
+        <label>Основной канал
+          <select name="primary_channel" required>
+            <option value="">Выберите</option>
+            <option>Авито</option>
+            <option>Сайт</option>
+            <option>Telegram</option>
+            <option>VK</option>
+            <option>Карты и справочники</option>
+            <option>Другое</option>
+          </select>
+        </label>
+      </div>
+      <label>Что сейчас не работает или вызывает сомнения
+        <textarea name="problem" minlength="20" maxlength="2000" required></textarea>
+      </label>
+      <label>Ссылки на материалы для разбора — не более трёх
+        <textarea name="links" maxlength="1500" placeholder="По одной ссылке на строку. Не вставляйте пароли, приватные кабинеты и клиентские базы."></textarea>
+      </label>
+      <label>Какой проверяемый результат нужен через 7 дней
+        <textarea name="expected_result" minlength="12" maxlength="1200" required placeholder="Например: получить разбор трёх объявлений, десять приоритетных исправлений и план на 30 дней."></textarea>
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Границы и доступы</legend>
+      <label>Что нельзя менять без отдельного согласования
+        <textarea name="restrictions" maxlength="1200" placeholder="Например: не отключать объявления, не менять бюджет, не публиковать от моего имени."></textarea>
+      </label>
+      <label>Какие данные доступны для анализа
+        <textarea name="available_data" maxlength="1200" placeholder="Например: публичные ссылки и обезличенная статистика. Не указывайте пароли или данные клиентов."></textarea>
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Согласие на подготовку запроса</legend>
+      <label class="check-row"><input type="checkbox" name="scope_ack" required> Понимаю, что «Экспресс» не гарантирует лиды, продажи, доход или позицию в выдаче.</label>
+      <label class="check-row"><input type="checkbox" name="privacy_ack" required> Прочитал политику конфиденциальности и не передаю пароли, банковские данные или клиентскую базу.</label>
+      <label class="check-row"><input type="checkbox" name="terms_ack" required> Понимаю, что договор возникает только после отдельного письменного заказа с номером, составом, ценой, сроком и правилами приёмки.</label>
+      <label class="check-row"><input type="checkbox" name="contact_ack" required> Разрешаю ответить на отправленное мной письмо по этой задаче. Это не согласие на рекламную рассылку.</label>
+    </fieldset>
+
+    <button class="button primary" type="submit">Сформировать письмо</button>
+    <button class="button" id="clear-express-order" type="button">Очистить</button>
+    <p id="express-order-status" class="form-status" role="status" aria-live="polite"></p>
+  </form>
+
+  <section id="express-order-preview" class="request-preview" hidden>
+    <p class="eyebrow">Проверьте перед отправкой</p>
+    <h2>Запрос сформирован, но ещё не отправлен</h2>
+    <p>Идентификатор нужен для защиты от дублей. Сохраните его в теме письма.</p>
+    <pre id="express-order-preview-text"></pre>
+    <div class="action-row">
+      <button class="button" id="copy-express-order" type="button">Скопировать</button>
+      <a class="button primary" id="open-express-gmail" href="#" rel="noreferrer">Открыть Gmail</a>
+      <a class="button" id="open-express-mail" href="#">Открыть почтовое приложение</a>
+    </div>
+    <p class="micro">Отправка происходит только после вашего действия в почтовом сервисе. ПРАКСЕЛЬТА не получает содержимое до фактической отправки письма.</p>
+  </section>
+</main>
+
+<footer class="market-footer">
+  <p><strong>ПРАКСЕЛЬТА</strong><br>Поддержка: <a href="mailto:m72692591@gmail.com">m72692591@gmail.com</a></p>
+  <nav aria-label="Документы заказа">
+    <a href="offer.html">Оферта</a>
+    <a href="privacy.html">Конфиденциальность</a>
+    <a href="terms.html">Условия</a>
+    <a href="refund.html">Отмена и возврат</a>
+  </nav>
+</footer>
+</body>
+</html>

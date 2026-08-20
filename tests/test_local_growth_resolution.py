@@ -3,13 +3,16 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/validate_local_growth_resolution.py"
 RESOLUTION = ROOT / "operations/salvage/local-service-growth-v3/DIVERGED_RESOLUTION.json"
 STATUS = ROOT / "operations/salvage/local-service-growth-v3/INTEGRATION_STATUS.json"
+SUCCESSOR = ROOT / "operations/salvage/local-service-growth-v3/ACTIVE_PRODUCT_V2_SUCCESSOR.json"
 
 spec = importlib.util.spec_from_file_location("local_growth_resolution", SCRIPT)
 assert spec and spec.loader
@@ -66,7 +69,7 @@ def test_resolution_cannot_enable_payments() -> None:
     assert any("payments_enabled" in error for error in errors)
 
 
-def test_owner_product_decision_gate_cannot_be_removed() -> None:
+def test_historical_owner_product_decision_gate_cannot_be_removed() -> None:
     data = load(RESOLUTION)
     changed = copy.deepcopy(data)
     changed["next_gate"]["status"] = "ACTIVE_PRODUCT"
@@ -82,3 +85,114 @@ def test_integration_status_must_match_exact_diverged_set() -> None:
     ][1:]
     errors = validator.validate(ROOT, load(RESOLUTION), changed)
     assert any("diverged set" in error for error in errors)
+
+
+def test_active_product_successor_links_exact_historical_and_current_blobs() -> None:
+    successor = load(SUCCESSOR)
+    assert successor["historical_path"] == "index.html"
+    assert successor["historical_current_blob"] == (
+        "b9841e994cdab3b21a299f24884ed19ca4a750c3"
+    )
+    assert successor["successor_blob"] == (
+        "6b338f78c75bfb6b14577cfb4438b9d96a715d06"
+    )
+    assert successor["scope"]["live_payments"] is False
+    assert successor["scope"]["first_paid_case_verified"] is False
+    assert successor["scope"]["revenue_verified"] is False
+    assert successor["scope"]["profit_verified"] is False
+
+
+def test_successor_blob_drift_is_blocked() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory) / "repo"
+        shutil.copytree(
+            ROOT,
+            root,
+            ignore=shutil.ignore_patterns(
+                ".git",
+                ".praxelta-local",
+                "__pycache__",
+                "*.pyc",
+                ".pytest_cache",
+            ),
+        )
+        path = (
+            root
+            / "operations"
+            / "salvage"
+            / "local-service-growth-v3"
+            / "ACTIVE_PRODUCT_V2_SUCCESSOR.json"
+        )
+        successor = load(path)
+        successor["successor_blob"] = "0" * 40
+        path.write_text(
+            json.dumps(successor, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        errors = validator.validate(
+            root,
+            load(
+                root
+                / "operations"
+                / "salvage"
+                / "local-service-growth-v3"
+                / "DIVERGED_RESOLUTION.json"
+            ),
+            load(
+                root
+                / "operations"
+                / "salvage"
+                / "local-service-growth-v3"
+                / "INTEGRATION_STATUS.json"
+            ),
+        )
+        assert any("successor blob drift" in error for error in errors)
+
+
+def test_successor_cannot_enable_unproven_commercial_gate() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory) / "repo"
+        shutil.copytree(
+            ROOT,
+            root,
+            ignore=shutil.ignore_patterns(
+                ".git",
+                ".praxelta-local",
+                "__pycache__",
+                "*.pyc",
+                ".pytest_cache",
+            ),
+        )
+        registry_path = (
+            root
+            / "operations"
+            / "products"
+            / "LOCAL_GROWTH_PRODUCT_DECISION_V2.json"
+        )
+        registry = load(registry_path)
+        registry["commercial_gates"]["first_paid_case_verified"] = True
+        registry_path.write_text(
+            json.dumps(registry, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        errors = validator.validate(
+            root,
+            load(
+                root
+                / "operations"
+                / "salvage"
+                / "local-service-growth-v3"
+                / "DIVERGED_RESOLUTION.json"
+            ),
+            load(
+                root
+                / "operations"
+                / "salvage"
+                / "local-service-growth-v3"
+                / "INTEGRATION_STATUS.json"
+            ),
+        )
+        assert any(
+            "unproven gate enabled: first_paid_case_verified" in error
+            for error in errors
+        )

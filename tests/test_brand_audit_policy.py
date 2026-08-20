@@ -25,7 +25,26 @@ def test_compiled_rejection_is_policy() -> None:
     assert module.is_negative_enforcement(line) is True
 
 
+def test_negative_validator_assertion_is_policy() -> None:
+    line = (
+        'require("Публичная витрина услуг ПОТОК" not in text, '
+        '"legacy active metadata copy remains public", errors)'
+    )
+    assert module.is_negative_enforcement(
+        line,
+        "scripts/validate_active_product_v2.py",
+    ) is True
+
+
+def test_negative_test_fixture_is_policy() -> None:
+    line = 'data["description"] = "Публичная витрина услуг ПОТОК"'
+    assert module.is_negative_enforcement(
+        line,
+        "tests/test_validate_active_product_v2.py",
+    ) is True
+
+
 def test_public_title_is_not_negative_enforcement() -> None:
     line = "<title>Публичная витрина услуг ПОТОК</title>"  # запрещённый тестовый пример
-    assert module.is_negative_enforcement(line) is False
+    assert module.is_negative_enforcement(line, "index.html") is False
     assert module.looks_active(line) is True

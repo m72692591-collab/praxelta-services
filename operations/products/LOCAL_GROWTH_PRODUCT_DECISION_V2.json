@@ -1,0 +1,84 @@
+{
+  "schema_version": 2,
+  "decision_id": "PRAXELTA_MANAGED_PROMOTION_ACTIVE_PRODUCT_V2",
+  "decision_date": "2026-08-20",
+  "decision_source": "EXPLICIT_OWNER_CLOSURE_DIRECTIVE",
+  "status": "ACTIVE_PRODUCT_PRELAUNCH",
+  "project": {
+    "brand_ru": "ПРАКСЕЛЬТА",
+    "brand_latin": "PRAXELTA",
+    "repository": "m72692591-collab/praxelta-services",
+    "independent_from": "ANIMA TACTUS"
+  },
+  "product": {
+    "product_id": "managed_promotion_and_inquiry_tracking_v1",
+    "name": "Управляемое продвижение и учёт обращений",
+    "entry_offer": {
+      "tariff_id": "express",
+      "name": "Экспресс",
+      "price_rub": 7900,
+      "currency": "RUB",
+      "duration_days": 7,
+      "scope": "Разбор и усиление до трёх объявлений, отчёт и план на 30 дней",
+      "guaranteed_leads": false,
+      "guaranteed_revenue": false,
+      "guaranteed_ranking": false
+    }
+  },
+  "public_intake": {
+    "status": "LOCAL_EMAIL_COMPOSER_ONLY",
+    "page": "express-order.html",
+    "automatic_submission": false,
+    "server_storage": false,
+    "browser_persistence": false,
+    "explicit_task_contact_consent": true,
+    "advertising_consent": false,
+    "written_order_required_before_payment": true
+  },
+  "local_order_ledger": {
+    "status": "IMPLEMENTED_LOCAL_ONLY_PENDING_PHYSICAL_USE",
+    "script": "scripts/praxelta_order_ledger.py",
+    "storage": ".praxelta-local/order-ledger/orders.sqlite3",
+    "tracked_in_git": false,
+    "deduplication": [
+      "unique order_id",
+      "unique payment_id_sha256",
+      "unique idempotency_key"
+    ],
+    "raw_customer_contact_stored": false,
+    "raw_payment_payload_stored": false,
+    "revenue_requires_reconciliation": true,
+    "profit_requires_direct_costs": true
+  },
+  "commercial_gates": {
+    "seller_identity_confirmed": false,
+    "tax_mode_confirmed_for_this_launch": false,
+    "written_order_received": false,
+    "provider_payment_confirmed": false,
+    "delivery_receipt_confirmed": false,
+    "client_acceptance_confirmed": false,
+    "reconciliation_confirmed": false,
+    "first_paid_case_verified": false,
+    "revenue_verified": false,
+    "profit_verified": false,
+    "live_payments_enabled": false
+  },
+  "deployment": {
+    "status": "REDEPLOY_REQUIRED_FOR_V2",
+    "public_url": "https://m72692591-collab.github.io/praxelta-services/",
+    "source_commit": null,
+    "deployment_receipt": null,
+    "exact_live_manifest_required": true
+  },
+  "metadata": {
+    "target": "operations/branding/GITHUB_METADATA_TARGET.json",
+    "patch_completed": false,
+    "repeat_api_get_verified": false
+  },
+  "separation": {
+    "shared_merchant_with_anima_tactus": false,
+    "shared_customer_data_with_anima_tactus": false,
+    "shared_webhook_secret_with_anima_tactus": false,
+    "shared_order_namespace_with_anima_tactus": false
+  }
+}
