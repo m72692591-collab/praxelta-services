@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "FRESH_THEMATIC_SUCCESSOR",
+  "historical_resolution": "operations/salvage/local-service-growth-v3/DIVERGED_RESOLUTION.json",
+  "historical_path": "index.html",
+  "historical_current_blob": "b9841e994cdab3b21a299f24884ed19ca4a750c3",
+  "successor_branch": "product/express-7900-metadata-ledger-v2-20260820",
+  "successor_head_sha": "737202e8965c2fc754d6d1d811453a41ebcd005e",
+  "successor_blob": "6b338f78c75bfb6b14577cfb4438b9d96a715d06",
+  "successor_product_registry": "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json",
+  "successor_validator": "scripts/validate_active_product_v2.py",
+  "scope": {
+    "active_product": "Управляемое продвижение и учёт обращений",
+    "entry_offer": "Экспресс",
+    "price_rub": 7900,
+    "currency": "RUB",
+    "duration_days": 7,
+    "live_payments": false,
+    "first_paid_case_verified": false,
+    "revenue_verified": false,
+    "profit_verified": false
+  },
+  "source_branch_preserved": true,
+  "branch_deletion": false,
+  "history_rewrite": false,
+  "rationale": "Историческое решение сохраняется как evidence старого локального growth-контура. Главная страница перенесена свежим тематическим diff на новый активный продукт с отдельными product, privacy, payment and reconciliation gates."
+}
