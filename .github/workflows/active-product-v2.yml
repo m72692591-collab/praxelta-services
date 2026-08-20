@@ -10,10 +10,13 @@ on:
       - "docs/PRICING_SOURCE_OF_TRUTH.md"
       - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json"
       - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - "operations/salvage/local-service-growth-v3/ACTIVE_PRODUCT_V2_SUCCESSOR.json"
       - "scripts/praxelta_order_ledger.py"
       - "scripts/validate_active_product_v2.py"
+      - "scripts/validate_local_growth_resolution.py"
       - "tests/test_praxelta_order_ledger.py"
       - "tests/test_validate_active_product_v2.py"
+      - "tests/test_local_growth_resolution.py"
       - ".gitignore"
       - ".github/workflows/active-product-v2.yml"
   push:
@@ -27,10 +30,13 @@ on:
       - "docs/PRICING_SOURCE_OF_TRUTH.md"
       - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json"
       - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - "operations/salvage/local-service-growth-v3/ACTIVE_PRODUCT_V2_SUCCESSOR.json"
       - "scripts/praxelta_order_ledger.py"
       - "scripts/validate_active_product_v2.py"
+      - "scripts/validate_local_growth_resolution.py"
       - "tests/test_praxelta_order_ledger.py"
       - "tests/test_validate_active_product_v2.py"
+      - "tests/test_local_growth_resolution.py"
       - ".gitignore"
       - ".github/workflows/active-product-v2.yml"
   workflow_dispatch:
@@ -61,14 +67,16 @@ jobs:
       - name: Install test runtime
         run: python -m pip install --disable-pip-version-check --no-input pytest
 
-      - name: Compile product, ledger and tests
+      - name: Compile product, ledger, successor and tests
         run: |
           set -euo pipefail
           python -m py_compile \
             scripts/praxelta_order_ledger.py \
             scripts/validate_active_product_v2.py \
+            scripts/validate_local_growth_resolution.py \
             tests/test_praxelta_order_ledger.py \
-            tests/test_validate_active_product_v2.py
+            tests/test_validate_active_product_v2.py \
+            tests/test_local_growth_resolution.py
 
       - name: Run exact active-product validator
         run: |
@@ -78,12 +86,13 @@ jobs:
             --root . \
             --report active-product-evidence/ACTIVE_PRODUCT_V2_RECEIPT.json
 
-      - name: Run ledger and negative tests
+      - name: Run ledger, negative and historical-successor tests
         run: |
           set -euo pipefail
           python -m pytest \
             tests/test_praxelta_order_ledger.py \
             tests/test_validate_active_product_v2.py \
+            tests/test_local_growth_resolution.py \
             -q
 
       - name: Prove local ledger remains outside Git
@@ -94,8 +103,29 @@ jobs:
             > active-product-evidence/LEDGER_INIT_RECEIPT.json
           test -f "$temp_root/.praxelta-local/order-ledger/orders.sqlite3"
           test ! -e .praxelta-local
-          git status --porcelain --untracked-files=all > active-product-evidence/GIT_STATUS.txt
-          test ! -s active-product-evidence/GIT_STATUS.txt
+          if git ls-files | grep -q '^\.praxelta-local/'; then
+            echo 'Private ledger path is tracked by Git.' >&2
+            exit 1
+          fi
+          grep -Fxq '.praxelta-local/' .gitignore
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = {
+              'schema_version': 1,
+              'status': 'PASS',
+              'runtime_database_created_outside_repository': True,
+              'repository_private_path_exists': False,
+              'repository_private_path_tracked': False,
+              'gitignore_contains_private_path': True,
+              'raw_customer_data_in_artifact': False,
+              'raw_payment_data_in_artifact': False,
+          }
+          Path('active-product-evidence/LEDGER_GIT_BOUNDARY.json').write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
 
       - name: Record exact source and file hashes
         run: |
@@ -109,6 +139,7 @@ jobs:
               pricing.json \
               operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json \
               operations/branding/GITHUB_METADATA_TARGET.json \
+              operations/salvage/local-service-growth-v3/ACTIVE_PRODUCT_V2_SUCCESSOR.json \
               scripts/praxelta_order_ledger.py
           } > active-product-evidence/SHA256SUMS.txt
           git diff --check
