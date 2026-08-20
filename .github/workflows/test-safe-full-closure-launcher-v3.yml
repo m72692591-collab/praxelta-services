@@ -1,0 +1,142 @@
+name: Test safe full closure launcher V3
+
+on:
+  pull_request:
+    paths:
+      - "tools/maestro/START_ALL_REMAINING_SAFE_V3.cmd.gz.b64"
+      - ".github/workflows/test-safe-full-closure-launcher-v3.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-parser-native-self-test:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact test commit
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Reconstruct exact launcher and verify SHA-256
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = '.\tools\maestro\START_ALL_REMAINING_SAFE_V3.cmd.gz.b64'
+          $launcher = '.\tools\maestro\START_ALL_REMAINING_SAFE_V3.cmd'
+          $b64 = (Get-Content -LiteralPath $payload -Raw -Encoding UTF8) -replace '\s', ''
+          $compressed = [Convert]::FromBase64String($b64)
+          $input = New-Object IO.MemoryStream(,$compressed)
+          $gzip = New-Object IO.Compression.GzipStream($input, [IO.Compression.CompressionMode]::Decompress)
+          $output = [IO.File]::Create($launcher)
+          try { $gzip.CopyTo($output) } finally {
+            $output.Dispose(); $gzip.Dispose(); $input.Dispose()
+          }
+          $expected = 'a8a89b126ffcf21fc388b0e13e574dec0d1e62098d2bbee42cf4867df25911ad'
+          $actual = (Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Launcher SHA mismatch: expected=$expected actual=$actual" }
+          Write-Host "LAUNCHER_SHA256_OK=$actual"
+
+      - name: Extract and parse embedded PowerShell with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $launcher = '.\tools\maestro\START_ALL_REMAINING_SAFE_V3.cmd'
+          $text = [IO.File]::ReadAllText($launcher, [Text.Encoding]::UTF8)
+          $marker = '###MAESTRO_CLOSURE_POWERSHELL_V3###'
+          $index = $text.LastIndexOf($marker, [StringComparison]::Ordinal)
+          if ($index -lt 0) { throw 'Embedded PowerShell marker is missing.' }
+          $payload = $text.Substring($index + $marker.Length).TrimStart([char]13, [char]10)
+          $temporary = Join-Path $env:TEMP 'MAESTRO_CLOSURE_SAFE_V3_PARSE.ps1'
+          [IO.File]::WriteAllText($temporary, $payload, (New-Object Text.UTF8Encoding($true)))
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile($temporary, [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) {
+            $rendered = @($errors | ForEach-Object {
+              '{0}:{1} {2}' -f $_.Extent.StartLineNumber, $_.Extent.StartColumnNumber, $_.Message
+            }) -join "`n"
+            throw "Embedded PowerShell parse failed:`n$rendered"
+          }
+          Write-Host 'WINDOWS_POWERSHELL_5_1_PARSE_PASS'
+
+      - name: Enforce non-destructive and stage-isolation policy
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $launcher = '.\tools\maestro\START_ALL_REMAINING_SAFE_V3.cmd'
+          $raw = [IO.File]::ReadAllText($launcher, [Text.Encoding]::UTF8)
+          $forbidden = @(
+            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\breset\b[^\r\n]*--hard',
+            '(?i)\bgit(?:\.exe)?\b[^\r\n]*\bclean\b',
+            '(?i)worktree[^\r\n]*remove[^\r\n]*--force',
+            '(?i)\bpush\b[^\r\n]*--force',
+            '(?i)\bbranch\b[^\r\n]*(?:-D|--delete)',
+            '(?i)Remove-Item[^\r\n]*-Recurse[^\r\n]*-Force'
+          )
+          foreach ($pattern in $forbidden) {
+            if ($raw -match $pattern) { throw "Forbidden destructive command: $pattern" }
+          }
+          foreach ($required in @(
+            'LOCAL_EXTERNAL_GATES_PUBLIC.zip',
+            'LOCAL_EXTERNAL_GATES_PRIVATE.zip',
+            'runner_errors',
+            "Stage 'github-admin-gates'",
+            'MAESTRO_CLOSURE_SAFE_V3_SELF_TEST_PASS',
+            'runtime-local-clone',
+            'runtime-detached-worktree',
+            'runtime-remote-clone'
+          )) {
+            if ($raw -notmatch [Regex]::Escape($required)) {
+              throw "Required V3 contract marker missing: $required"
+            }
+          }
+          Write-Host 'NON_DESTRUCTIVE_STAGE_ISOLATION_POLICY_PASS'
+
+      - name: Run exact CMD native Git fixture self-test
+        shell: cmd
+        env:
+          MAESTRO_CLOSURE_SELF_TEST: "1"
+        run: tools\maestro\START_ALL_REMAINING_SAFE_V3.cmd
+
+      - name: Verify exact self-test proof and create receipt
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $proof = Join-Path $env:TEMP 'MAESTRO_CLOSURE_SAFE_V3_SELF_TEST_OK.txt'
+          if (-not (Test-Path -LiteralPath $proof -PathType Leaf)) { throw "Self-test proof missing: $proof" }
+          $value = (Get-Content -LiteralPath $proof -Raw -Encoding UTF8).Trim()
+          if ($value -ne 'MAESTRO_CLOSURE_SAFE_V3_SELF_TEST_PASS') { throw "Self-test proof mismatch: $value" }
+          $launcher = '.\tools\maestro\START_ALL_REMAINING_SAFE_V3.cmd'
+          $receiptRoot = '.\launcher-test-evidence-v3'
+          New-Item -ItemType Directory -Path $receiptRoot -Force | Out-Null
+          [ordered]@{
+            schema_version = 3
+            status = 'PASS'
+            source_commit = $env:GITHUB_SHA
+            launcher_sha256 = (Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash.ToLowerInvariant()
+            windows_image = $env:ImageOS
+            powershell_version = $PSVersionTable.PSVersion.ToString()
+            parser = 'PASS'
+            native_git_version = 'PASS'
+            local_git_init_commit_clone_rev_parse_fixture = 'PASS'
+            static_policy = 'PASS'
+            stage_isolation_contract = 'PASS'
+            cmd_self_test = 'PASS'
+            branch_deletion = $false
+            force_push = $false
+            history_rewrite = $false
+            git_reset_hard = $false
+            git_clean = $false
+          } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $receiptRoot 'SAFE_FULL_CLOSURE_LAUNCHER_V3_RECEIPT.json') -Encoding UTF8
+          Copy-Item -LiteralPath $launcher -Destination (Join-Path $receiptRoot 'START_ALL_REMAINING_SAFE_V3.cmd')
+
+      - name: Upload immutable Windows V3 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: safe-full-closure-launcher-v3-${{ github.run_id }}
+          path: launcher-test-evidence-v3
+          if-no-files-found: error
+          retention-days: 90
