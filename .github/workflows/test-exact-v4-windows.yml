@@ -107,6 +107,32 @@ jobs:
           '@
           $patch = ($patch -replace '^              ', '')
           $stableText = $stableText.Replace($needle, $needle + $patch + "`r`n")
+
+          $runnerOld = @'
+              & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $File @Arguments *>> $Log
+              $code = [int]$LASTEXITCODE
+              if ($code -ne 0) {
+                  throw ('PowerShell script failed with exit code {0}: {1}' -f $code, $File)
+              }
+          '@
+          $runnerNew = @'
+              $ChildOutput = @(& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $File @Arguments 2>&1)
+              $code = [int]$LASTEXITCODE
+              foreach ($ChildItem in $ChildOutput) {
+                  $ChildLine = ($ChildItem | Out-String).TrimEnd()
+                  if (-not [string]::IsNullOrWhiteSpace($ChildLine)) {
+                      $ChildLine | Add-Content -LiteralPath $Log -Encoding UTF8
+                      Write-Host $ChildLine
+                  }
+              }
+              if ($code -ne 0) {
+                  throw ('PowerShell script failed with exit code {0}: {1}' -f $code, $File)
+              }
+          '@
+          $runnerOld = ($runnerOld -replace '^              ', '').Trim("`r", "`n")
+          $runnerNew = ($runnerNew -replace '^              ', '').Trim("`r", "`n")
+          if (-not $stableText.Contains($runnerOld)) { throw 'CHILD_OUTPUT_PATCH_POINT_MISSING' }
+          $stableText = $stableText.Replace($runnerOld, $runnerNew)
           [IO.File]::WriteAllText($stableScript, $stableText, (New-Object Text.UTF8Encoding($false)))
 
           Compress-Archive -Path (Join-Path $outerDir '*') -DestinationPath $newOuterZip -CompressionLevel Optimal -Force
@@ -168,6 +194,7 @@ jobs:
               if (Test-Path -LiteralPath $path) {
                 Write-Host "===== $path ====="
                 Get-Content -LiteralPath $path -Raw -ErrorAction SilentlyContinue
+                Copy-Item -LiteralPath $path -Destination (Join-Path $PWD ([IO.Path]::GetFileName($path))) -Force
               }
             }
             throw "EXACT_V5_EXIT_$code"
@@ -179,6 +206,7 @@ jobs:
           $evidencePath = Join-Path $target 'state\STABLE_INSTALL.json'
           $evidence = Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json
           if ($evidence.status -ne 'TECHNICAL_INSTALL_COMPLETED') { throw "V5_EVIDENCE_STATUS_$($evidence.status)" }
+          Copy-Item -LiteralPath $evidencePath -Destination (Join-Path $PWD 'STABLE_INSTALL.json') -Force
           Write-Host 'PRAXELTA_EXACT_V5_FULL_WINDOWS_INSTALL_PASS'
 
       - name: Upload exact V5 and evidence
@@ -189,7 +217,7 @@ jobs:
           path: |
             PRAXELTA_ONE_CLICK_INSTALL_V5.cmd
             PRAXELTA_ONE_CLICK_INSTALL_V5.build.txt
-            ${{ runner.temp }}\praxelta-v5-installed\state\STABLE_INSTALL.json
-            ${{ runner.temp }}\praxelta-v5-installed\state\logs\stable-install.log
+            STABLE_INSTALL.json
+            stable-install.log
           if-no-files-found: warn
           retention-days: 30
