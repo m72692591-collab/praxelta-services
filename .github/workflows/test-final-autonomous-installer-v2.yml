@@ -24,7 +24,9 @@ jobs:
           $ErrorActionPreference = 'Stop'
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-          $outerExpected = '7c2385de2aad17b995872dfb9afefba005eebe38d715bf5c70aa275a4b0dce19'
+          # This is the exact hash of the immutable six-part public bundle.
+          # Its inner release is independently pinned by innerExpected below.
+          $outerExpected = 'e1d64cac245a8a0b18c2c0bdeb844195d9f46267325eae75b3f9e7029921ff33'
           $innerExpected = '396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33'
           $chunkCommit = 'ab12616530d754ea740da4eec5ff56d42e99acbc'
           $chunkBase = "https://raw.githubusercontent.com/m72692591-collab/praxelta-services/$chunkCommit/downloads/praxelta-travel/0.3.0"
@@ -73,7 +75,7 @@ jobs:
             echo.
             echo PRAXELTA Travel autonomous installation V2 failed with exit code %RC%.
             echo Log: %USERPROFILE%\Documents\PRAXELTA\Travel\state\logs\final-autonomous-install.log
-            pause
+            if not defined PRAXELTA_NO_PAUSE pause
           )
           exit /b %RC%
           ###PRAXELTA_PS1###
@@ -108,6 +110,7 @@ jobs:
           $target = Join-Path $env:RUNNER_TEMP 'praxelta-v2-installed'
           $env:PRAXELTA_CI = '1'
           $env:PRAXELTA_CI_TARGET = $target
+          $env:PRAXELTA_NO_PAUSE = '1'
           & cmd.exe /d /c "`"$installer`""
           $code = [int]$LASTEXITCODE
           if ($code -ne 0) {
@@ -160,13 +163,13 @@ jobs:
           }
           $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath 'PRAXELTA_AUTO_INSTALL_FINAL_V2-verification.json' -Encoding UTF8
           @(
-            '# PRAXELTA_AUTO_INSTALL_FINAL_V2 — Windows verification',
+            '# PRAXELTA_AUTO_INSTALL_FINAL_V2 - Windows verification',
             '',
-            "- SHA-256: `$hash`",
+            ('- SHA-256: ' + $hash),
             '- Runner: Windows Server 2022',
-            "- Windows PowerShell: `$($PSVersionTable.PSVersion)`",
+            ('- Windows PowerShell: ' + $PSVersionTable.PSVersion.ToString()),
             '- Payload extraction: LastIndexOf marker + exact inner SHA-256',
-            "- End-to-end evidence: `$status`",
+            ('- End-to-end evidence: ' + $status),
             '- Network download inside installer: none',
             '- Owner secrets embedded: none'
           ) | Set-Content -LiteralPath 'PRAXELTA_AUTO_INSTALL_FINAL_V2-verification.md' -Encoding UTF8
