@@ -3,7 +3,7 @@ name: PRAXELTA exact V4 Windows end-to-end
 on:
   pull_request:
     paths:
-      - "installer_test/v4.base64.part-*.txt"
+      - "installer_test/**"
       - ".github/workflows/test-exact-v4-windows.yml"
   workflow_dispatch:
 
@@ -22,11 +22,25 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
+          $ordered = @(
+            'installer_test\v4.fix.000a.txt',
+            'installer_test\v4.fix.000b.txt',
+            'installer_test\v4.base64.part-001.txt',
+            'installer_test\v4.base64.part-002.txt',
+            'installer_test\v4.fix.003a.txt',
+            'installer_test\v4.fix.003b.txt',
+            'installer_test\v4.fix.004a.txt',
+            'installer_test\v4.fix.004b.txt',
+            'installer_test\v4.base64.part-005.txt'
+          )
           $builder = New-Object Text.StringBuilder
-          Get-ChildItem -LiteralPath 'installer_test' -Filter 'v4.base64.part-*.txt' -File |
-            Sort-Object Name |
-            ForEach-Object { [void]$builder.Append((Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8).Trim()) }
-          $bytes = [Convert]::FromBase64String($builder.ToString())
+          foreach ($relative in $ordered) {
+            if (-not (Test-Path -LiteralPath $relative -PathType Leaf)) { throw "FIXTURE_MISSING_$relative" }
+            [void]$builder.Append((Get-Content -LiteralPath $relative -Raw -Encoding UTF8).Trim())
+          }
+          $encoded = $builder.ToString()
+          if ($encoded.Length -ne 112416) { throw "EXACT_V4_BASE64_LENGTH_$($encoded.Length)" }
+          $bytes = [Convert]::FromBase64String($encoded)
           $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
           [IO.File]::WriteAllBytes($installer, $bytes)
           $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
