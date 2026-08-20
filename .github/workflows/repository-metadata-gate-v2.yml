@@ -1,0 +1,239 @@
+name: PRAXELTA repository metadata gate V2
+
+on:
+  pull_request:
+    paths:
+      - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - ".github/workflows/repository-metadata-gate-v2.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - ".github/workflows/repository-metadata-gate-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  REPOSITORY_SLUG: m72692591-collab/praxelta-services
+  TARGET_PATH: operations/branding/GITHUB_METADATA_TARGET.json
+
+concurrency:
+  group: praxelta-repository-metadata-v2-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout target contract
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Validate target and perform independent public API GET
+        run: |
+          set -euo pipefail
+          mkdir -p repository-metadata-evidence
+          curl --fail --silent --show-error \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/$REPOSITORY_SLUG" \
+            > "$RUNNER_TEMP/current.json"
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          target = json.loads(Path(os.environ['TARGET_PATH']).read_text(encoding='utf-8'))
+          current = json.loads(Path(os.environ['RUNNER_TEMP'], 'current.json').read_text(encoding='utf-8'))
+          assert target['schema_version'] == 2
+          assert target['repository'] == os.environ['REPOSITORY_SLUG']
+          assert target['description'] == 'Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ'
+          assert target['homepage'] == 'https://m72692591-collab.github.io/praxelta-services/'
+          assert target['default_branch'] == 'main'
+          assert target['verification']['patch_is_not_completion'] is True
+          assert target['verification']['repeat_api_get_required'] is True
+          matched = (
+              current.get('description') == target['description']
+              and current.get('homepage') == target['homepage']
+              and current.get('default_branch') == target['default_branch']
+          )
+          receipt = {
+              'schema_version': 2,
+              'checked_at_utc': datetime.now(timezone.utc).isoformat(),
+              'repository': os.environ['REPOSITORY_SLUG'],
+              'status': (
+                  'VERIFIED_BY_INDEPENDENT_API_GET'
+                  if matched
+                  else 'EXTERNAL_BLOCKED_PROTECTED_ADMIN_EXECUTION_REQUIRED'
+              ),
+              'target_description': target['description'],
+              'actual_description': current.get('description'),
+              'target_homepage': target['homepage'],
+              'actual_homepage': current.get('homepage'),
+              'target_default_branch': target['default_branch'],
+              'actual_default_branch': current.get('default_branch'),
+              'repeat_api_get_verified': matched,
+              'required_environment': 'repository-administration',
+              'required_secret': 'PRAXELTA_REPO_ADMIN_TOKEN',
+              'secret_value_stored': False,
+              'patch_attempted_by_observe_job': False,
+          }
+          output = Path('repository-metadata-evidence/REPOSITORY_METADATA_GATE_V2.json')
+          output.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          Path('operations/evidence').mkdir(parents=True, exist_ok=True)
+          Path('operations/evidence/repository-metadata-gate-latest.json').write_text(
+              json.dumps(receipt, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Persist current gate on main without retriggering
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add operations/evidence/repository-metadata-gate-latest.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Record current PRAXELTA repository metadata gate'
+          for attempt in 1 2 3 4 5 6; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep $((attempt * 3))
+          done
+          exit 1
+
+      - name: Upload immutable observed metadata receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-metadata-observed-${{ github.run_id }}
+          path: repository-metadata-evidence
+          if-no-files-found: error
+          retention-days: 90
+
+  patch-and-reread:
+    if: github.event_name == 'workflow_dispatch'
+    needs: observe
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: repository-administration
+    steps:
+      - name: Checkout exact target
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Require protected repository-admin credential
+        env:
+          ADMIN_TOKEN: ${{ secrets.PRAXELTA_REPO_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$ADMIN_TOKEN"
+
+      - name: Patch target and perform fresh independent GET
+        env:
+          ADMIN_TOKEN: ${{ secrets.PRAXELTA_REPO_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p repository-metadata-evidence
+          python - <<'PY' > "$RUNNER_TEMP/payload.json"
+          import json
+          from pathlib import Path
+          target=json.loads(Path('operations/branding/GITHUB_METADATA_TARGET.json').read_text(encoding='utf-8'))
+          print(json.dumps({'description': target['description'], 'homepage': target['homepage']}, ensure_ascii=False))
+          PY
+          curl --fail --silent --show-error \
+            --request PATCH \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -H 'Content-Type: application/json' \
+            --data-binary @"$RUNNER_TEMP/payload.json" \
+            "https://api.github.com/repos/$REPOSITORY_SLUG" \
+            > "$RUNNER_TEMP/patch.json"
+          curl --fail --silent --show-error \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/$REPOSITORY_SLUG" \
+            > "$RUNNER_TEMP/after.json"
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          target=json.loads(Path('operations/branding/GITHUB_METADATA_TARGET.json').read_text(encoding='utf-8'))
+          patch=json.loads(Path(os.environ['RUNNER_TEMP'], 'patch.json').read_text(encoding='utf-8'))
+          after=json.loads(Path(os.environ['RUNNER_TEMP'], 'after.json').read_text(encoding='utf-8'))
+          verified=(
+              after.get('description') == target['description']
+              and after.get('homepage') == target['homepage']
+              and after.get('default_branch') == target['default_branch']
+          )
+          receipt={
+              'schema_version':2,
+              'checked_at_utc':datetime.now(timezone.utc).isoformat(),
+              'repository':target['repository'],
+              'status':'VERIFIED_BY_PATCH_AND_INDEPENDENT_GET' if verified else 'PATCH_NOT_VERIFIED',
+              'patch_response_description':patch.get('description'),
+              'target_description':target['description'],
+              'actual_description':after.get('description'),
+              'target_homepage':target['homepage'],
+              'actual_homepage':after.get('homepage'),
+              'target_default_branch':target['default_branch'],
+              'actual_default_branch':after.get('default_branch'),
+              'repeat_api_get_verified':verified,
+              'secret_value_stored':False,
+          }
+          Path('repository-metadata-evidence/REPOSITORY_METADATA_GATE_V2.json').write_text(
+              json.dumps(receipt,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          Path('operations/evidence').mkdir(parents=True,exist_ok=True)
+          Path('operations/evidence/repository-metadata-gate-latest.json').write_text(
+              json.dumps(receipt,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          if not verified:
+              raise SystemExit(1)
+          PY
+
+      - name: Persist verified receipt before finishing
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add operations/evidence/repository-metadata-gate-latest.json
+          git commit -m 'Record verified PRAXELTA repository metadata'
+          for attempt in 1 2 3 4 5 6; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep $((attempt * 3))
+          done
+          exit 1
+
+      - name: Upload immutable patch and GET receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-metadata-verified-${{ github.run_id }}
+          path: repository-metadata-evidence
+          if-no-files-found: error
+          retention-days: 90
