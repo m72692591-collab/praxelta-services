@@ -90,7 +90,7 @@ jobs:
             'LOCAL_EXTERNAL_GATES_PUBLIC.zip',
             'LOCAL_EXTERNAL_GATES_PRIVATE.zip',
             'MAESTRO_AUTOPILOT_V4_SELF_TEST_PASS',
-            'Повторно запускать этот файл не потребуется'
+            'MAESTRO_AUTOPILOT_V4_INSTALLED_AND_RUNNING'
           )) {
             if ($raw -notmatch [Regex]::Escape($required)) { throw "Required contract marker missing: $required" }
           }
