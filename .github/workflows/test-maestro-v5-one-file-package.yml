@@ -1,0 +1,265 @@
+name: Test MAESTRO V5 one-file package
+
+on:
+  pull_request:
+    paths:
+      - "tools/maestro/MAESTRO_AUTOPILOT_V4_EXACT_REPAIR_V5_ONE_FILE.cmd.gz.b64"
+      - ".github/workflows/test-maestro-v5-one-file-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51-one-file:
+    runs-on: windows-2022
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout exact test commit
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Reconstruct exact standalone CMD and verify SHA-256
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $encodedPath = '.\tools\maestro\MAESTRO_AUTOPILOT_V4_EXACT_REPAIR_V5_ONE_FILE.cmd.gz.b64'
+          $standaloneDir = Join-Path $env:RUNNER_TEMP 'standalone-only'
+          New-Item -ItemType Directory -Path $standaloneDir -Force | Out-Null
+          $cmdPath = Join-Path $standaloneDir 'MAESTRO_AUTOPILOT_V4_EXACT_REPAIR_V5_ONE_FILE.cmd'
+          $b64 = (Get-Content -LiteralPath $encodedPath -Raw -Encoding UTF8) -replace '\s', ''
+          $compressed = [Convert]::FromBase64String($b64)
+          $input = New-Object IO.MemoryStream(,$compressed)
+          $gzip = New-Object IO.Compression.GzipStream($input, [IO.Compression.CompressionMode]::Decompress)
+          $output = [IO.File]::Create($cmdPath)
+          try { $gzip.CopyTo($output) } finally { $output.Dispose(); $gzip.Dispose(); $input.Dispose() }
+          $expected = '9f877a7922066dab650dfbbcb91fb48a9e545b610d0ab49481eee6546d2701a2'
+          $actual = (Get-FileHash -LiteralPath $cmdPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Standalone CMD SHA mismatch: expected=$expected actual=$actual" }
+          if (@(Get-ChildItem -LiteralPath $standaloneDir -File).Count -ne 1) {
+            throw 'The launch directory must contain exactly one file.'
+          }
+          "STANDALONE_CMD=$cmdPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "STANDALONE_CMD_SHA256=$actual"
+
+      - name: Extract embedded PowerShell exactly and parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cmdPath = $env:STANDALONE_CMD
+          $raw = [IO.File]::ReadAllText($cmdPath, [Text.Encoding]::UTF8)
+          $marker = '###__MAESTRO_EXACT_REPAIR_V5_PAYLOAD__###'
+          if (($raw.Split(@($marker), [StringSplitOptions]::None).Count - 1) -ne 1) {
+            throw 'Standalone payload marker must occur exactly once.'
+          }
+          $index = $raw.LastIndexOf($marker, [StringComparison]::Ordinal)
+          $payload = $raw.Substring($index + $marker.Length).TrimStart([char]13, [char]10)
+          $payloadPath = Join-Path $env:RUNNER_TEMP 'EXTRACTED_REPAIR_V5.ps1'
+          [IO.File]::WriteAllText($payloadPath, $payload, (New-Object Text.UTF8Encoding($true)))
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile($payloadPath, [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) {
+            $rendered = @($errors | ForEach-Object { '{0}:{1} {2}' -f $_.Extent.StartLineNumber, $_.Extent.StartColumnNumber, $_.Message }) -join "`n"
+            throw "Embedded repair parser failure:`n$rendered"
+          }
+          if ($PSVersionTable.PSVersion.Major -ne 5) { throw "Expected Windows PowerShell 5.1, got $($PSVersionTable.PSVersion)" }
+          "EXTRACTED_PAYLOAD=$payloadPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host 'STANDALONE_PAYLOAD_PARSE_PASS'
+
+      - name: Create isolated installed-Autopilot and closure-result fixture
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installRoot = Join-Path $env:LOCALAPPDATA 'MAESTRO\AutopilotV4'
+          New-Item -ItemType Directory -Path $installRoot -Force | Out-Null
+          $installed = Join-Path $installRoot 'MAESTRO_AUTOPILOT_V4.ps1'
+          $fixture = @'
+          [CmdletBinding()]
+          param(
+              [string]$Mode = 'Run',
+              [switch]$NoUi
+          )
+          Set-StrictMode -Version 2.0
+          $InstallRoot = Join-Path $env:LOCALAPPDATA 'MAESTRO\AutopilotV4'
+          $ExecutionRoot = Join-Path $env:LOCALAPPDATA 'MAESTRO\fixture-execution'
+          $RuntimeRoot = Join-Path $env:LOCALAPPDATA 'MAESTRO\fixture-runtime'
+          function Ensure-Directory {
+              param([string]$Path)
+              if (-not (Test-Path -LiteralPath $Path -PathType Container)) { New-Item -ItemType Directory -Path $Path -Force | Out-Null }
+          }
+          function Write-Log { param([string]$Message) }
+          function Invoke-Native { param([string]$File,[string[]]$Arguments,[string]$StepId,[string]$WorkingDirectory); return [pscustomobject]@{ exit_code = 0 } }
+          $Desktop = [Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)
+          if ([string]::IsNullOrWhiteSpace($Desktop)) { $Desktop = Join-Path $env:USERPROFILE 'Desktop' }
+          function Write-OwnerFixture {
+              param($blockerList, $errorLines, [string]$HumanPath, [string]$JsonPath)
+                  $ownerText = @(
+                      'MAESTRO AUTOPILOT V4 continues.',
+                      '',
+                      'Owner action or blocker:',
+                      ($blockerList | ForEach-Object { '- ' + [string]$_ }),
+                      '',
+                      'Runner errors:',
+                      $errorLines,
+                      '',
+                      "Last report: $HumanPath",
+                      "Last JSON: $JsonPath",
+                      '',
+                      'Autopilot retries after the owner action.'
+                  ) -join "`r`n"
+              return $ownerText
+          }
+          function Invoke-PowerShellScript {
+              param(
+                  [Parameter(Mandatory = $true)][string]$Script,
+                  [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Arguments,
+                  [Parameter(Mandatory = $true)][string]$StepId
+              )
+              if (-not (Test-Path -LiteralPath $Script -PathType Leaf)) {
+                  return [pscustomobject][ordered]@{
+                      id = $StepId
+                      exit_code = 127
+                      started_at_utc = (Get-Date).ToUniversalTime().ToString('o')
+                      finished_at_utc = (Get-Date).ToUniversalTime().ToString('o')
+                      duration_seconds = 0
+                      stdout_path = ''
+                      stderr_path = ''
+                      stdout_tail = ''
+                      stderr_tail = "Required script missing: $Script"
+                  }
+              }
+              $native = @(
+                  '-NoProfile',
+                  '-ExecutionPolicy', 'Bypass',
+                  '-File', $Script
+              ) + $Arguments
+              return Invoke-Native -File 'powershell.exe' -Arguments $native -StepId $StepId -WorkingDirectory $RuntimeRoot
+          }
+          exit 0
+          '@
+          $fixture = ($fixture -split "`r?`n" | ForEach-Object { $_ -replace '^          ', '' }) -join "`r`n"
+          [IO.File]::WriteAllText($installed, $fixture, (New-Object Text.UTF8Encoding($true)))
+
+          $documents = [Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)
+          $closureDir = Join-Path $documents 'Anima Tactus\closure-safe-v4\fixture'
+          New-Item -ItemType Directory -Path $closureDir -Force | Out-Null
+          $closureJson = Join-Path $closureDir 'MAESTRO_CLOSURE_AUTOPILOT_V4_RESULT.json'
+          [ordered]@{
+              schema_version = 3
+              status = 'BLOCKED_WITH_EXACT_EVIDENCE'
+              blockers = @('BLOCKER_ONE','BLOCKER_TWO')
+              runner_errors = @(
+                  [ordered]@{
+                      stage = 'find-local-repository'
+                      type = 'System.Management.Automation.RuntimeException'
+                      message = 'fixture error'
+                      script_line = 1175
+                  }
+              )
+          } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $closureJson -Encoding UTF8
+          [ordered]@{
+              last_json = $closureJson
+              owner_notification_signature = 'old'
+              last_signature = 'old'
+              consecutive_same_signature = 2
+          } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $installRoot 'autopilot-state.json') -Encoding UTF8
+          "FIXTURE_INSTALLED=$installed" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FIXTURE_CLOSURE_JSON=$closureJson" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Run the single CMD from a directory with no companion PS1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cmdPath = $env:STANDALONE_CMD
+          $directory = Split-Path -Parent $cmdPath
+          if (Test-Path -LiteralPath (Join-Path $directory 'MAESTRO_AUTOPILOT_V4_EXACT_REPAIR_V5.ps1')) {
+            throw 'A companion PS1 unexpectedly exists next to the CMD.'
+          }
+          $process = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/c',('"' + $cmdPath + '"')) -Wait -PassThru -WindowStyle Hidden
+          if ($process.ExitCode -ne 0) { throw "Standalone CMD exit code: $($process.ExitCode)" }
+          Write-Host 'STANDALONE_CMD_BOOTSTRAP_PASS'
+
+      - name: Wait for repair receipt and verify the full one-file contract
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installRoot = Join-Path $env:LOCALAPPDATA 'MAESTRO\AutopilotV4'
+          $deadline = [DateTimeOffset]::UtcNow.AddSeconds(90)
+          $receipt = $null
+          $receiptFile = $null
+          do {
+            $receiptFile = Get-ChildItem -LiteralPath $installRoot -Filter 'MAESTRO_AUTOPILOT_V4_EXACT_REPAIR_V5_RECEIPT.json' -File -Recurse -ErrorAction SilentlyContinue |
+              Sort-Object LastWriteTimeUtc -Descending |
+              Select-Object -First 1
+            if ($null -ne $receiptFile) {
+              try { $receipt = Get-Content -LiteralPath $receiptFile.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $receipt = $null }
+            }
+            if ($null -ne $receipt -and [string]$receipt.status -eq 'REPAIR_INSTALLED_AND_AUTOPILOT_RUN_STARTED') { break }
+            Start-Sleep -Seconds 2
+          } while ([DateTimeOffset]::UtcNow -lt $deadline)
+          if ($null -eq $receipt) { throw 'Repair receipt was not created.' }
+          if ([string]$receipt.status -ne 'REPAIR_INSTALLED_AND_AUTOPILOT_RUN_STARTED') { throw "Repair status: $($receipt.status); error=$($receipt.error)" }
+          if (-not [bool]$receipt.autopilot_run_started) { throw 'Autopilot Run was not started.' }
+
+          $extracted = Join-Path $env:LOCALAPPDATA 'MAESTRO\Repair\MAESTRO_AUTOPILOT_V4_EXACT_REPAIR_V5_ONE_FILE.ps1'
+          if (-not (Test-Path -LiteralPath $extracted -PathType Leaf)) { throw 'The embedded PS1 was not extracted from the standalone CMD.' }
+          $expectedPayload = [IO.File]::ReadAllText($env:EXTRACTED_PAYLOAD, [Text.Encoding]::UTF8).TrimStart([char]0xFEFF)
+          $actualPayload = [IO.File]::ReadAllText($extracted, [Text.Encoding]::UTF8).TrimStart([char]0xFEFF)
+          if ($expectedPayload.Replace("`r`n","`n") -ne $actualPayload.Replace("`r`n","`n")) { throw 'Extracted embedded payload differs from the validated payload.' }
+
+          $installedText = [IO.File]::ReadAllText($env:FIXTURE_INSTALLED, [Text.Encoding]::UTF8)
+          foreach ($required in @('$Documents = [Environment]::GetFolderPath','MAESTRO_UTF8_BOM_SESSION_V5','$ownerTextLines = New-Object')) {
+            if ($installedText -notmatch [Regex]::Escape($required)) { throw "Installed patch marker missing: $required" }
+          }
+          $noticePath = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)) 'MAESTRO_НУЖНО_ОДНО_ДЕЙСТВИЕ.txt'
+          if (-not (Test-Path -LiteralPath $noticePath -PathType Leaf)) { throw 'Owner notice was not created.' }
+          $notice = [IO.File]::ReadAllText($noticePath, [Text.Encoding]::UTF8)
+          foreach ($required in @('BLOCKER_ONE','BLOCKER_TWO','find-local-repository','fixture error')) {
+            if ($notice -notmatch [Regex]::Escape($required)) { throw "Owner notice missing: $required" }
+          }
+          if ($notice -match 'System\.Object\[\]') { throw 'System.Object[] remains in the owner notice.' }
+          Write-Host "RECEIPT=$($receiptFile.FullName)"
+          Write-Host 'ONE_FILE_FULL_CONTRACT_PASS'
+
+      - name: Create immutable Windows evidence
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = '.\maestro-v5-one-file-evidence'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          $cmdPath = $env:STANDALONE_CMD
+          $receiptFile = Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'MAESTRO\AutopilotV4') -Filter 'MAESTRO_AUTOPILOT_V4_EXACT_REPAIR_V5_RECEIPT.json' -File -Recurse |
+              Sort-Object LastWriteTimeUtc -Descending |
+              Select-Object -First 1
+          [ordered]@{
+              schema_version = 1
+              status = 'PASS'
+              source_commit = $env:GITHUB_SHA
+              standalone_cmd_sha256 = (Get-FileHash -LiteralPath $cmdPath -Algorithm SHA256).Hash.ToLowerInvariant()
+              windows_image = $env:ImageOS
+              powershell_version = $PSVersionTable.PSVersion.ToString()
+              single_file_directory = 'PASS'
+              no_companion_ps1 = 'PASS'
+              embedded_payload_exact = 'PASS'
+              embedded_payload_parser = 'PASS'
+              full_repair_fixture = 'PASS'
+              notice_without_system_object_array = 'PASS'
+              branch_deletion = $false
+              force_push = $false
+              history_rewrite = $false
+              git_reset_hard = $false
+              git_clean = $false
+          } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $out 'MAESTRO_V5_ONE_FILE_VALIDATION.json') -Encoding UTF8
+          Copy-Item -LiteralPath $cmdPath -Destination $out
+          Copy-Item -LiteralPath $receiptFile.FullName -Destination (Join-Path $out 'FIXTURE_REPAIR_RECEIPT.json')
+
+      - name: Upload immutable Windows evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-v5-one-file-${{ github.run_id }}
+          path: maestro-v5-one-file-evidence
+          if-no-files-found: error
+          retention-days: 90
