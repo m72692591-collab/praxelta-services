@@ -1,0 +1,82 @@
+name: PRAXELTA exact V4 Windows end-to-end
+
+on:
+  pull_request:
+    paths:
+      - "installer_test/v4.base64.part-*.txt"
+      - ".github/workflows/test-exact-v4-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-v4-windows-2022:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout exact fixture
+        uses: actions/checkout@v4
+
+      - name: Reconstruct exact user-delivered V4
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $builder = New-Object Text.StringBuilder
+          Get-ChildItem -LiteralPath 'installer_test' -Filter 'v4.base64.part-*.txt' -File |
+            Sort-Object Name |
+            ForEach-Object { [void]$builder.Append((Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8).Trim()) }
+          $bytes = [Convert]::FromBase64String($builder.ToString())
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
+          [IO.File]::WriteAllBytes($installer, $bytes)
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne 'ad6a4e71cd32467fd7308c40592bd00df807507375cef2ca965e64a2c0e48772') {
+            throw "EXACT_V4_HASH_MISMATCH_$hash"
+          }
+          if ($bytes.Length -ne 84311) { throw "EXACT_V4_SIZE_$($bytes.Length)" }
+          Write-Host "EXACT_V4_RECONSTRUCTED=$hash"
+
+      - name: Execute exact V4 end to end
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v4-installed'
+          $env:PRAXELTA_CI = '1'
+          $env:PRAXELTA_CI_TARGET = $target
+          $env:PRAXELTA_NO_PAUSE = '1'
+          & cmd.exe /d /c "`"$installer`""
+          $code = [int]$LASTEXITCODE
+          if ($code -ne 0) {
+            foreach ($path in @(
+              (Join-Path $target 'state\STABLE_INSTALL.json'),
+              (Join-Path $target 'state\FINAL_AUTONOMOUS_INSTALL.json'),
+              (Join-Path $target 'state\logs\stable-install.log'),
+              (Join-Path $target 'state\logs\final-autonomous-install.log')
+            )) {
+              if (Test-Path -LiteralPath $path) {
+                Write-Host "===== $path ====="
+                Get-Content -LiteralPath $path -Raw -ErrorAction SilentlyContinue
+              }
+            }
+            throw "EXACT_V4_EXIT_$code"
+          }
+          $python = Join-Path $target '.venv\Scripts\python.exe'
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw 'V4_VENV_PYTHON_MISSING' }
+          & $python -m praxelta_travel_ops.cli doctor
+          if ($LASTEXITCODE -ne 0) { throw 'V4_POST_INSTALL_DOCTOR_FAILED' }
+          Write-Host 'PRAXELTA_EXACT_V4_FULL_WINDOWS_INSTALL_PASS'
+
+      - name: Upload exact V4 and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-exact-v4-evidence-${{ github.run_number }}
+          path: |
+            PRAXELTA_ONE_CLICK_INSTALL_V4.cmd
+            ${{ runner.temp }}\praxelta-v4-installed\state\STABLE_INSTALL.json
+            ${{ runner.temp }}\praxelta-v4-installed\state\FINAL_AUTONOMOUS_INSTALL.json
+            ${{ runner.temp }}\praxelta-v4-installed\state\logs\stable-install.log
+            ${{ runner.temp }}\praxelta-v4-installed\state\logs\final-autonomous-install.log
+          if-no-files-found: warn
+          retention-days: 30
