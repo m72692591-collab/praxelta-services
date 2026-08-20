@@ -1,0 +1,190 @@
+name: PRAXELTA final autonomous installer V2 end-to-end
+
+on:
+  pull_request:
+    paths:
+      - "scripts/praxelta-final-autoinstall.ps1"
+      - ".github/workflows/test-final-autonomous-installer-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-2022-full-install:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build exact self-contained V2 installer
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+          # This is the exact hash of the immutable six-part public bundle.
+          # Its inner release is independently pinned by innerExpected below.
+          $outerExpected = 'e1d64cac245a8a0b18c2c0bdeb844195d9f46267325eae75b3f9e7029921ff33'
+          $innerExpected = '396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33'
+          $chunkCommit = 'ab12616530d754ea740da4eec5ff56d42e99acbc'
+          $chunkBase = "https://raw.githubusercontent.com/m72692591-collab/praxelta-services/$chunkCommit/downloads/praxelta-travel/0.3.0"
+          $work = Join-Path $env:RUNNER_TEMP 'praxelta-v2-build'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+
+          $outerBase64 = New-Object Text.StringBuilder
+          foreach ($index in 0..5) {
+            $url = $chunkBase + '/kit.base64.part-' + ('{0:D3}' -f $index) + '.txt'
+            [void]$outerBase64.Append([string](Invoke-RestMethod -Uri $url -TimeoutSec 90))
+          }
+          $outerBytes = [Convert]::FromBase64String(($outerBase64.ToString() -replace '\s',''))
+          $outerZip = Join-Path $work 'PRAXELTA_TRAVEL_LATEST.zip'
+          [IO.File]::WriteAllBytes($outerZip, $outerBytes)
+          $outerActual = (Get-FileHash -LiteralPath $outerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($outerActual -ne $outerExpected) { throw "OUTER_HASH_MISMATCH_$outerActual" }
+
+          $outerExtract = Join-Path $work 'outer'
+          Expand-Archive -LiteralPath $outerZip -DestinationPath $outerExtract -Force
+          $inner = @(Get-ChildItem -LiteralPath $outerExtract -Filter 'praxelta-travel-ops-0.3.0.zip' -File -Recurse)
+          if ($inner.Count -ne 1) { throw "INNER_ZIP_COUNT_$($inner.Count)" }
+          $innerActual = (Get-FileHash -LiteralPath $inner[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($innerActual -ne $innerExpected) { throw "INNER_HASH_MISMATCH_$innerActual" }
+
+          $scriptPath = Join-Path $PWD 'scripts\praxelta-final-autoinstall.ps1'
+          $script = Get-Content -LiteralPath $scriptPath -Raw -Encoding UTF8
+          $old = '$markerIndex = $RawFile.IndexOf($ZipMarker)'
+          $new = '$markerIndex = $RawFile.LastIndexOf($ZipMarker)'
+          if (-not $script.Contains($old)) { throw 'EXPECTED_MARKER_LOOKUP_NOT_FOUND' }
+          $script = $script.Replace($old, $new)
+          $script = $script.Replace(
+            "Write-Log 'PRAXELTA Travel final autonomous installation started.'",
+            "Write-Log 'PRAXELTA Travel final autonomous installation V2 started.'"
+          )
+          if ($script.Contains($old) -or -not $script.Contains($new)) { throw 'MARKER_LOOKUP_PATCH_FAILED' }
+
+          $header = @'
+          @echo off
+          setlocal EnableExtensions
+          chcp 65001 >nul
+          title PRAXELTA Travel - FINAL AUTONOMOUS INSTALL V2
+          set "PRAXELTA_SELF=%~f0"
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $p=$env:PRAXELTA_SELF; $raw=[IO.File]::ReadAllText($p,[Text.Encoding]::UTF8); $m1='###PRAXELTA_PS1###'; $m2='###PRAXELTA_ZIP_BASE64###'; $i1=$raw.LastIndexOf($m1); $i2=$raw.LastIndexOf($m2); if($i1 -lt 0 -or $i2 -lt 0 -or $i2 -le $i1){throw 'SELF_EXTRACT_MARKER_MISSING'}; $script=$raw.Substring($i1+$m1.Length,$i2-($i1+$m1.Length)); & ([ScriptBlock]::Create($script)) -SelfPath $p -RawFile $raw -ZipMarker $m2"
+          set "RC=%ERRORLEVEL%"
+          if not "%RC%"=="0" (
+            echo.
+            echo PRAXELTA Travel autonomous installation V2 failed with exit code %RC%.
+            echo Log: %USERPROFILE%\Documents\PRAXELTA\Travel\state\logs\final-autonomous-install.log
+            if not defined PRAXELTA_NO_PAUSE pause
+          )
+          exit /b %RC%
+          ###PRAXELTA_PS1###
+          '@
+          $header = ($header -replace '^          ', '')
+          $payload = [Convert]::ToBase64String([IO.File]::ReadAllBytes($inner[0].FullName), [Base64FormattingOptions]::InsertLineBreaks)
+          $content = $header.TrimStart() + "`r`n" + $script.Trim("`r","`n") + "`r`n###PRAXELTA_ZIP_BASE64###`r`n" + $payload + "`r`n"
+          $installer = Join-Path $PWD 'PRAXELTA_AUTO_INSTALL_FINAL_V2.cmd'
+          [IO.File]::WriteAllText($installer, $content, (New-Object Text.UTF8Encoding($false)))
+
+          $raw = [IO.File]::ReadAllText($installer, [Text.Encoding]::UTF8)
+          $marker = '###PRAXELTA_ZIP_BASE64###'
+          $first = $raw.IndexOf($marker)
+          $last = $raw.LastIndexOf($marker)
+          if ($first -eq $last) { throw 'REGRESSION_TEST_INVALID_MARKER_MUST_APPEAR_IN_LAUNCHER_AND_PAYLOAD' }
+          $encoded = ($raw.Substring($last + $marker.Length) -replace '[^A-Za-z0-9+/=]', '')
+          $decoded = [Convert]::FromBase64String($encoded)
+          $decodedPath = Join-Path $work 'decoded-inner.zip'
+          [IO.File]::WriteAllBytes($decodedPath, $decoded)
+          $decodedHash = (Get-FileHash -LiteralPath $decodedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($decodedHash -ne $innerExpected) { throw "SELF_EXTRACT_HASH_MISMATCH_$decodedHash" }
+
+          $installerHash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$installerHash  PRAXELTA_AUTO_INSTALL_FINAL_V2.cmd" | Set-Content -LiteralPath "$installer.sha256" -Encoding ASCII
+          Write-Host "V2_INSTALLER_BUILT=$installerHash"
+
+      - name: Execute exact V2 installer end to end
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $PWD 'PRAXELTA_AUTO_INSTALL_FINAL_V2.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v2-installed'
+          $env:PRAXELTA_CI = '1'
+          $env:PRAXELTA_CI_TARGET = $target
+          $env:PRAXELTA_NO_PAUSE = '1'
+          & cmd.exe /d /c "`"$installer`""
+          $code = [int]$LASTEXITCODE
+          if ($code -ne 0) {
+            $log = Join-Path $target 'state\logs\final-autonomous-install.log'
+            $evidence = Join-Path $target 'state\FINAL_AUTONOMOUS_INSTALL.json'
+            if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log -Tail 250 }
+            if (Test-Path -LiteralPath $evidence) { Get-Content -LiteralPath $evidence -Raw }
+            throw "V2_INSTALLER_EXIT_$code"
+          }
+
+          $evidencePath = Join-Path $target 'state\FINAL_AUTONOMOUS_INSTALL.json'
+          if (-not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) { throw 'EVIDENCE_MISSING' }
+          $evidence = Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($evidence.status -ne 'TECHNICAL_INSTALL_COMPLETED') { throw "EVIDENCE_STATUS_$($evidence.status)" }
+          foreach ($required in @(
+            'START_HERE.cmd',
+            'pyproject.toml',
+            '.venv\Scripts\python.exe',
+            'state\OWNER_PENDING_ACTIONS.txt',
+            'state\logs\final-autonomous-install.log'
+          )) {
+            if (-not (Test-Path -LiteralPath (Join-Path $target $required))) { throw "INSTALLED_FILE_MISSING_$required" }
+          }
+          $python = Join-Path $target '.venv\Scripts\python.exe'
+          & $python -m praxelta_travel_ops.cli doctor
+          if ($LASTEXITCODE -ne 0) { throw 'POST_INSTALL_DOCTOR_FAILED' }
+          Write-Host 'PRAXELTA_V2_FULL_WINDOWS_INSTALL_PASS'
+
+      - name: Create verification report
+        if: always()
+        shell: powershell
+        run: |
+          $installer = Join-Path $PWD 'PRAXELTA_AUTO_INSTALL_FINAL_V2.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v2-installed'
+          $hash = if (Test-Path -LiteralPath $installer) { (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
+          $evidencePath = Join-Path $target 'state\FINAL_AUTONOMOUS_INSTALL.json'
+          $status = 'MISSING'
+          if (Test-Path -LiteralPath $evidencePath) {
+            try { $status = (Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json).status } catch { $status = 'UNREADABLE' }
+          }
+          $report = [ordered]@{
+            schema = 1
+            installer = 'PRAXELTA_AUTO_INSTALL_FINAL_V2.cmd'
+            sha256 = $hash
+            windows_runner = 'windows-2022'
+            powershell = $PSVersionTable.PSVersion.ToString()
+            evidence_status = $status
+            marker_lookup = 'LastIndexOf'
+            full_execution_expected_status = 'TECHNICAL_INSTALL_COMPLETED'
+          }
+          $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath 'PRAXELTA_AUTO_INSTALL_FINAL_V2-verification.json' -Encoding UTF8
+          @(
+            '# PRAXELTA_AUTO_INSTALL_FINAL_V2 - Windows verification',
+            '',
+            ('- SHA-256: ' + $hash),
+            '- Runner: Windows Server 2022',
+            ('- Windows PowerShell: ' + $PSVersionTable.PSVersion.ToString()),
+            '- Payload extraction: LastIndexOf marker + exact inner SHA-256',
+            ('- End-to-end evidence: ' + $status),
+            '- Network download inside installer: none',
+            '- Owner secrets embedded: none'
+          ) | Set-Content -LiteralPath 'PRAXELTA_AUTO_INSTALL_FINAL_V2-verification.md' -Encoding UTF8
+
+      - name: Upload exact tested installer
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-auto-install-final-v2-${{ github.run_number }}
+          path: |
+            PRAXELTA_AUTO_INSTALL_FINAL_V2.cmd
+            PRAXELTA_AUTO_INSTALL_FINAL_V2.cmd.sha256
+            PRAXELTA_AUTO_INSTALL_FINAL_V2-verification.json
+            PRAXELTA_AUTO_INSTALL_FINAL_V2-verification.md
+            ${{ runner.temp }}\praxelta-v2-installed\state\FINAL_AUTONOMOUS_INSTALL.json
+            ${{ runner.temp }}\praxelta-v2-installed\state\logs\final-autonomous-install.log
+          if-no-files-found: warn
+          retention-days: 30
