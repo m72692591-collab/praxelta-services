@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "checked_at_utc": "2026-08-20T01:40:21.283753+00:00",
+  "repository": "m72692591-collab/praxelta-services",
+  "status": "EXTERNAL_BLOCKED_PROTECTED_ADMIN_EXECUTION_REQUIRED",
+  "target_description": "Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ",
+  "actual_description": "Публичная витрина услуг ПОТОК",
+  "target_homepage": "https://m72692591-collab.github.io/praxelta-services/",
+  "actual_homepage": "https://m72692591-collab.github.io/praxelta-services/",
+  "target_default_branch": "main",
+  "actual_default_branch": "main",
+  "repeat_api_get_verified": false,
+  "required_environment": "repository-administration",
+  "required_secret": "PRAXELTA_REPO_ADMIN_TOKEN",
+  "secret_value_stored": false,
+  "patch_attempted_by_observe_job": false
+}
