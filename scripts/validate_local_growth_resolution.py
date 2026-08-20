@@ -15,6 +15,13 @@ RESOLUTION = Path(
 STATUS = Path(
     "operations/salvage/local-service-growth-v3/INTEGRATION_STATUS.json"
 )
+SUCCESSOR = Path(
+    "operations/salvage/local-service-growth-v3/ACTIVE_PRODUCT_V2_SUCCESSOR.json"
+)
+PRODUCT_V2 = Path(
+    "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json"
+)
+ACTIVE_PRODUCT_VALIDATOR = Path("scripts/validate_active_product_v2.py")
 EXPECTED_PATHS = {
     "AGENTS.md",
     "README.md",
@@ -50,6 +57,99 @@ def git(root: Path, *args: str) -> str:
         capture_output=True,
         check=True,
     ).stdout.strip()
+
+
+def validate_successor(
+    root: Path,
+    successor: dict[str, Any],
+    historical_path: str,
+    historical_blob: str,
+    actual_blob: str,
+) -> list[str]:
+    errors: list[str] = []
+    if successor.get("schema_version") != 1:
+        errors.append("active-product successor schema drift")
+    if successor.get("status") != "FRESH_THEMATIC_SUCCESSOR":
+        errors.append("active-product successor status drift")
+    if successor.get("historical_resolution") != RESOLUTION.as_posix():
+        errors.append("active-product successor resolution link drift")
+    if successor.get("historical_path") != historical_path:
+        errors.append("active-product successor path drift")
+    if successor.get("historical_current_blob") != historical_blob:
+        errors.append("active-product successor historical blob drift")
+    if successor.get("successor_blob") != actual_blob:
+        errors.append("active-product successor blob drift")
+    head = successor.get("successor_head_sha")
+    if not isinstance(head, str) or SHA_PATTERN.fullmatch(head) is None:
+        errors.append("active-product successor head SHA invalid")
+    if successor.get("successor_product_registry") != PRODUCT_V2.as_posix():
+        errors.append("active-product successor registry link drift")
+    if successor.get("successor_validator") != ACTIVE_PRODUCT_VALIDATOR.as_posix():
+        errors.append("active-product successor validator link drift")
+    if successor.get("source_branch_preserved") is not True:
+        errors.append("active-product successor source branch not preserved")
+    if successor.get("branch_deletion") is not False:
+        errors.append("active-product successor branch deletion drift")
+    if successor.get("history_rewrite") is not False:
+        errors.append("active-product successor history rewrite drift")
+    rationale = successor.get("rationale")
+    if not isinstance(rationale, str) or len(rationale.strip()) < 80:
+        errors.append("active-product successor rationale too short")
+
+    registry_path = root / PRODUCT_V2
+    validator_path = root / ACTIVE_PRODUCT_VALIDATOR
+    if not registry_path.is_file():
+        errors.append("active-product successor registry missing")
+    else:
+        try:
+            registry = load(registry_path)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            errors.append(f"active-product successor registry invalid: {exc}")
+        else:
+            product = registry.get("product") or {}
+            entry = product.get("entry_offer") or {}
+            gates = registry.get("commercial_gates") or {}
+            if registry.get("schema_version") != 2:
+                errors.append("active-product successor registry schema drift")
+            if registry.get("status") != "ACTIVE_PRODUCT_PRELAUNCH":
+                errors.append("active-product successor registry status drift")
+            if product.get("name") != "Управляемое продвижение и учёт обращений":
+                errors.append("active-product successor product name drift")
+            if entry.get("name") != "Экспресс":
+                errors.append("active-product successor tariff drift")
+            if entry.get("price_rub") != 7900:
+                errors.append("active-product successor price drift")
+            if entry.get("currency") != "RUB":
+                errors.append("active-product successor currency drift")
+            if entry.get("duration_days") != 7:
+                errors.append("active-product successor duration drift")
+            for key in (
+                "live_payments_enabled",
+                "first_paid_case_verified",
+                "revenue_verified",
+                "profit_verified",
+            ):
+                if gates.get(key) is not False:
+                    errors.append(f"active-product successor unproven gate enabled: {key}")
+    if not validator_path.is_file():
+        errors.append("active-product successor validator missing")
+
+    scope = successor.get("scope") or {}
+    expected_scope = {
+        "active_product": "Управляемое продвижение и учёт обращений",
+        "entry_offer": "Экспресс",
+        "price_rub": 7900,
+        "currency": "RUB",
+        "duration_days": 7,
+        "live_payments": False,
+        "first_paid_case_verified": False,
+        "revenue_verified": False,
+        "profit_verified": False,
+    }
+    for key, expected in expected_scope.items():
+        if scope.get(key) != expected:
+            errors.append(f"active-product successor scope drift: {key}")
+    return errors
 
 
 def validate(
@@ -103,6 +203,15 @@ def validate(
     if status.get("source_deletions_not_applied") not in ([], None):
         errors.append("unexpected source deletions in integration status")
 
+    successor: dict[str, Any] | None = None
+    successor_path = root / SUCCESSOR
+    if successor_path.is_file():
+        try:
+            successor = load(successor_path)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            errors.append(f"active-product successor invalid: {exc}")
+
+    successor_consumed = False
     for row in rows:
         if not isinstance(row, dict):
             errors.append("resolution row must be object")
@@ -127,9 +236,25 @@ def validate(
             errors.append(f"cannot hash current path {path}: {exc}")
         else:
             if actual_current != current_blob:
-                errors.append(
-                    f"current blob drift: {path}: expected {current_blob}, got {actual_current}"
-                )
+                if (
+                    path == "index.html"
+                    and successor is not None
+                    and successor.get("historical_path") == path
+                ):
+                    errors.extend(
+                        validate_successor(
+                            root,
+                            successor,
+                            path,
+                            current_blob,
+                            actual_current,
+                        )
+                    )
+                    successor_consumed = True
+                else:
+                    errors.append(
+                        f"current blob drift: {path}: expected {current_blob}, got {actual_current}"
+                    )
         if source_ref:
             try:
                 actual_source = git(root, "rev-parse", f"{source_ref}:{path}")
@@ -140,6 +265,9 @@ def validate(
                     errors.append(
                         f"source blob drift: {path}: expected {source_blob}, got {actual_source}"
                     )
+
+    if successor is not None and not successor_consumed:
+        errors.append("active-product successor exists but does not match a current blob transition")
 
     summary = resolution.get("summary") or {}
     expected_summary = {
@@ -192,16 +320,19 @@ def main() -> int:
         )
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         errors = [str(exc)]
+    successor_present = (root / SUCCESSOR).is_file()
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "PASS" if not errors else "FAIL",
         "error_count": len(errors),
         "errors": errors,
         "diverged_paths_resolved": 13 if not errors else 0,
         "unresolved_diverged_paths": 0 if not errors else 13,
-        "product_launch_unlocked": False,
-        "owner_product_decision_required": True,
-        "deployment_performed": False,
+        "historical_product_launch_unlocked": False,
+        "historical_owner_product_decision_required": True,
+        "active_product_v2_successor_present": successor_present,
+        "active_product_v2_external_gates_remain": True,
+        "deployment_performed_by_historical_resolution": False,
         "payments_enabled": False,
     }
     rendered = json.dumps(report, ensure_ascii=False, indent=2)
