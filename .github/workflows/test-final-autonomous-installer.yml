@@ -1,0 +1,53 @@
+name: PRAXELTA final autonomous installer
+
+on:
+  pull_request:
+    paths:
+      - "scripts/praxelta-final-autoinstall.ps1"
+      - ".github/workflows/test-final-autonomous-installer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse exact embedded script with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = Join-Path $PWD 'scripts\praxelta-final-autoinstall.ps1'
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            $path,
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | Format-List *
+            throw "PowerShell parser errors: $($errors.Count)"
+          }
+          $text = Get-Content -LiteralPath $path -Raw -Encoding UTF8
+          foreach ($required in @(
+            "396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33",
+            "scripts\setup_windows.ps1",
+            "scripts\create_shortcuts.ps1",
+            "scripts\write_pending_actions.ps1",
+            "TECHNICAL_INSTALL_COMPLETED"
+          )) {
+            if (-not $text.Contains($required)) {
+              throw "Required marker missing: $required"
+            }
+          }
+          if ($text.Contains('-EncodedCommand')) {
+            throw 'EncodedCommand is forbidden.'
+          }
+          if ($text.Contains('Invoke-WebRequest') -or $text.Contains('Invoke-RestMethod')) {
+            throw 'Network download is forbidden in the final self-contained installer.'
+          }
+          Write-Host 'PRAXELTA_FINAL_AUTOINSTALLER_PARSER_PASS'
