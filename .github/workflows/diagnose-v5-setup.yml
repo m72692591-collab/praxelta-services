@@ -1,0 +1,106 @@
+name: PRAXELTA V5 setup diagnostics
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/diagnose-v5-setup.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  diagnose-windows-2022:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Download the exact V5 artifact from the full run
+        uses: actions/download-artifact@v4
+        with:
+          name: praxelta-exact-v5-11
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 32426344123
+          path: artifact
+
+      - name: Extract exact V5 release and run bootstrap directly
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $v5 = Join-Path $PWD 'artifact\PRAXELTA_ONE_CLICK_INSTALL_V5.cmd'
+          if (-not (Test-Path -LiteralPath $v5 -PathType Leaf)) { throw 'V5_ARTIFACT_MISSING' }
+          $v5Hash = (Get-FileHash -LiteralPath $v5 -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "V5_HASH=$v5Hash"
+
+          $bytes = [IO.File]::ReadAllBytes($v5)
+          $markerText = '__PRAXELTA_PAYLOAD_5_94C2F7E5D3174B76A96D004979E0E278__'
+          $marker = [Text.Encoding]::ASCII.GetBytes($markerText + "`r`n")
+          $index = -1
+          for ($i = $bytes.Length - $marker.Length; $i -ge 0; $i--) {
+            $ok = $true
+            for ($j = 0; $j -lt $marker.Length; $j++) {
+              if ($bytes[$i + $j] -ne $marker[$j]) { $ok = $false; break }
+            }
+            if ($ok) { $index = $i; break }
+          }
+          if ($index -lt 0) { throw 'V5_MARKER_MISSING' }
+          $payload = New-Object byte[] ($bytes.Length - ($index + $marker.Length))
+          [Array]::Copy($bytes, $index + $marker.Length, $payload, 0, $payload.Length)
+
+          $work = Join-Path $env:RUNNER_TEMP 'praxelta-v5-diagnostic'
+          $outerZip = Join-Path $work 'outer.zip'
+          $outer = Join-Path $work 'outer'
+          $inner = Join-Path $work 'inner'
+          New-Item -ItemType Directory -Path $outer -Force | Out-Null
+          New-Item -ItemType Directory -Path $inner -Force | Out-Null
+          [IO.File]::WriteAllBytes($outerZip, $payload)
+          Expand-Archive -LiteralPath $outerZip -DestinationPath $outer -Force
+
+          $innerZip = Join-Path $outer 'praxelta-travel-ops-0.3.0.zip'
+          if (-not (Test-Path -LiteralPath $innerZip -PathType Leaf)) { throw 'INNER_RELEASE_MISSING' }
+          $innerHash = (Get-FileHash -LiteralPath $innerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($innerHash -ne '396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33') {
+            throw "INNER_HASH_MISMATCH_$innerHash"
+          }
+          Expand-Archive -LiteralPath $innerZip -DestinationPath $inner -Force
+          $root = Join-Path $inner 'praxelta-travel-ops-0.3.0'
+          if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw 'INNER_ROOT_MISSING' }
+
+          $utf8Bom = New-Object Text.UTF8Encoding($true)
+          Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.ps1' | ForEach-Object {
+            $text = [IO.File]::ReadAllText($_.FullName, [Text.Encoding]::UTF8)
+            [IO.File]::WriteAllText($_.FullName, $text, $utf8Bom)
+          }
+
+          Write-Host '=== COMMAND DISCOVERY ==='
+          Get-Command py.exe, python.exe, python3.exe -ErrorAction SilentlyContinue | Format-List Name,Source,Version
+          Write-Host '=== PYTHON VERSIONS ==='
+          foreach ($command in @('py.exe -3 --version', 'python.exe --version', 'python3.exe --version')) {
+            Write-Host "> $command"
+            cmd.exe /d /c $command
+            Write-Host "exit=$LASTEXITCODE"
+          }
+
+          Write-Host '=== BOOTSTRAP PYTHON DIRECT ==='
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $root 'scripts\bootstrap_python.ps1')
+          $bootstrapCode = [int]$LASTEXITCODE
+          Write-Host "BOOTSTRAP_EXIT=$bootstrapCode"
+          if ($bootstrapCode -ne 0) { throw "BOOTSTRAP_FAILED_$bootstrapCode" }
+
+          Write-Host '=== SETUP WINDOWS DIRECT ==='
+          $env:PRAXELTA_CI = '1'
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $root 'scripts\setup_windows.ps1')
+          $setupCode = [int]$LASTEXITCODE
+          Write-Host "SETUP_EXIT=$setupCode"
+          if ($setupCode -ne 0) { throw "SETUP_FAILED_$setupCode" }
+
+          Write-Host 'PRAXELTA_V5_DIRECT_SETUP_DIAGNOSTIC_PASS'
+
+      - name: Upload diagnostic tree
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-v5-diagnostic-${{ github.run_number }}
+          path: ${{ runner.temp }}\praxelta-v5-diagnostic
+          if-no-files-found: warn
+          retention-days: 14
