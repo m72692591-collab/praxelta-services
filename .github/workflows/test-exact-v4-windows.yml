@@ -1,4 +1,4 @@
-name: PRAXELTA exact V4 Windows end-to-end
+name: PRAXELTA exact V5 Windows end-to-end
 
 on:
   pull_request:
@@ -11,14 +11,14 @@ permissions:
   contents: read
 
 jobs:
-  exact-v4-windows-2022:
+  exact-v5-windows-2022:
     runs-on: windows-2022
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - name: Checkout exact fixture
         uses: actions/checkout@v4
 
-      - name: Reconstruct exact user-delivered V4
+      - name: Reconstruct exact user-delivered V4 source fixture
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -46,21 +46,115 @@ jobs:
           $encoded = $builder.ToString()
           if ($encoded.Length -ne 112416) { throw "EXACT_V4_BASE64_LENGTH_$($encoded.Length)" }
           $bytes = [Convert]::FromBase64String($encoded)
-          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
-          [IO.File]::WriteAllBytes($installer, $bytes)
-          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          $v4 = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
+          [IO.File]::WriteAllBytes($v4, $bytes)
+          $hash = (Get-FileHash -LiteralPath $v4 -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($hash -ne 'ad6a4e71cd32467fd7308c40592bd00df807507375cef2ca965e64a2c0e48772') {
             throw "EXACT_V4_HASH_MISMATCH_$hash"
           }
-          if ($bytes.Length -ne 84311) { throw "EXACT_V4_SIZE_$($bytes.Length)" }
-          Write-Host "EXACT_V4_RECONSTRUCTED=$hash"
+          Write-Host "EXACT_V4_SOURCE_VERIFIED=$hash"
 
-      - name: Execute exact V4 end to end
+      - name: Build exact V5 with Windows PowerShell 5.1 encoding repair
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
-          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v4-installed'
+          $v4 = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
+          $work = Join-Path $env:RUNNER_TEMP 'praxelta-v5-build'
+          $outerZip = Join-Path $work 'outer-v4.zip'
+          $outerDir = Join-Path $work 'outer-v5'
+          $newOuterZip = Join-Path $work 'outer-v5.zip'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          New-Item -ItemType Directory -Path $outerDir -Force | Out-Null
+
+          $all = [IO.File]::ReadAllBytes($v4)
+          $markerText = '__PRAXELTA_PAYLOAD_4E5A66C87D114B46B4BDA3D9A41BBE21__'
+          $marker = [Text.Encoding]::ASCII.GetBytes($markerText + "`r`n")
+          $index = -1
+          for ($i = $all.Length - $marker.Length; $i -ge 0; $i--) {
+            $ok = $true
+            for ($j = 0; $j -lt $marker.Length; $j++) {
+              if ($all[$i + $j] -ne $marker[$j]) { $ok = $false; break }
+            }
+            if ($ok) { $index = $i; break }
+          }
+          if ($index -lt 0) { throw 'V4_PAYLOAD_MARKER_NOT_FOUND' }
+          $offset = $index + $marker.Length
+          $outerBytes = New-Object byte[] ($all.Length - $offset)
+          [Array]::Copy($all, $offset, $outerBytes, 0, $outerBytes.Length)
+          [IO.File]::WriteAllBytes($outerZip, $outerBytes)
+          $outerHash = (Get-FileHash -LiteralPath $outerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($outerHash -ne 'a3ef458bbcd7fd4ef4733e3bcb0b79c77dcd7ead0310b07d66bbdff07d7e8ce9') {
+            throw "V4_OUTER_HASH_MISMATCH_$outerHash"
+          }
+          Expand-Archive -LiteralPath $outerZip -DestinationPath $outerDir -Force
+
+          $stableScript = Join-Path $outerDir 'install_praxelta_travel.ps1'
+          $stableText = [IO.File]::ReadAllText($stableScript, [Text.Encoding]::UTF8)
+          $needle = "    Get-ChildItem -LiteralPath `$Target -Recurse -File -Include *.ps1,*.cmd | Unblock-File -ErrorAction SilentlyContinue`r`n"
+          if (-not $stableText.Contains($needle)) {
+            $needle = "    Get-ChildItem -LiteralPath `$Target -Recurse -File -Include *.ps1,*.cmd | Unblock-File -ErrorAction SilentlyContinue`n"
+          }
+          if (-not $stableText.Contains($needle)) { throw 'ENCODING_PATCH_INSERTION_POINT_MISSING' }
+          $patch = @'
+              # Windows PowerShell 5.1 treats UTF-8 without BOM as an ANSI code page.
+              # Normalize every installed PowerShell script before the first child process.
+              $Utf8Bom = New-Object Text.UTF8Encoding($true)
+              Get-ChildItem -LiteralPath $Target -Recurse -File -Filter '*.ps1' | ForEach-Object {
+                  $PowerShellText = [IO.File]::ReadAllText($_.FullName, [Text.Encoding]::UTF8)
+                  [IO.File]::WriteAllText($_.FullName, $PowerShellText, $Utf8Bom)
+              }
+              Add-Step -Id 'powershell-encoding' -Passed $true -Message 'PowerShell scripts normalized to UTF-8 BOM for Windows PowerShell 5.1.'
+          '@
+          $patch = ($patch -replace '^              ', '')
+          $stableText = $stableText.Replace($needle, $needle + $patch + "`r`n")
+          [IO.File]::WriteAllText($stableScript, $stableText, (New-Object Text.UTF8Encoding($false)))
+
+          Compress-Archive -Path (Join-Path $outerDir '*') -DestinationPath $newOuterZip -CompressionLevel Optimal -Force
+          $newOuterHash = (Get-FileHash -LiteralPath $newOuterZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $v5 = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V5.cmd'
+          $v5MarkerText = '__PRAXELTA_PAYLOAD_5_94C2F7E5D3174B76A96D004979E0E278__'
+          $header = @"
+          @echo off
+          setlocal EnableExtensions
+          chcp 65001 >nul
+          title PRAXELTA Travel - ONE CLICK INSTALL V5
+          set "PRAXELTA_SELF=%~f0"
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "`$ErrorActionPreference='Stop';`$p=`$env:PRAXELTA_SELF;`$all=[IO.File]::ReadAllBytes(`$p);`$markerText='$v5MarkerText';`$m=[Text.Encoding]::ASCII.GetBytes(`$markerText+[Environment]::NewLine);`$idx=-1;for(`$i=`$all.Length-`$m.Length;`$i -ge 0;`$i--){`$ok=`$true;for(`$j=0;`$j -lt `$m.Length;`$j++){if(`$all[`$i+`$j] -ne `$m[`$j]){`$ok=`$false;break}};if(`$ok){`$idx=`$i;break}};if(`$idx -lt 0){throw 'PAYLOAD_MARKER_NOT_FOUND'};`$offset=`$idx+`$m.Length;`$length=`$all.Length-`$offset;`$zip=New-Object byte[] `$length;[Array]::Copy(`$all,`$offset,`$zip,0,`$length);`$shaObj=[Security.Cryptography.SHA256]::Create();try{`$sha=(-join (`$shaObj.ComputeHash(`$zip)|ForEach-Object{`$_.ToString('x2')}))}finally{`$shaObj.Dispose()};if(`$sha -ne '$newOuterHash'){throw ('EMBEDDED_KIT_HASH_MISMATCH_'+`$sha)};`$root=Join-Path `$env:USERPROFILE 'Documents\PRAXELTA\Installer\OneClickV5';if(Test-Path -LiteralPath `$root){Remove-Item -LiteralPath `$root -Recurse -Force};New-Item -ItemType Directory -Path `$root -Force|Out-Null;`$zipPath=Join-Path `$root 'PRAXELTA_TRAVEL_STABLE_INSTALLER_V5.zip';[IO.File]::WriteAllBytes(`$zipPath,`$zip);Expand-Archive -LiteralPath `$zipPath -DestinationPath `$root -Force;`$installer=Join-Path `$root 'install_praxelta_travel.ps1';if(-not(Test-Path -LiteralPath `$installer -PathType Leaf)){throw 'INSTALLER_SCRIPT_MISSING_AFTER_EXTRACTION'};& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File `$installer;`$code=[int]`$LASTEXITCODE;if(`$code -ne 0){throw ('STABLE_INSTALLER_EXIT_'+`$code)};Write-Host 'PRAXELTA_ONE_CLICK_V5_COMPLETED' -ForegroundColor Green;exit 0"
+          set "RC=%ERRORLEVEL%"
+          if not "%RC%"=="0" (
+            echo.
+            echo PRAXELTA Travel one-click V5 installation failed with exit code %RC%.
+            if exist "%USERPROFILE%\Documents\PRAXELTA\Travel\state\logs\stable-install.log" start "" notepad.exe "%USERPROFILE%\Documents\PRAXELTA\Travel\state\logs\stable-install.log"
+            if exist "%USERPROFILE%\Documents\PRAXELTA\Travel\state\STABLE_INSTALL.json" start "" notepad.exe "%USERPROFILE%\Documents\PRAXELTA\Travel\state\STABLE_INSTALL.json"
+            if not defined PRAXELTA_NO_PAUSE pause
+          )
+          exit /b %RC%
+          $v5MarkerText
+          "@
+          $header = ($header -replace '^          ', '').TrimStart()
+          $headerBytes = [Text.Encoding]::ASCII.GetBytes($header.Replace("`n", "`r`n"))
+          $payload = [IO.File]::ReadAllBytes($newOuterZip)
+          $stream = [IO.File]::Open($v5, [IO.FileMode]::Create, [IO.FileAccess]::Write)
+          try {
+            $stream.Write($headerBytes, 0, $headerBytes.Length)
+            $stream.Write($payload, 0, $payload.Length)
+          } finally {
+            $stream.Dispose()
+          }
+          $v5Hash = (Get-FileHash -LiteralPath $v5 -Algorithm SHA256).Hash.ToLowerInvariant()
+          @(
+            "v5_sha256=$v5Hash",
+            "outer_sha256=$newOuterHash",
+            "size=$((Get-Item -LiteralPath $v5).Length)"
+          ) | Set-Content -LiteralPath 'PRAXELTA_ONE_CLICK_INSTALL_V5.build.txt' -Encoding ASCII
+          Write-Host "PRAXELTA_V5_BUILT=$v5Hash"
+
+      - name: Execute exact V5 end to end
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V5.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v5-installed'
           $env:PRAXELTA_CI = '1'
           $env:PRAXELTA_CI_TARGET = $target
           $env:PRAXELTA_NO_PAUSE = '1'
@@ -69,33 +163,33 @@ jobs:
           if ($code -ne 0) {
             foreach ($path in @(
               (Join-Path $target 'state\STABLE_INSTALL.json'),
-              (Join-Path $target 'state\FINAL_AUTONOMOUS_INSTALL.json'),
-              (Join-Path $target 'state\logs\stable-install.log'),
-              (Join-Path $target 'state\logs\final-autonomous-install.log')
+              (Join-Path $target 'state\logs\stable-install.log')
             )) {
               if (Test-Path -LiteralPath $path) {
                 Write-Host "===== $path ====="
                 Get-Content -LiteralPath $path -Raw -ErrorAction SilentlyContinue
               }
             }
-            throw "EXACT_V4_EXIT_$code"
+            throw "EXACT_V5_EXIT_$code"
           }
           $python = Join-Path $target '.venv\Scripts\python.exe'
-          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw 'V4_VENV_PYTHON_MISSING' }
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw 'V5_VENV_PYTHON_MISSING' }
           & $python -m praxelta_travel_ops.cli doctor
-          if ($LASTEXITCODE -ne 0) { throw 'V4_POST_INSTALL_DOCTOR_FAILED' }
-          Write-Host 'PRAXELTA_EXACT_V4_FULL_WINDOWS_INSTALL_PASS'
+          if ($LASTEXITCODE -ne 0) { throw 'V5_POST_INSTALL_DOCTOR_FAILED' }
+          $evidencePath = Join-Path $target 'state\STABLE_INSTALL.json'
+          $evidence = Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($evidence.status -ne 'TECHNICAL_INSTALL_COMPLETED') { throw "V5_EVIDENCE_STATUS_$($evidence.status)" }
+          Write-Host 'PRAXELTA_EXACT_V5_FULL_WINDOWS_INSTALL_PASS'
 
-      - name: Upload exact V4 and evidence
+      - name: Upload exact V5 and evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: praxelta-exact-v4-evidence-${{ github.run_number }}
+          name: praxelta-exact-v5-${{ github.run_number }}
           path: |
-            PRAXELTA_ONE_CLICK_INSTALL_V4.cmd
-            ${{ runner.temp }}\praxelta-v4-installed\state\STABLE_INSTALL.json
-            ${{ runner.temp }}\praxelta-v4-installed\state\FINAL_AUTONOMOUS_INSTALL.json
-            ${{ runner.temp }}\praxelta-v4-installed\state\logs\stable-install.log
-            ${{ runner.temp }}\praxelta-v4-installed\state\logs\final-autonomous-install.log
+            PRAXELTA_ONE_CLICK_INSTALL_V5.cmd
+            PRAXELTA_ONE_CLICK_INSTALL_V5.build.txt
+            ${{ runner.temp }}\praxelta-v5-installed\state\STABLE_INSTALL.json
+            ${{ runner.temp }}\praxelta-v5-installed\state\logs\stable-install.log
           if-no-files-found: warn
           retention-days: 30
