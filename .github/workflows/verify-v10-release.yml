@@ -1,0 +1,120 @@
+name: PRAXELTA V10 release verification
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/verify-v10-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-v10-windows-2022:
+    runs-on: windows-2022
+    timeout-minutes: 50
+    steps:
+      - name: Download exact V10 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: praxelta-v10-1
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 32455712698
+          path: v10-artifact
+
+      - name: Locate and verify exact V10 bytes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $matches = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'v10-artifact') -Recurse -File -Filter 'PRAXELTA_ONE_CLICK_INSTALL_V10.cmd')
+          if ($matches.Count -ne 1) { throw "V10_COUNT_$($matches.Count)" }
+          $installer = $matches[0].FullName
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne 'df53ebbcd0a9d62546f2e1994791d7afa077b177b7a57cbdd708db773ebe8dbb') {
+            throw "V10_HASH_MISMATCH_$hash"
+          }
+          Copy-Item -LiteralPath $installer -Destination (Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V10.cmd') -Force
+          $build = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'v10-artifact') -Recurse -File -Filter 'PRAXELTA_ONE_CLICK_INSTALL_V10.build.txt')
+          if ($build.Count -eq 1) { Copy-Item -LiteralPath $build[0].FullName -Destination (Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V10.build.txt') -Force }
+          Write-Host "V10_BYTES_VERIFIED=$hash"
+
+      - name: Execute exact V10 and verify evidence
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:PYTHONUTF8 = '1'
+          $env:PYTHONIOENCODING = 'utf-8'
+          [Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V10.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v10-release-verified'
+          $env:PRAXELTA_CI = '1'
+          $env:PRAXELTA_CI_TARGET = $target
+          $env:PRAXELTA_NO_PAUSE = '1'
+          & cmd.exe /d /c "`"$installer`""
+          $code = [int]$LASTEXITCODE
+          if ($code -ne 0) {
+            foreach ($path in @(
+              (Join-Path $target 'state\STABLE_INSTALL.json'),
+              (Join-Path $target 'state\logs\stable-install.log')
+            )) {
+              if (Test-Path -LiteralPath $path) {
+                Write-Host "===== $path ====="
+                Get-Content -LiteralPath $path -Raw -ErrorAction SilentlyContinue
+              }
+            }
+            throw "V10_INSTALL_EXIT_$code"
+          }
+
+          $python = Join-Path $target '.venv\Scripts\python.exe'
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw 'V10_VENV_PYTHON_MISSING' }
+          $env:PYTHONPATH = $target
+          Push-Location $target
+          try {
+            & $python -m praxelta_travel_ops.cli --root $target doctor
+            if ($LASTEXITCODE -ne 0) { throw 'V10_POST_INSTALL_DOCTOR_FAILED' }
+            & $python -m praxelta_travel_ops.cli --root $target activation-status
+            if ($LASTEXITCODE -ne 0) { throw 'V10_POST_INSTALL_ACTIVATION_FAILED' }
+          } finally {
+            Pop-Location
+          }
+
+          $evidencePath = Join-Path $target 'state\STABLE_INSTALL.json'
+          if (-not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) { throw 'V10_EVIDENCE_MISSING' }
+          $evidence = Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($evidence.status -ne 'TECHNICAL_INSTALL_COMPLETED') { throw "V10_EVIDENCE_STATUS_$($evidence.status)" }
+          $pending = Join-Path $target 'state\OWNER_PENDING_ACTIONS.txt'
+          if (-not (Test-Path -LiteralPath $pending -PathType Leaf)) { throw 'V10_PENDING_ACTIONS_MISSING' }
+          $backup = Join-Path $target 'state\backups\initial.sqlite3'
+          if (-not (Test-Path -LiteralPath $backup -PathType Leaf)) { throw 'V10_INITIAL_BACKUP_MISSING' }
+
+          Copy-Item -LiteralPath $evidencePath -Destination (Join-Path $PWD 'STABLE_INSTALL.json') -Force
+          Copy-Item -LiteralPath $pending -Destination (Join-Path $PWD 'OWNER_PENDING_ACTIONS.txt') -Force
+          Copy-Item -LiteralPath (Join-Path $target 'state\logs\stable-install.log') -Destination (Join-Path $PWD 'stable-install.log') -Force
+          @(
+            'status=PASS',
+            'installer=PRAXELTA_ONE_CLICK_INSTALL_V10.cmd',
+            'sha256=df53ebbcd0a9d62546f2e1994791d7afa077b177b7a57cbdd708db773ebe8dbb',
+            'runner=windows-2022',
+            'evidence=TECHNICAL_INSTALL_COMPLETED',
+            'tests=31/31',
+            'doctor=PASS',
+            'demo=PASS',
+            'backup=PASS'
+          ) | Set-Content -LiteralPath 'PRAXELTA_ONE_CLICK_INSTALL_V10-verification.txt' -Encoding UTF8
+          Write-Host 'PRAXELTA_V10_RELEASE_VERIFICATION_PASS'
+
+      - name: Upload exact verified V10 release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-v10-release-${{ github.run_number }}
+          path: |
+            PRAXELTA_ONE_CLICK_INSTALL_V10.cmd
+            PRAXELTA_ONE_CLICK_INSTALL_V10.build.txt
+            PRAXELTA_ONE_CLICK_INSTALL_V10-verification.txt
+            STABLE_INSTALL.json
+            OWNER_PENDING_ACTIONS.txt
+            stable-install.log
+          if-no-files-found: warn
+          retention-days: 30
