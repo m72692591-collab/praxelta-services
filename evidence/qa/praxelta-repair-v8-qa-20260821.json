@@ -1,0 +1,44 @@
+{
+  "schema": "praxelta_repair_v8_qa/1",
+  "recorded_at": "2026-08-21T20:45:00+08:00",
+  "branch": "feat/praxelta-repair-visual-system-v8",
+  "baseline_commit": "6190d661430ae0b5eeb5cfb999027a8863ae8d80",
+  "public_status": "CONCEPT_NOT_PRODUCTION",
+  "checks": {
+    "prototype_unit_component_safety": "11_PASS",
+    "public_site_preflight": "PASS_56_PAGES",
+    "python_type_syntax": "PASS",
+    "html_parse": "PASS",
+    "js_runtime_dom": "PASS_EDGE_ADMIN_ROUTE_AND_KOPECK_FORMATTING",
+    "wcag_aa_token_contrast": "PASS_MIN_4.97_TO_1",
+    "keyboard_semantics_static": "PASS",
+    "reduced_motion_static": "PASS",
+    "network_primitives": "ABSENT",
+    "secret_pii_pan_regex_scan": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "screenshots": {
+    "home_360": "B5AE2A478F3BE381F317F94E35914A95AB6D209268877AD0CEC430C1FC463944",
+    "home_390": "E8526E3AF31823568F414AB727DDEF7C5461DAB112E6EA65DF1F6ADA28490C40",
+    "home_430": "5D262157AEEECDD059C234ECA868F042DC8082A9198EE66E23222F4B59CA2185",
+    "home_renderer_fallback_500": "E0796B83BF71EA0117A734EAB4978190576D0442D3D46E6D35FB960B5C9A4E43",
+    "checkout_tablet_768": "B153168E178647694562BE2462A581AEC764B2A074FA27D536F90C148281AAC8",
+    "admin_desktop_1440": "3535ECDD5843BEEA3FEB708F51D2DF60ECD46FB6AB427BC9D7F4008A291A44D4"
+  },
+  "accessibility_notes": [
+    "Focus ring is 3px lime; touch targets are at least 44px.",
+    "Status always includes text and is announced through aria-live where state changes.",
+    "Reduced-motion removes meaningful animation duration; critical data never uses infinite animation.",
+    "Primary action gradient was darkened to keep white text at WCAG AA contrast."
+  ],
+  "humanity_gate": "PASS_HV2_CODEX_FINAL_EDIT",
+  "gemini_visual_route": "ROUTE_UNAVAILABLE_AUTH_PENDING",
+  "known_gaps": [
+    "No local MAX mini-app or private praxelta-ops frontend was found; implementation is in the existing public standalone prototype branch.",
+    "The static prototype has no backend and therefore fails closed for payment, insurance, stock, reserve and payout capabilities.",
+    "Edge command-line screenshots below 500 CSS px are cropped by the renderer minimum viewport; 360/390/430 breakpoint contracts passed structurally and the full mobile visual was inspected at the 500px renderer fallback.",
+    "No migration deployment gate, merge or deploy was performed."
+  ],
+  "rollback": "Delete the worktree or reset this feature branch to baseline commit 6190d661430ae0b5eeb5cfb999027a8863ae8d80; main is unchanged.",
+  "contains_secrets": false
+}

@@ -1,6 +1,6 @@
 # ПРАКСЕЛЬТА Ремонт V8 — Electric Atelier
 
-Статус: `INTERACTIVE_PROTOTYPE_ONLY`  
+Статус: `IMPLEMENTED_AS_INTERACTIVE_PROTOTYPE`
 Rollout: `FREE-FIRST-ROLLOUT-20260821-1`  
 База продукта: `V7.2.1_TBUSINESS_LIVE_ACCESS`
 
@@ -172,23 +172,24 @@ budget   0
 paid routes disabled
 ```
 
-Текущий coordinator-container не обнаружил `ollama`, `llama-cli`, Qwen CLI или соответствующие Python-модули. Точный статус: `OLLAMA_UNAVAILABLE`. Это не утверждение о неисправности локального MAESTRO владельца; контейнер не имеет доступа к пользовательскому Windows runtime. Независимые детерминированные этапы продолжены.
+Control task `praxelta-repair-v8-state-catalog-20260821-1` выполнен локально моделью `qwen2.5-coder:1.5b` за `15 565 ms`. Ответ прошёл JSON-проверку, fallback `qwen2.5-coder:0.5b` не потребовался. Полная квитанция без секретов сохранена в `evidence/router/`.
 
 ## QA
 
 В полном пакете V8 выполнено:
 
 ```text
-pytest: 6 passed
-node --check: PASS
-HTML parse: PASS
+prototype unit/component/safety: 11 passed
+public site preflight: PASS (56 pages)
+HTML and typed-token parse: PASS
 runtime external URLs: 0
 fetch/XMLHttpRequest/WebSocket/sendBeacon: absent
-PAN/CVV input fields: absent
+PAN/CVV/contact input fields: absent
+Edge screenshots: 360 / 390 / 430 / 768 / 1440
 production side effects: none
 ```
 
-Chromium в coordinator-container не завершил headless render / навигация блокировалась политикой. Статус: `BROWSER_RENDERER_UNAVAILABLE`. Для статического visual QA использован fallback renderer; полноценная screenshot regression должна быть повторена Codex в фактической frontend/CI-среде.
+Визуальная проверка выполнена реальным headless Microsoft Edge. Скриншоты находятся в `prototypes/repair-v8/screenshots/`; mobile и desktop кадры дополнительно просмотрены Codex.
 
 ## Критерии готовности к merge
 
