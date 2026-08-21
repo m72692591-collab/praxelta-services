@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="Автономный интерактивный прототип ПРАКСЕЛЬТА Ремонт V8. Без платежей и передачи данных.">
+  <title>ПРАКСЕЛЬТА Ремонт · Electric Atelier V8</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="responsive-fixes.css">
+</head>
+<body>
+  <div class="concept-notice" role="status">КОНЦЕПТ · ДАННЫЕ НЕ ОТПРАВЛЯЮТСЯ · ПЛАТЕЖЕЙ НЕТ</div>
+  <a class="skip-link" href="#app-content">К содержанию</a>
+  <main class="shell">
+    <aside class="intro" aria-label="О концепции">
+      <div class="brand"><span class="concept-mark" aria-hidden="true">Р</span><span>ПРАКСЕЛЬТА<small>Ремонт · Electric Atelier</small></span></div>
+      <h1>Ремонт без <span>серых зон</span></h1>
+      <p>Работа, детали и движение денег показаны отдельно. Доступность оплаты и защиты определяется только серверными возможностями.</p>
+      <div class="principles"><article><strong>Понятно</strong><span>На экране одно главное действие.</span></article><article><strong>Проверяемо</strong><span>У каждого статуса есть источник.</span></article><article><strong>Безопасно</strong><span>Банковские данные не вводятся здесь.</span></article><article><strong>Честно</strong><span>Неизвестное не выглядит доступным.</span></article></div>
+    </aside>
+
+    <section class="device" data-screen="home" aria-label="Интерактивный прототип приложения">
+      <header class="app-header"><button class="icon-button" type="button" data-open-state-panel aria-label="Показать системные состояния">☰</button><div class="app-brand"><span class="concept-mark" aria-hidden="true">Р</span><span><strong>ПРАКСЕЛЬТА Ремонт</strong><small>демо · не production</small></span></div><span class="connection-dot" title="Демо работает без сети" aria-label="Автономный демо-режим"></span></header>
+      <div class="viewport" id="app-content" tabindex="-1">
+        <section class="view active" data-view="home" aria-labelledby="home-title">
+          <article class="hero-card"><span class="eyebrow">ПРОЗРАЧНЫЙ РЕМОНТ</span><h2 id="home-title">Что нужно <em>починить?</em></h2><p>Опишите проблему. Сначала покажем предварительный диапазон, затем — подтверждённую смету.</p><button class="primary-action" type="button" data-go="request">Новая заявка</button></article>
+          <h3 class="section-title">Выберите направление</h3><div class="category-grid"><button type="button" data-go="request">Сантехника <span>→</span></button><button type="button" data-go="request">Электрика <span>→</span></button><button type="button" data-go="request">Техника <span>→</span></button><button type="button" data-go="request">Другая задача <span>→</span></button></div>
+          <article class="info-card compact"><span class="status-chip info">DEMO</span><p>Можно пройти весь путь без сети. Ничего не сохраняется и не отправляется.</p></article>
+        </section>
+
+        <section class="view" data-view="request" aria-labelledby="request-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="home" aria-label="Назад на главную">←</button><div><span class="eyebrow">НОВАЯ ЗАЯВКА · ШАГ 1 ИЗ 2</span><h2 id="request-title">Что случилось?</h2></div></header>
+          <label class="field">Опишите проблему<textarea id="problem" maxlength="500" placeholder="Например: кран подтекает у основания" aria-describedby="problem-help"></textarea><small id="problem-help">Не указывайте телефон, точный адрес или другие личные данные.</small></label>
+          <fieldset class="choice-group"><legend>Где нужна помощь</legend><label><input type="radio" name="location" checked> Саратов · район пока не указан</label><label><input type="radio" name="location"> Выбрать другой населённый пункт</label></fieldset>
+          <article class="upload-card"><span>＋</span><div><strong>Фото можно добавить позже</strong><small>В демо файл не выбирается и не загружается.</small></div></article><button class="primary-action" type="button" data-go="estimate">Показать предварительную оценку</button>
+        </section>
+
+        <section class="view" data-view="estimate" aria-labelledby="estimate-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="request" aria-label="Назад к заявке">←</button><div><span class="eyebrow">ПРЕДВАРИТЕЛЬНАЯ ОЦЕНКА</span><h2 id="estimate-title">Диапазон, не итоговая цена</h2></div></header>
+          <article class="estimate-card"><span class="status-chip process">УВЕРЕННОСТЬ: СРЕДНЯЯ</span><strong class="money" data-kopecks-min="240000" data-kopecks-max="480000">2 400–4 800 ₽</strong><p>Работа по описанию. Выезд и детали пока не подтверждены.</p></article>
+          <dl class="money-list"><div><dt>Работа</dt><dd>2 400–4 800 ₽</dd></div><div><dt>Выезд</dt><dd>статус неизвестен</dd></div><div><dt>Запчасти</dt><dd>отдельно после диагностики</dd></div></dl>
+          <article class="info-card"><span class="status-chip warning">НУЖНА ДИАГНОСТИКА</span><p>Мастер уточнит причину и предложит смету. Изменение цены потребует вашего подтверждения.</p></article><button class="primary-action" type="button" data-go="parts">Посмотреть прозрачную деталь</button>
+        </section>
+
+        <section class="view" data-view="parts" aria-labelledby="parts-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="estimate" aria-label="Назад к оценке">←</button><div><span class="eyebrow">ПРОЗРАЧНЫЕ ЗАПЧАСТИ</span><h2 id="parts-title">Предложение поставщика</h2></div></header>
+          <article class="part-card"><div class="part-visual" aria-hidden="true"></div><div><span class="status-chip info">СОВМЕСТИМОСТЬ: ПРОВЕРЯЕТСЯ</span><h3>Картридж смесителя · SKU DEMO-35</h3><p>Демонстрационная позиция без реального наличия.</p></div></article>
+          <article class="money-card"><h3>Поставщик: демо-магазин</h3><dl class="money-list"><div><dt>Публичная цена</dt><dd>1 350 ₽</dd></div><div><dt>Партнёрская цена</dt><dd>1 180 ₽</dd></div><div><dt>Скидка уровня мастера</dt><dd class="success-text">−100 ₽</dd></div><div class="total"><dt>Итог для клиента</dt><dd>1 080 ₽</dd></div></dl><p class="disclosure">ПРАКСЕЛЬТА получила бы от магазина 54 ₽. Вознаграждение не добавляется к цене клиента.</p></article>
+          <article class="freshness"><span class="status-chip stale">STALE</span><p>Наличие и цена не подтверждены backend. Резерв и покупка недоступны.</p></article><button class="primary-action" type="button" data-go="checkout">Проверить способы оплаты</button>
+        </section>
+
+        <section class="view" data-view="checkout" aria-labelledby="checkout-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="parts" aria-label="Назад к детали">←</button><div><span class="eyebrow">T‑БИЗНЕС CHECKOUT</span><h2 id="checkout-title">Оплата пока недоступна</h2></div></header>
+          <article class="bank-card"><span class="status-chip blocked">CAPABILITY: UNKNOWN</span><h3>Официальный PaymentURL</h3><p>Номер карты, CVV и банковские коды никогда не вводятся в ПРАКСЕЛЬТЕ.</p></article>
+          <dl class="capability-list"><div><dt>Интернет-эквайринг</dt><dd>не подтверждён</dd></div><div><dt>PaymentURL</dt><dd>не подтверждён</dd></div><div><dt>Webhook health</dt><dd>нет свежего статуса</dd></div></dl>
+          <div class="system-message blocked" role="status">Когда backend подтвердит все три возможности и свежий TTL, здесь появится переход на страницу банка.</div><button class="primary-action" type="button" disabled aria-disabled="true">Перейти к оплате</button><button class="secondary-action" type="button" data-go="split">Посмотреть демо split-статусов</button>
+        </section>
+
+        <section class="view" data-view="split" aria-labelledby="split-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="checkout" aria-label="Назад к оплате">←</button><div><span class="eyebrow">SPLIT PAYMENT · ДЕМО</span><h2 id="split-title">Каждая сумма — отдельно</h2></div></header>
+          <article class="split-card"><h3>Статус: частично подтверждено</h3><div class="split-leg cyan"><span></span><div><strong>PARTS_LEG</strong><small>поставщику · резерв ожидается</small></div><b>4 900 ₽</b></div><div class="split-leg violet"><span></span><div><strong>LABOR_LEG</strong><small>мастеру после приёмки</small></div><b>8 000 ₽</b></div><div class="split-leg magenta"><span></span><div><strong>MASTER_FEE</strong><small>ПРАКСЕЛЬТЕ · START_20</small></div><b>2 000 ₽</b></div></article>
+          <article class="info-card"><span class="status-chip partial">PARTIAL</span><p>Демо не считает заказ оплаченным: подтверждения банка и provider state нет.</p></article><button class="primary-action" type="button" data-go="order">Открыть активный заказ</button>
+        </section>
+
+        <section class="view" data-view="order" aria-labelledby="order-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="home" aria-label="Назад на главную">←</button><div><span class="eyebrow">АКТИВНЫЙ ЗАКАЗ · ДЕМО</span><h2 id="order-title">Смета изменилась</h2></div></header>
+          <article class="change-card"><span class="status-chip warning">НУЖНО РЕШЕНИЕ</span><dl class="money-list"><div><dt>Было</dt><dd>8 000 ₽</dd></div><div><dt>Стало</dt><dd>9 200 ₽</dd></div><div><dt>Разница</dt><dd>+1 200 ₽</dd></div></dl><p><strong>Причина:</strong> после диагностики выявлена дополнительная работа. Автор изменения: мастер.</p></article>
+          <div class="timeline" aria-label="Ход заказа"><div class="done"><span></span><p><strong>Заявка создана</strong><small>демо-событие</small></p></div><div class="done"><span></span><p><strong>Диагностика завершена</strong><small>демо-событие</small></p></div><div class="current"><span></span><p><strong>Ожидается решение клиента</strong><small>работы не продолжаются</small></p></div></div>
+          <button class="primary-action" type="button" data-demo-decision>Подтвердить изменение в демо</button><button class="secondary-action" type="button" data-show-dispute>Оспорить цену</button>
+        </section>
+
+        <section class="view" data-view="master" aria-labelledby="master-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="home" aria-label="Назад на главную">←</button><div><span class="eyebrow">КАБИНЕТ МАСТЕРА · ДЕМО</span><h2 id="master-title">Работа и выплата</h2></div></header>
+          <article class="profile-card"><div><span class="status-chip success">EXPERT</span><h3>Документы: демо-статус</h3></div><p>Тариф snapshot: <strong>START_20</strong><br>Комиссия берётся только с подтверждённой работы.</p></article>
+          <dl class="money-list"><div><dt>Оплаченная работа</dt><dd>10 000 ₽</dd></div><div><dt>Комиссия ПРАКСЕЛЬТЫ</dt><dd>2 000 ₽</dd></div><div class="total"><dt>Ожидаемая выплата</dt><dd>8 000 ₽</dd></div></dl>
+          <article class="system-message blocked"><strong>Выплата заблокирована</strong><p>Нет подтверждённой приёмки и provider state. Нужное действие: дождаться проверки заказа.</p></article><button class="primary-action" type="button" data-go="supplier">Открыть резерв детали</button>
+        </section>
+
+        <section class="view" data-view="supplier" aria-labelledby="supplier-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="master" aria-label="Назад в кабинет мастера">←</button><div><span class="eyebrow">ПОСТАВЩИК · РЕЗЕРВ</span><h2 id="supplier-title">QR ещё не выдан</h2></div></header>
+          <article class="qr-card"><div class="qr-placeholder" aria-label="QR недоступен">QR</div><div><span class="status-chip blocked">RESERVE: STALE</span><h3>SKU DEMO-35 · 1 шт.</h3><p>Филиал и цена требуют свежего подтверждения backend.</p></div></article>
+          <dl class="capability-list"><div><dt>Резерв</dt><dd>истёк</dd></div><div><dt>QR-выдача</dt><dd>заблокирована</dd></div><div><dt>Возврат</dt><dd>маршрут не подтверждён</dd></div><div><dt>Reconciliation</dt><dd>ожидается</dd></div></dl>
+          <button class="primary-action" type="button" disabled aria-disabled="true">Показать одноразовый QR</button><button class="secondary-action" type="button" data-go="admin">Открыть admin capability view</button>
+        </section>
+
+        <section class="view" data-view="admin" aria-labelledby="admin-title">
+          <header class="view-title"><button class="back-button" type="button" data-go="home" aria-label="Назад на главную">←</button><div><span class="eyebrow">ADMIN · БЕЗ СЕКРЕТОВ</span><h2 id="admin-title">Capability и сверка</h2></div></header>
+          <div class="admin-grid"><article><span class="status-chip blocked">UNKNOWN</span><strong>TBUSINESS_ACQUIRING</strong><small>нет свежего evidence</small></article><article><span class="status-chip stale">STALE</span><strong>PAYMENT_URL</strong><small>TTL истёк</small></article><article><span class="status-chip warning">PARTIAL</span><strong>WEBHOOK HEALTH</strong><small>последняя проверка неполная</small></article><article><span class="status-chip blocked">BLOCKED</span><strong>RECONCILIATION</strong><small>есть demo mismatch</small></article></div>
+          <article class="reconciliation-card"><h3>Mismatch queue · 1 демо-запись</h3><dl><div><dt>Ledger</dt><dd>13 000 ₽</dd></div><div><dt>Provider registry</dt><dd>нет подтверждения</dd></div><div><dt>Bank statement</dt><dd>не импортирована</dd></div></dl><p>Выплаты остаются заблокированы. Ручная отметка «сошлось» недоступна.</p></article><button class="primary-action" type="button" data-open-state-panel>Проверить системные состояния</button>
+        </section>
+      </div>
+
+      <nav class="bottom-nav" aria-label="Основная навигация"><button class="active" type="button" data-tab="home"><span>⌂</span>Главная</button><button type="button" data-tab="request"><span>＋</span>Заявка</button><button type="button" data-tab="order"><span>◇</span>Заказ</button><button type="button" data-tab="master"><span>☆</span>Мастер</button><button type="button" data-tab="admin"><span>▦</span>Admin</button></nav>
+      <dialog class="state-panel" id="state-panel" aria-labelledby="state-panel-title"><form method="dialog"><button class="close-button" aria-label="Закрыть">×</button></form><span class="eyebrow">STATE LAB · ДЕМО</span><h2 id="state-panel-title">Системные состояния</h2><p>Выберите состояние — приложение покажет причину и следующее безопасное действие.</p><label class="field">Состояние<select id="demo-state"><option value="loading">loading</option><option value="empty">empty</option><option value="error">error</option><option value="blocked">blocked</option><option value="offline">offline</option><option value="stale">stale</option><option value="partial">partial</option><option value="refund">refund</option><option value="dispute">dispute</option></select></label><div class="state-preview" id="state-preview" role="status" aria-live="polite"></div></dialog>
+      <div class="live-region" id="live-region" aria-live="polite" aria-atomic="true"></div>
+    </section>
+
+    <aside class="evidence" aria-label="Принципы реализации"><h2>Красиво — только когда <span>правдиво</span></h2><article><i class="ok"></i><div><strong>Capability-driven</strong><p>Неизвестные возможности остаются недоступными.</p></div></article><article><i class="ok"></i><div><strong>Все суммы в копейках</strong><p>В интерфейсе форматируется отдельное представление.</p></div></article><article><i class="ok"></i><div><strong>FREE-FIRST route</strong><p>Qwen 1.5B → 0.5B; Codex final QA; бюджет 0.</p></div></article><article><i class="warning"></i><div><strong>CONCEPT_NOT_PRODUCTION</strong><p>Знак, суммы, организации и события — демонстрационные.</p></div></article></aside>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

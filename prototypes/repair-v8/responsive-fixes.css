@@ -1,0 +1,25 @@
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.device {
+  min-width: 0;
+  max-width: 100vw;
+}
+
+.viewport:focus {
+  outline: none;
+}
+
+@keyframes view-in {
+  from { transform: translateX(12px); }
+  to { transform: none; }
+}
+
+@media (max-width: 760px) {
+  .app-brand,
+  .app-brand > span:last-child {
+    min-width: 0;
+  }
+}
