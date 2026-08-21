@@ -1,0 +1,226 @@
+name: PRAXELTA V7 full Windows end-to-end
+
+on:
+  pull_request:
+    paths:
+      - "installer_test/**"
+      - ".github/workflows/test-v7-full-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v7-windows-2022:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact fixture
+        uses: actions/checkout@v4
+
+      - name: Reconstruct exact V4 source
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ordered = @(
+            'installer_test\v4.fix.000a.txt',
+            'installer_test\v4.fix.000b.txt',
+            'installer_test\v4.base64.part-001.txt',
+            'installer_test\v4.base64.part-002.txt',
+            'installer_test\v4.fix.003a.txt',
+            'installer_test\v4.fix.003b.txt',
+            'installer_test\v4.fix.004a.txt',
+            'installer_test\v4.fix.004b.txt',
+            'installer_test\v4.base64.part-005.txt'
+          )
+          $builder = New-Object Text.StringBuilder
+          foreach ($relative in $ordered) {
+            if (-not (Test-Path -LiteralPath $relative -PathType Leaf)) { throw "FIXTURE_MISSING_$relative" }
+            $segment = (Get-Content -LiteralPath $relative -Raw -Encoding UTF8).Trim()
+            if ($relative -eq 'installer_test\v4.fix.004b.txt') {
+              if (-not $segment.EndsWith('Q')) { throw 'EXPECTED_FIXTURE_TAIL_Q_MISSING' }
+              $segment = $segment.Substring(0, $segment.Length - 1)
+            }
+            [void]$builder.Append($segment)
+          }
+          $encoded = $builder.ToString()
+          if ($encoded.Length -ne 112416) { throw "EXACT_V4_BASE64_LENGTH_$($encoded.Length)" }
+          $bytes = [Convert]::FromBase64String($encoded)
+          $v4 = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
+          [IO.File]::WriteAllBytes($v4, $bytes)
+          $hash = (Get-FileHash -LiteralPath $v4 -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne 'ad6a4e71cd32467fd7308c40592bd00df807507375cef2ca965e64a2c0e48772') {
+            throw "EXACT_V4_HASH_MISMATCH_$hash"
+          }
+          Write-Host "EXACT_V4_SOURCE_VERIFIED=$hash"
+
+      - name: Build V7 with Windows PowerShell 5.1 encoding repair
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $v4 = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V4.cmd'
+          $work = Join-Path $env:RUNNER_TEMP 'praxelta-v7-build'
+          $outerZip = Join-Path $work 'outer-v4.zip'
+          $outerDir = Join-Path $work 'outer-v7'
+          $newOuterZip = Join-Path $work 'outer-v7.zip'
+          New-Item -ItemType Directory -Path $outerDir -Force | Out-Null
+
+          $all = [IO.File]::ReadAllBytes($v4)
+          $sourceMarkerText = '__PRAXELTA_PAYLOAD_4E5A66C87D114B46B4BDA3D9A41BBE21__'
+          $sourceMarker = [Text.Encoding]::ASCII.GetBytes($sourceMarkerText)
+          $sourceIndex = -1
+          for ($i = $all.Length - $sourceMarker.Length; $i -ge 0; $i--) {
+            $ok = $true
+            for ($j = 0; $j -lt $sourceMarker.Length; $j++) {
+              if ($all[$i + $j] -ne $sourceMarker[$j]) { $ok = $false; break }
+            }
+            if ($ok) { $sourceIndex = $i; break }
+          }
+          if ($sourceIndex -lt 0) { throw 'V4_PAYLOAD_MARKER_NOT_FOUND' }
+          $sourceOffset = $sourceIndex + $sourceMarker.Length
+          while ($sourceOffset -lt $all.Length -and ($all[$sourceOffset] -eq 13 -or $all[$sourceOffset] -eq 10)) { $sourceOffset++ }
+          $outerBytes = New-Object byte[] ($all.Length - $sourceOffset)
+          [Array]::Copy($all, $sourceOffset, $outerBytes, 0, $outerBytes.Length)
+          [IO.File]::WriteAllBytes($outerZip, $outerBytes)
+          $outerHash = (Get-FileHash -LiteralPath $outerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($outerHash -ne 'a3ef458bbcd7fd4ef4733e3bcb0b79c77dcd7ead0310b07d66bbdff07d7e8ce9') {
+            throw "V4_OUTER_HASH_MISMATCH_$outerHash"
+          }
+          Expand-Archive -LiteralPath $outerZip -DestinationPath $outerDir -Force
+
+          $stableScript = Join-Path $outerDir 'install_praxelta_travel.ps1'
+          if (-not (Test-Path -LiteralPath $stableScript -PathType Leaf)) { throw 'STABLE_SCRIPT_MISSING' }
+          $stableText = [IO.File]::ReadAllText($stableScript, [Text.Encoding]::UTF8)
+          $needle = "    Get-ChildItem -LiteralPath `$Target -Recurse -File -Include *.ps1,*.cmd | Unblock-File -ErrorAction SilentlyContinue`r`n"
+          if (-not $stableText.Contains($needle)) {
+            $needle = "    Get-ChildItem -LiteralPath `$Target -Recurse -File -Include *.ps1,*.cmd | Unblock-File -ErrorAction SilentlyContinue`n"
+          }
+          if (-not $stableText.Contains($needle)) { throw 'ENCODING_PATCH_INSERTION_POINT_MISSING' }
+          $patch = @'
+              # Windows PowerShell 5.1 treats UTF-8 without BOM as the legacy ANSI code page.
+              $Utf8Bom = New-Object Text.UTF8Encoding($true)
+              Get-ChildItem -LiteralPath $Target -Recurse -File -Filter '*.ps1' | ForEach-Object {
+                  $PowerShellText = [IO.File]::ReadAllText($_.FullName, [Text.Encoding]::UTF8)
+                  [IO.File]::WriteAllText($_.FullName, $PowerShellText, $Utf8Bom)
+              }
+              Add-Step -Id 'powershell-encoding' -Passed $true -Message 'PowerShell scripts normalized to UTF-8 BOM for Windows PowerShell 5.1.'
+          '@
+          $patch = ($patch -replace '(?m)^              ', '').Trim("`r", "`n")
+          $stableText = $stableText.Replace($needle, $needle + $patch + "`r`n")
+          [IO.File]::WriteAllText($stableScript, $stableText, (New-Object Text.UTF8Encoding($false)))
+
+          Compress-Archive -Path (Join-Path $outerDir '*') -DestinationPath $newOuterZip -CompressionLevel Optimal -Force
+          $newOuterHash = (Get-FileHash -LiteralPath $newOuterZip -Algorithm SHA256).Hash.ToLowerInvariant()
+
+          $v7 = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V7.cmd'
+          $markerText = '__PRAXELTA_PAYLOAD_7_46E34D566F6448EA93E7D0E214AFDF20__'
+          $command = '$ErrorActionPreference=''Stop'';' +
+            '$p=$env:PRAXELTA_SELF;' +
+            '$all=[IO.File]::ReadAllBytes($p);' +
+            '$markerText=''' + $markerText + ''';' +
+            '$m=[Text.Encoding]::ASCII.GetBytes($markerText);' +
+            '$idx=-1;' +
+            'for($i=$all.Length-$m.Length;$i -ge 0;$i--){$ok=$true;for($j=0;$j -lt $m.Length;$j++){if($all[$i+$j] -ne $m[$j]){$ok=$false;break}};if($ok){$idx=$i;break}};' +
+            'if($idx -lt 0){throw ''PAYLOAD_MARKER_NOT_FOUND''};' +
+            '$offset=$idx+$m.Length;' +
+            'while($offset -lt $all.Length -and ($all[$offset] -eq 13 -or $all[$offset] -eq 10)){$offset++};' +
+            '$length=$all.Length-$offset;' +
+            '$zip=New-Object byte[] $length;' +
+            '[Array]::Copy($all,$offset,$zip,0,$length);' +
+            '$shaObj=[Security.Cryptography.SHA256]::Create();' +
+            'try{$sha=(-join ($shaObj.ComputeHash($zip)|ForEach-Object{$_.ToString(''x2'')}))}finally{$shaObj.Dispose()};' +
+            'if($sha -ne ''' + $newOuterHash + '''){throw (''EMBEDDED_KIT_HASH_MISMATCH_''+$sha)};' +
+            '$root=Join-Path $env:USERPROFILE ''Documents\PRAXELTA\Installer\OneClickV7'';' +
+            'if(Test-Path -LiteralPath $root){Remove-Item -LiteralPath $root -Recurse -Force};' +
+            'New-Item -ItemType Directory -Path $root -Force|Out-Null;' +
+            '$zipPath=Join-Path $root ''PRAXELTA_TRAVEL_STABLE_INSTALLER_V7.zip'';' +
+            '[IO.File]::WriteAllBytes($zipPath,$zip);' +
+            'Expand-Archive -LiteralPath $zipPath -DestinationPath $root -Force;' +
+            '$installer=Join-Path $root ''install_praxelta_travel.ps1'';' +
+            'if(-not(Test-Path -LiteralPath $installer -PathType Leaf)){throw ''INSTALLER_SCRIPT_MISSING_AFTER_EXTRACTION''};' +
+            '& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $installer;' +
+            '$code=[int]$LASTEXITCODE;' +
+            'if($code -ne 0){throw (''STABLE_INSTALLER_EXIT_''+$code)};' +
+            'Write-Host ''PRAXELTA_ONE_CLICK_V7_COMPLETED'' -ForegroundColor Green;' +
+            'exit 0'
+          $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
+          $header = @"
+          @echo off
+          setlocal EnableExtensions
+          chcp 65001 >nul
+          title PRAXELTA Travel - ONE CLICK INSTALL V7
+          set "PRAXELTA_SELF=%~f0"
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand $encodedCommand
+          set "RC=%ERRORLEVEL%"
+          if not "%RC%"=="0" (
+            echo.
+            echo PRAXELTA Travel one-click V7 installation failed with exit code %RC%.
+            if exist "%USERPROFILE%\Documents\PRAXELTA\Travel\state\logs\stable-install.log" start "" notepad.exe "%USERPROFILE%\Documents\PRAXELTA\Travel\state\logs\stable-install.log"
+            if exist "%USERPROFILE%\Documents\PRAXELTA\Travel\state\STABLE_INSTALL.json" start "" notepad.exe "%USERPROFILE%\Documents\PRAXELTA\Travel\state\STABLE_INSTALL.json"
+            if not defined PRAXELTA_NO_PAUSE pause
+          )
+          exit /b %RC%
+          $markerText
+          "@
+          $header = ($header -replace '(?m)^          ', '').TrimStart()
+          $headerBytes = [Text.Encoding]::ASCII.GetBytes($header + "`r`n")
+          $payload = [IO.File]::ReadAllBytes($newOuterZip)
+          $stream = [IO.File]::Open($v7, [IO.FileMode]::Create, [IO.FileAccess]::Write)
+          try {
+            $stream.Write($headerBytes, 0, $headerBytes.Length)
+            $stream.Write($payload, 0, $payload.Length)
+          } finally { $stream.Dispose() }
+          $v7Hash = (Get-FileHash -LiteralPath $v7 -Algorithm SHA256).Hash.ToLowerInvariant()
+          @(
+            "v7_sha256=$v7Hash",
+            "outer_sha256=$newOuterHash",
+            "size=$((Get-Item -LiteralPath $v7).Length)"
+          ) | Set-Content -LiteralPath 'PRAXELTA_ONE_CLICK_INSTALL_V7.build.txt' -Encoding ASCII
+          Write-Host "PRAXELTA_V7_BUILT=$v7Hash"
+
+      - name: Execute V7 end to end
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_INSTALL_V7.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v7-installed'
+          $env:PRAXELTA_CI = '1'
+          $env:PRAXELTA_CI_TARGET = $target
+          $env:PRAXELTA_NO_PAUSE = '1'
+          & cmd.exe /d /c "`"$installer`""
+          $code = [int]$LASTEXITCODE
+          if ($code -ne 0) {
+            foreach ($path in @(
+              (Join-Path $target 'state\STABLE_INSTALL.json'),
+              (Join-Path $target 'state\logs\stable-install.log')
+            )) {
+              if (Test-Path -LiteralPath $path) {
+                Write-Host "===== $path ====="
+                Get-Content -LiteralPath $path -Raw -ErrorAction SilentlyContinue
+                Copy-Item -LiteralPath $path -Destination (Join-Path $PWD ([IO.Path]::GetFileName($path))) -Force
+              }
+            }
+            throw "V7_EXIT_$code"
+          }
+          $python = Join-Path $target '.venv\Scripts\python.exe'
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw 'V7_VENV_PYTHON_MISSING' }
+          & $python -m praxelta_travel_ops.cli doctor
+          if ($LASTEXITCODE -ne 0) { throw 'V7_POST_INSTALL_DOCTOR_FAILED' }
+          $evidencePath = Join-Path $target 'state\STABLE_INSTALL.json'
+          $evidence = Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($evidence.status -ne 'TECHNICAL_INSTALL_COMPLETED') { throw "V7_EVIDENCE_STATUS_$($evidence.status)" }
+          Copy-Item -LiteralPath $evidencePath -Destination (Join-Path $PWD 'STABLE_INSTALL.json') -Force
+          Write-Host 'PRAXELTA_V7_FULL_WINDOWS_INSTALL_PASS'
+
+      - name: Upload exact V7 and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-v7-${{ github.run_number }}
+          path: |
+            PRAXELTA_ONE_CLICK_INSTALL_V7.cmd
+            PRAXELTA_ONE_CLICK_INSTALL_V7.build.txt
+            STABLE_INSTALL.json
+            stable-install.log
+          if-no-files-found: warn
+          retention-days: 30
