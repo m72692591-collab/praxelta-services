@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://id.vk.ru https://api.vk.ru https://api.vk.com; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <title>Подключение ANIMA TACTUS к VK</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #f3f6fb; color: #172033; }
+    main { width: min(100% - 28px, 680px); margin: 0 auto; padding: 28px 0 48px; }
+    .card { background: #fff; border: 1px solid #dce4ef; border-radius: 22px; padding: 24px; box-shadow: 0 16px 40px rgba(23,32,51,.08); }
+    .mark { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 17px; background: #2377f0; color: #fff; font-size: 27px; font-weight: 800; }
+    h1 { margin: 20px 0 10px; font-size: clamp(26px, 7vw, 38px); line-height: 1.08; }
+    p { margin: 10px 0; font-size: 17px; line-height: 1.55; }
+    .muted { color: #667085; }
+    button { width: 100%; min-height: 54px; margin-top: 20px; padding: 14px 18px; border: 0; border-radius: 15px; background: #2377f0; color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+    button:disabled { opacity: .58; cursor: wait; }
+    .status { margin-top: 20px; padding: 16px; border-radius: 15px; background: #eef5ff; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .status.ok { background: #eaf8ef; color: #176b3a; }
+    .status.error { background: #fff0f0; color: #9b1c1c; }
+    details { margin-top: 16px; border: 1px solid #dce4ef; border-radius: 15px; padding: 14px; }
+    summary { cursor: pointer; font-weight: 700; }
+    ul { margin: 10px 0 0; padding-left: 22px; }
+    li { margin: 8px 0; line-height: 1.4; }
+    code { overflow-wrap: anywhere; }
+    .privacy { margin-top: 18px; font-size: 14px; color: #667085; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card" aria-labelledby="title">
+      <div class="mark" aria-hidden="true">AT</div>
+      <h1 id="title">Подключение ANIMA TACTUS к VK</h1>
+      <p id="intro">Один защищённый вход позволит завершить аудит и применить только безопасные изменения в сообществе.</p>
+      <p class="muted">Обложка и аватар останутся без изменений. Публикации, видео, клипы и другие материалы не удаляются.</p>
+      <button id="connect" type="button">Подключить VK и продолжить</button>
+      <div id="status" class="status" role="status" aria-live="polite">Готово к подключению.</div>
+      <div id="details" hidden></div>
+      <p class="privacy">Ключ доступа обрабатывается только в этой вкладке, не сохраняется на сайте и не отправляется в GitHub или ChatGPT. После проверки он удаляется из памяти страницы.</p>
+    </section>
+  </main>
+  <script>
+  (() => {
+    'use strict';
+
+    const APP_ID = 54767065;
+    const GROUP_ID = 240179386;
+    const OWNER_ID = -GROUP_ID;
+    const API_VERSION = '5.199';
+    const OAUTH_VERSION = '2.6.1';
+    const REQUIRED_SCOPE = 'groups wall photos video status docs market stats offline';
+    const STORAGE_VERIFIER = 'anima_vk_pkce_verifier';
+    const STORAGE_STATE = 'anima_vk_oauth_state';
+    const CANONICAL_NAME = 'ANIMA TACTUS';
+    const CANONICAL_STATUS = 'Назвать чувства. Понять состояние. Выбрать следующий шаг.';
+    const CANONICAL_DESCRIPTION = 'ANIMA TACTUS — спокойное пространство для самонаблюдения. Здесь можно остановиться после значимой ситуации, назвать свои чувства без оценок и диагнозов, заметить их интенсивность и выбрать безопасный следующий шаг. В сообществе — практические материалы, новости приложения и авторских программ. Чтобы начать, нажмите «Написать» и отправьте слово «СТАРТ». ANIMA TACTUS не является диагностикой, лечением или экстренной помощью.';
+    const MESSAGE_LINK = 'https://vk.me/club240179386';
+    const MESSAGE_LINK_TEXT = 'Начать — написать';
+    const PINNED_POST = `Добро пожаловать в ANIMA TACTUS
+
+Это спокойное пространство, где можно остановиться после значимой ситуации, назвать свои чувства без оценок и диагнозов и выбрать безопасный следующий шаг.
+
+Что здесь можно сделать
+• понять, что происходит: ситуация → чувства → интенсивность;
+• использовать короткие практики самонаблюдения и приватной разгрузки;
+• следить за выходом приложения и авторских программ.
+
+Что доступно
+• практические материалы сообщества — уже здесь;
+• приложение ANIMA TACTUS — готовится к публичному выпуску;
+• «Семь встреч с собой» — готовится к выпуску;
+• 14-дневная программа с рабочим названием «Точка роста» — в разработке, продажи не открыты.
+
+Как начать
+Нажмите «Написать» и отправьте слово «СТАРТ». В сообщениях вы получите навигацию по ближайшему доступному формату.
+
+Важно: ANIMA TACTUS — образовательный инструмент самонаблюдения. Он не ставит диагнозы, не является лечением и не заменяет экстренную или профессиональную помощь. При угрозе жизни или безопасности обратитесь в местную экстренную службу.`;
+
+    const connectButton = document.getElementById('connect');
+    const statusBox = document.getElementById('status');
+    const detailsBox = document.getElementById('details');
+    let accessKey = null;
+
+    function setStatus(text, kind = '') {
+      statusBox.textContent = text;
+      statusBox.className = `status ${kind}`.trim();
+    }
+
+    function randomBase64Url(bytesLength) {
+      const bytes = new Uint8Array(bytesLength);
+      crypto.getRandomValues(bytes);
+      let binary = '';
+      bytes.forEach((value) => { binary += String.fromCharCode(value); });
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+
+    async function sha256Base64Url(value) {
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+      let binary = '';
+      new Uint8Array(digest).forEach((item) => { binary += String.fromCharCode(item); });
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+
+    function callbackUrl() {
+      return `${location.origin}${location.pathname}`;
+    }
+
+    async function beginAuthorization() {
+      connectButton.disabled = true;
+      setStatus('Открываю защищённый вход VK…');
+      const verifier = randomBase64Url(64);
+      const state = randomBase64Url(32);
+      const challenge = await sha256Base64Url(verifier);
+      sessionStorage.setItem(STORAGE_VERIFIER, verifier);
+      sessionStorage.setItem(STORAGE_STATE, state);
+
+      const url = new URL('https://id.vk.ru/authorize');
+      url.searchParams.set('response_type', 'code');
+      url.searchParams.set('client_id', String(APP_ID));
+      url.searchParams.set('app_id', String(APP_ID));
+      url.searchParams.set('redirect_uri', callbackUrl());
+      url.searchParams.set('code_challenge', challenge);
+      url.searchParams.set('code_challenge_method', 'S256');
+      url.searchParams.set('state', state);
+      url.searchParams.set('scope', REQUIRED_SCOPE);
+      url.searchParams.set('v', OAUTH_VERSION);
+      url.searchParams.set('sdk_type', 'vkid');
+      location.assign(url.toString());
+    }
+
+    function readOAuthResult() {
+      const query = new URLSearchParams(location.search);
+      const fragment = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const value = (name) => query.get(name) || fragment.get(name);
+      return {
+        code: value('code'),
+        deviceId: value('device_id'),
+        state: value('state'),
+        error: value('error'),
+        errorDescription: value('error_description')
+      };
+    }
+
+    async function exchangeCode(result) {
+      const verifier = sessionStorage.getItem(STORAGE_VERIFIER);
+      const expectedState = sessionStorage.getItem(STORAGE_STATE);
+      if (!verifier || !expectedState || !result.state || result.state !== expectedState) {
+        throw new Error('Защитная проверка входа не совпала. Начните подключение ещё раз.');
+      }
+      if (!result.code || !result.deviceId) {
+        throw new Error('VK не вернул код подтверждения. Начните подключение ещё раз.');
+      }
+
+      const query = new URLSearchParams({
+        grant_type: 'authorization_code',
+        redirect_uri: callbackUrl(),
+        client_id: String(APP_ID),
+        code_verifier: verifier,
+        state: expectedState,
+        device_id: result.deviceId
+      });
+      const response = await fetch(`https://id.vk.ru/oauth2/auth?${query.toString()}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ code: result.code })
+      });
+      const payload = await response.json();
+      if (!response.ok || payload.error || !payload.access_token) {
+        const reason = payload.error_description || payload.error || `HTTP ${response.status}`;
+        throw new Error(`VK не выдал ключ доступа: ${reason}`);
+      }
+      sessionStorage.removeItem(STORAGE_VERIFIER);
+      sessionStorage.removeItem(STORAGE_STATE);
+      history.replaceState({}, document.title, callbackUrl());
+      return payload.access_token;
+    }
+
+    function encodeParams(params) {
+      const body = new URLSearchParams();
+      Object.entries(params || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        if (Array.isArray(value)) body.set(key, value.join(','));
+        else if (typeof value === 'boolean') body.set(key, value ? '1' : '0');
+        else body.set(key, String(value));
+      });
+      body.set('access_token', accessKey);
+      body.set('v', API_VERSION);
+      return body;
+    }
+
+    async function vkApi(method, params = {}) {
+      let lastNetworkError = null;
+      for (const origin of ['https://api.vk.ru', 'https://api.vk.com']) {
+        try {
+          const response = await fetch(`${origin}/method/${method}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: encodeParams(params)
+          });
+          const payload = await response.json();
+          if (payload.error) {
+            const error = new Error(`${method}: ${payload.error.error_msg || 'ошибка VK'}`);
+            error.vkCode = payload.error.error_code;
+            throw error;
+          }
+          if (!Object.prototype.hasOwnProperty.call(payload, 'response')) {
+            throw new Error(`${method}: пустой ответ VK`);
+          }
+          return payload.response;
+        } catch (error) {
+          if (error.vkCode) throw error;
+          lastNetworkError = error;
+        }
+      }
+      throw lastNetworkError || new Error(`${method}: сеть недоступна`);
+    }
+
+    async function optionalCall(audit, key, method, params) {
+      try {
+        audit[key] = { ok: true, value: await vkApi(method, params) };
+      } catch (error) {
+        audit[key] = { ok: false, error: String(error.message || error) };
+      }
+    }
+
+    function itemsOf(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
+      if (Array.isArray(value.items)) return value.items;
+      if (Array.isArray(value.groups)) return value.groups;
+      return [];
+    }
+
+    function countOf(call) {
+      if (!call || !call.ok) return null;
+      const value = call.value;
+      if (typeof value?.count === 'number') return value.count;
+      if (Array.isArray(value)) return value.length;
+      if (Array.isArray(value?.items)) return value.items.length;
+      return null;
+    }
+
+    function groupOf(call) {
+      const value = call?.value;
+      if (Array.isArray(value)) return value[0] || {};
+      if (Array.isArray(value?.groups)) return value.groups[0] || {};
+      return value || {};
+    }
+
+    async function auditCommunity() {
+      const audit = {};
+      await Promise.all([
+        optionalCall(audit, 'group', 'groups.getById', {
+          group_id: GROUP_ID,
+          fields: 'description,status,activity,site,contacts,links,counters,cover,can_message,can_post,members_count'
+        }),
+        optionalCall(audit, 'settings', 'groups.getSettings', { group_id: GROUP_ID }),
+        optionalCall(audit, 'wall', 'wall.get', { owner_id: OWNER_ID, domain: `club${GROUP_ID}`, count: 100, filter: 'owner' }),
+        optionalCall(audit, 'videos', 'video.get', { owner_id: OWNER_ID, count: 200, extended: 1 }),
+        optionalCall(audit, 'photos', 'photos.getAll', { owner_id: OWNER_ID, count: 1 }),
+        optionalCall(audit, 'topics', 'board.getTopics', { group_id: GROUP_ID, count: 100 }),
+        optionalCall(audit, 'market', 'market.get', { owner_id: OWNER_ID, count: 200 }),
+        optionalCall(audit, 'docs', 'docs.get', { owner_id: OWNER_ID, count: 200 }),
+        optionalCall(audit, 'addresses', 'groups.getAddresses', { group_id: GROUP_ID, count: 100 })
+      ]);
+      return audit;
+    }
+
+    function normalizeUrl(value) {
+      return String(value || '').trim().replace(/\/$/, '').replace(/^http:\/\//, 'https://');
+    }
+
+    function attachmentId(item) {
+      const type = item?.type;
+      const media = item?.[type];
+      if (!type || !media || !Number.isInteger(media.owner_id) || !Number.isInteger(media.id)) return null;
+      if (!['photo', 'video', 'audio', 'doc', 'page', 'note', 'poll', 'album'].includes(type)) return null;
+      return `${type}${media.owner_id}_${media.id}${media.access_key ? `_${media.access_key}` : ''}`;
+    }
+
+    async function ensureMessageLink(audit, operations) {
+      const group = groupOf(audit.group);
+      const links = Array.isArray(group.links) ? group.links : [];
+      const existing = links.find((item) => normalizeUrl(item.url) === normalizeUrl(MESSAGE_LINK));
+      if (existing) {
+        if (existing.name !== MESSAGE_LINK_TEXT && existing.desc !== MESSAGE_LINK_TEXT && Number.isInteger(existing.id)) {
+          await vkApi('groups.editLink', { group_id: GROUP_ID, link_id: existing.id, text: MESSAGE_LINK_TEXT });
+          operations.push('Подпись ссылки на сообщения обновлена');
+        } else {
+          operations.push('Ссылка на сообщения уже настроена');
+        }
+        return;
+      }
+      await vkApi('groups.addLink', { group_id: GROUP_ID, link: MESSAGE_LINK, text: MESSAGE_LINK_TEXT });
+      operations.push('Добавлена ссылка «Начать — написать»');
+    }
+
+    async function ensureWelcomePost(audit, operations) {
+      if (!audit.wall?.ok) {
+        operations.push('Закреплённый пост пропущен: стену нельзя было безопасно проверить');
+        return null;
+      }
+      const posts = itemsOf(audit.wall.value);
+      const previousPinned = posts.find((item) => item.is_pinned === 1);
+      let welcome = posts.find((item) => String(item.text || '').trim() === PINNED_POST.trim());
+
+      if (!welcome) {
+        const closeMatch = posts.find((item) => {
+          const text = String(item.text || '');
+          return text.includes('Добро пожаловать в ANIMA TACTUS') && text.includes('Как начать');
+        });
+        if (closeMatch) {
+          const attachments = Array.isArray(closeMatch.attachments) ? closeMatch.attachments : [];
+          const preserved = attachments.map(attachmentId).filter(Boolean);
+          if (preserved.length === attachments.length) {
+            await vkApi('wall.edit', {
+              owner_id: OWNER_ID,
+              post_id: closeMatch.id,
+              message: PINNED_POST,
+              attachments: preserved
+            });
+            welcome = closeMatch;
+            operations.push('Существующий приветственный пост обновлён без удаления вложений');
+          } else {
+            welcome = closeMatch;
+            operations.push('Существующий приветственный пост сохранён: неизвестные вложения не изменялись');
+          }
+        }
+      }
+
+      if (!welcome) {
+        const created = await vkApi('wall.post', {
+          owner_id: OWNER_ID,
+          from_group: 1,
+          message: PINNED_POST,
+          guid: `anima-tactus-welcome-v1-${GROUP_ID}`
+        });
+        const postId = Number(created?.post_id ?? created);
+        if (!Number.isInteger(postId) || postId <= 0) throw new Error('wall.post: VK не вернул ID поста');
+        welcome = { id: postId };
+        operations.push('Создан новый приветственный пост');
+      }
+
+      await vkApi('wall.pin', { owner_id: OWNER_ID, post_id: welcome.id });
+      if (previousPinned && previousPinned.id !== welcome.id) {
+        operations.push(`Новый пост закреплён; прежний пост ${previousPinned.id} сохранён на стене`);
+      } else {
+        operations.push('Приветственный пост закреплён');
+      }
+      return welcome.id;
+    }
+
+    function buildSectionSettings(audit) {
+      const settings = {
+        group_id: GROUP_ID,
+        title: CANONICAL_NAME,
+        description: CANONICAL_DESCRIPTION,
+        messages: 1,
+        links: 1,
+        main_section: 42,
+        secondary_section: 9
+      };
+      const hidden = [];
+      const candidates = [
+        ['topics', 'topics', 'Обсуждения'],
+        ['video', 'videos', 'Видео'],
+        ['docs', 'docs', 'Документы'],
+        ['market', 'market', 'Товары'],
+        ['addresses', 'addresses', 'Адреса']
+      ];
+      candidates.forEach(([parameter, auditKey, label]) => {
+        if (countOf(audit[auditKey]) === 0) {
+          settings[parameter] = 0;
+          hidden.push(label);
+        }
+      });
+      if (countOf(audit.photos) === 0) {
+        settings.photos = 0;
+        hidden.push('Фотографии');
+      }
+      return { settings, hidden };
+    }
+
+    async function applySafeChanges(audit) {
+      const operations = [];
+      const failures = [];
+      const attempt = async (label, action) => {
+        try { await action(); }
+        catch (error) { failures.push(`${label}: ${String(error.message || error)}`); }
+      };
+
+      await attempt('Статус', async () => {
+        await vkApi('status.set', { group_id: GROUP_ID, text: CANONICAL_STATUS });
+        operations.push('Статус сообщества установлен');
+      });
+
+      await attempt('Ссылка', async () => ensureMessageLink(audit, operations));
+      let pinnedPostId = null;
+      await attempt('Закреплённый пост', async () => { pinnedPostId = await ensureWelcomePost(audit, operations); });
+
+      const sectionPlan = buildSectionSettings(audit);
+      await attempt('Настройки сообщества', async () => {
+        try {
+          await vkApi('groups.edit', sectionPlan.settings);
+          operations.push('Название, описание, сообщения и главные разделы приведены к канону');
+          if (sectionPlan.hidden.length) operations.push(`Скрыты подтверждённо пустые разделы: ${sectionPlan.hidden.join(', ')}`);
+        } catch (error) {
+          await vkApi('groups.edit', {
+            group_id: GROUP_ID,
+            title: CANONICAL_NAME,
+            description: CANONICAL_DESCRIPTION,
+            messages: 1,
+            links: 1
+          });
+          operations.push('Основные настройки применены; порядок разделов VK не принял и он сохранён');
+          throw new Error(`${error.message}; основные настройки применены резервным запросом`);
+        }
+      });
+
+      return { operations, failures, pinnedPostId, hiddenSections: sectionPlan.hidden };
+    }
+
+    function collectDeleteCandidates(audit) {
+      const candidates = [];
+      const group = groupOf(audit.group);
+      const links = Array.isArray(group.links) ? group.links : [];
+      const linkGroups = new Map();
+      links.forEach((item) => {
+        const key = normalizeUrl(item.url);
+        if (!key) return;
+        linkGroups.set(key, [...(linkGroups.get(key) || []), item]);
+      });
+      linkGroups.forEach((items, url) => {
+        if (items.length > 1) candidates.push(`Дубли ссылок (${items.length}): ${url}`);
+      });
+
+      const titleGroups = new Map();
+      itemsOf(audit.videos?.value).forEach((item) => {
+        const key = String(item.title || '').trim().toLocaleLowerCase('ru');
+        if (!key) {
+          candidates.push(`Видео без названия: ID ${item.id}`);
+          return;
+        }
+        titleGroups.set(key, [...(titleGroups.get(key) || []), item]);
+      });
+      titleGroups.forEach((items, title) => {
+        if (items.length > 1) candidates.push(`Видео с одинаковым названием (${items.length}): «${title}»`);
+      });
+      return candidates;
+    }
+
+    function safeText(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    function renderReport(audit, applied, verification) {
+      const initialGroup = groupOf(audit.group);
+      const finalGroup = groupOf(verification.group);
+      const finalWall = itemsOf(verification.wall?.value);
+      const pinned = finalWall.find((item) => item.is_pinned === 1);
+      const deleteCandidates = collectDeleteCandidates(audit);
+      const auditErrors = Object.entries(audit)
+        .filter(([, item]) => !item.ok)
+        .map(([key, item]) => `${key}: ${item.error}`);
+      const counts = [
+        ['Публикации', countOf(audit.wall)],
+        ['Видео и клипы', countOf(audit.videos)],
+        ['Фотографии', countOf(audit.photos)],
+        ['Обсуждения', countOf(audit.topics)],
+        ['Товары', countOf(audit.market)],
+        ['Документы', countOf(audit.docs)],
+        ['Адреса', countOf(audit.addresses)]
+      ];
+      const list = (items, empty) => items.length
+        ? `<ul>${items.map((item) => `<li>${safeText(item)}</li>`).join('')}</ul>`
+        : `<p class="muted">${safeText(empty)}</p>`;
+
+      detailsBox.innerHTML = `
+        <details open>
+          <summary>Что сделано</summary>
+          ${list(applied.operations, 'Изменения не потребовались.')}
+          ${applied.failures.length ? `<p><strong>Не удалось:</strong></p>${list(applied.failures, '')}` : ''}
+        </details>
+        <details>
+          <summary>Аудит разделов</summary>
+          <ul>${counts.map(([label, count]) => `<li>${safeText(label)}: ${count === null ? 'сохранено без изменений — VK не дал точный счётчик' : safeText(count)}</li>`).join('')}</ul>
+          ${auditErrors.length ? `<p><strong>Ограничения API:</strong></p>${list(auditErrors, '')}` : ''}
+        </details>
+        <details>
+          <summary>Проверка результата</summary>
+          <ul>
+            <li>Название: ${safeText(finalGroup.name || initialGroup.name || 'не прочитано')}</li>
+            <li>Описание: ${finalGroup.description === CANONICAL_DESCRIPTION ? 'подтверждено' : 'требует проверки'}</li>
+            <li>Закреплённый пост: ${pinned ? `ID ${safeText(pinned.id)}` : 'не подтверждён'}</li>
+            <li>Обложка и аватар: не изменялись</li>
+            <li>Удаления: не выполнялись</li>
+          </ul>
+        </details>
+        <details>
+          <summary>Что можно предложить удалить — только после вашего подтверждения</summary>
+          ${list(deleteCandidates, 'Явных дублей для удаления автоматически не найдено.')}
+        </details>`;
+      detailsBox.hidden = false;
+    }
+
+    async function run() {
+      connectButton.hidden = true;
+      setStatus('Вход подтверждён. Провожу полный безопасный аудит…');
+      const initialAudit = await auditCommunity();
+      setStatus('Аудит завершён. Применяю только обратимые изменения, без удалений…');
+      const applied = await applySafeChanges(initialAudit);
+      setStatus('Проверяю сообщество после изменений…');
+      const verification = {};
+      await Promise.all([
+        optionalCall(verification, 'group', 'groups.getById', {
+          group_id: GROUP_ID,
+          fields: 'description,status,activity,site,links,counters,cover,can_message,members_count'
+        }),
+        optionalCall(verification, 'settings', 'groups.getSettings', { group_id: GROUP_ID }),
+        optionalCall(verification, 'wall', 'wall.get', { owner_id: OWNER_ID, domain: `club${GROUP_ID}`, count: 20, filter: 'owner' })
+      ]);
+      renderReport(initialAudit, applied, verification);
+      accessKey = null;
+      setStatus(applied.failures.length
+        ? 'Настройка выполнена частично. Секретный ключ очищен; подробности показаны ниже.'
+        : 'Готово. Сообщество проверено и безопасно обновлено. Секретный ключ очищен.',
+        applied.failures.length ? '' : 'ok');
+    }
+
+    async function resumeIfCallback() {
+      const result = readOAuthResult();
+      if (result.error) {
+        history.replaceState({}, document.title, callbackUrl());
+        throw new Error(result.errorDescription || result.error);
+      }
+      if (!result.code) return false;
+      connectButton.hidden = true;
+      setStatus('Подтверждение получено. Завершаю защищённое подключение…');
+      accessKey = await exchangeCode(result);
+      await run();
+      return true;
+    }
+
+    connectButton.addEventListener('click', () => {
+      beginAuthorization().catch((error) => {
+        connectButton.disabled = false;
+        setStatus(String(error.message || error), 'error');
+      });
+    });
+
+    resumeIfCallback().catch((error) => {
+      accessKey = null;
+      sessionStorage.removeItem(STORAGE_VERIFIER);
+      sessionStorage.removeItem(STORAGE_STATE);
+      history.replaceState({}, document.title, callbackUrl());
+      connectButton.hidden = false;
+      connectButton.disabled = false;
+      connectButton.textContent = 'Повторить безопасное подключение';
+      setStatus(`Подключение не завершено: ${String(error.message || error)}`, 'error');
+    });
+  })();
+  </script>
+</body>
+</html>
