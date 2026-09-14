@@ -17,8 +17,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import requests
-from PIL import Image, ImageDraw, ImageFont
 
 API_VERSION = "5.199"
 API_ORIGINS = ("https://api.vk.ru/method", "https://api.vk.com/method")
@@ -127,6 +125,8 @@ class VKClient:
         self.timeout = timeout
 
     def call(self, method: str, **params: Any) -> Any:
+        import requests
+
         if method in DESTRUCTIVE_METHODS:
             raise VKError(method, "destructive method is blocked")
         payload = {
@@ -245,7 +245,9 @@ def audit_community(client: VKClient) -> dict[str, dict[str, Any]]:
     }
 
 
-def font(size: int, bold: bool = False) -> ImageFont.ImageFont:
+def font(size: int, bold: bool = False) -> Any:
+    from PIL import ImageFont
+
     choices = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold
         else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -258,7 +260,7 @@ def font(size: int, bold: bool = False) -> ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def wrap_pixels(draw: ImageDraw.ImageDraw, text: str, chosen_font: ImageFont.ImageFont, width: int) -> list[str]:
+def wrap_pixels(draw: Any, text: str, chosen_font: Any, width: int) -> list[str]:
     lines: list[str] = []
     for paragraph in text.splitlines() or [""]:
         words = paragraph.split()
@@ -277,6 +279,8 @@ def wrap_pixels(draw: ImageDraw.ImageDraw, text: str, chosen_font: ImageFont.Ima
 
 
 def render_card(spec: dict[str, Any]) -> bytes:
+    from PIL import Image, ImageDraw
+
     width, height = 1080, 1350
     image = Image.new("RGB", (width, height), "#F4F6FF")
     draw = ImageDraw.Draw(image)
@@ -318,6 +322,8 @@ def render_card(spec: dict[str, Any]) -> bytes:
 
 
 def upload_wall_photo(client: VKClient, image_bytes: bytes) -> str:
+    import requests
+
     server = client.call("photos.getWallUploadServer", group_id=client.group_id)
     upload_url = str(server.get("upload_url", ""))
     if not upload_url.startswith("https://"):
