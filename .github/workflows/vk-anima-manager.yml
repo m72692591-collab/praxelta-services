@@ -47,6 +47,15 @@ jobs:
           python scripts/vk_anima_manager.py \
             --plan operations/vk-anima-tactus/content-plan.json \
             --dry-run
+          python scripts/audit_brand_terms.py --root . --report /tmp/vk-brand.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('/tmp/vk-brand.json').read_text(encoding='utf-8'))
+          active = [item for item in data['findings'] if item['classification'] == 'ACTIVE_VIOLATION']
+          if active:
+              print(json.dumps(active, ensure_ascii=False, indent=2))
+          PY
           git diff --check
 
   manage:
