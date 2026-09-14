@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <link rel="canonical" href="https://m72692591-collab.github.io/praxelta-services/anima-tactus-vk.html">
   <meta http-equiv="Cache-Control" content="no-store">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://id.vk.ru https://api.vk.ru https://api.vk.com; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://id.vk.ru; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://api.vk.ru https://api.vk.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
   <title>Подключение ANIMA TACTUS к VK</title>
   <style>
     :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -86,6 +86,7 @@
     const statusBox = document.getElementById('status');
     const detailsBox = document.getElementById('details');
     let accessKey = null;
+    let jsonpSequence = 0;
 
     function setStatus(text, kind = '') {
       statusBox.textContent = text;
@@ -194,25 +195,53 @@
       return body;
     }
 
+    function vkApiJsonp(origin, method, params) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `__animaVkApi_${Date.now()}_${jsonpSequence++}`;
+        const script = document.createElement('script');
+        let finished = false;
+        let timer = null;
+
+        const finish = (error, value) => {
+          if (finished) return;
+          finished = true;
+          if (timer) clearTimeout(timer);
+          script.remove();
+          try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
+          if (error) reject(error);
+          else resolve(value);
+        };
+
+        window[callbackName] = (payload) => {
+          if (payload?.error) {
+            const error = new Error(`${method}: ${payload.error.error_msg || 'ошибка VK'}`);
+            error.vkCode = payload.error.error_code;
+            finish(error);
+            return;
+          }
+          if (!payload || !Object.prototype.hasOwnProperty.call(payload, 'response')) {
+            finish(new Error(`${method}: пустой ответ VK`));
+            return;
+          }
+          finish(null, payload.response);
+        };
+
+        const query = encodeParams(params);
+        query.set('callback', callbackName);
+        script.async = true;
+        script.referrerPolicy = 'no-referrer';
+        script.src = `${origin}/method/${encodeURIComponent(method)}?${query.toString()}`;
+        script.addEventListener('error', () => finish(new Error(`${method}: VK API недоступен через ${origin}`)));
+        timer = setTimeout(() => finish(new Error(`${method}: VK API не ответил вовремя`)), 20000);
+        document.head.appendChild(script);
+      });
+    }
+
     async function vkApi(method, params = {}) {
       let lastNetworkError = null;
       for (const origin of ['https://api.vk.ru', 'https://api.vk.com']) {
         try {
-          const response = await fetch(`${origin}/method/${method}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: encodeParams(params)
-          });
-          const payload = await response.json();
-          if (payload.error) {
-            const error = new Error(`${method}: ${payload.error.error_msg || 'ошибка VK'}`);
-            error.vkCode = payload.error.error_code;
-            throw error;
-          }
-          if (!Object.prototype.hasOwnProperty.call(payload, 'response')) {
-            throw new Error(`${method}: пустой ответ VK`);
-          }
-          return payload.response;
+          return await vkApiJsonp(origin, method, params);
         } catch (error) {
           if (error.vkCode) throw error;
           lastNetworkError = error;
