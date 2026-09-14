@@ -27,6 +27,7 @@ POLICY_EVIDENCE_PATHS = {
     "brand_registry.json",
     "governance/EPHEMERAL_WORKFLOW_RETIREMENT_V1.json",
     "governance/REPOSITORY_METADATA_RECEIPT.json",
+    "operations/evidence/repository-metadata-gate-latest.json",
 }
 ALLOWED_MARKERS = {
     "LEGACY_COMPATIBILITY_ONLY",
