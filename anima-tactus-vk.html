@@ -585,7 +585,7 @@
       });
     });
 
-    resumeIfCallback().catch((error) => {
+    function showConnectionError(error) {
       accessKey = null;
       sessionStorage.removeItem(STORAGE_VERIFIER);
       sessionStorage.removeItem(STORAGE_STATE);
@@ -594,7 +594,15 @@
       connectButton.disabled = false;
       connectButton.textContent = 'Повторить безопасное подключение';
       setStatus(`Подключение не завершено: ${String(error.message || error)}`, 'error');
-    });
+    }
+
+    resumeIfCallback()
+      .then((resumed) => {
+        const autoRun = new URLSearchParams(location.search).get('autorun') === '1';
+        if (!resumed && autoRun) return beginAuthorization();
+        return undefined;
+      })
+      .catch(showConnectionError);
   })();
   </script>
 </body>
