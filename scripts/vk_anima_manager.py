@@ -288,7 +288,7 @@ def render_card(spec: dict[str, Any]) -> bytes:
         draw.line((0, y, width, y), fill=color)
     draw.ellipse((720, -160, 1210, 330), fill=(62, 196, 181))
     draw.ellipse((-210, 970, 310, 1490), fill=(233, 111, 128))
-    draw.rounded_rectangle((70, 75, 1010, 1275), radius=54, fill=(255, 255, 255, 238))
+    draw.rounded_rectangle((70, 75, 1010, 1275), radius=54, fill=(255, 255, 255))
 
     eyebrow = str(spec.get("eyebrow", "ПРАКТИКА САМОНАБЛЮДЕНИЯ")).upper()
     title = str(spec.get("title", "Остановиться и заметить"))
