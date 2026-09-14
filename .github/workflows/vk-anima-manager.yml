@@ -1,4 +1,4 @@
-name: ANIMA TACTUS VK manager
+name: ANIMA TACTUS VK source validation
 
 on:
   pull_request:
@@ -7,28 +7,17 @@ on:
       - "tests/test_vk_anima_manager.py"
       - "operations/vk-anima-tactus/content-plan.json"
       - ".github/workflows/vk-anima-manager.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "scripts/vk_anima_manager.py"
-      - "tests/test_vk_anima_manager.py"
-      - "operations/vk-anima-tactus/content-plan.json"
-      - ".github/workflows/vk-anima-manager.yml"
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: anima-tactus-vk-manager
-  cancel-in-progress: false
+  group: anima-tactus-vk-source-validation-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -42,6 +31,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check --no-input requests pillow
       - name: Validate manager and content plan
         run: |
+          set -euo pipefail
           python -m py_compile scripts/vk_anima_manager.py tests/test_vk_anima_manager.py
           python -m unittest tests.test_vk_anima_manager -v
           python scripts/vk_anima_manager.py \
@@ -55,36 +45,6 @@ jobs:
           active = [item for item in data['findings'] if item['classification'] == 'ACTIVE_VIOLATION']
           if active:
               print(json.dumps(active, ensure_ascii=False, indent=2))
+              raise SystemExit(1)
           PY
           git diff --check
-
-  manage:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 12
-    steps:
-      - name: Checkout exact source
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install safe runtime
-        run: python -m pip install --disable-pip-version-check --no-input requests pillow
-      - name: Audit and manage ANIMA TACTUS
-        env:
-          VK_COMMUNITY_TOKEN: ${{ secrets.VK_COMMUNITY_TOKEN }}
-          VK_GROUP_ID: "240179386"
-        run: |
-          test -n "$VK_COMMUNITY_TOKEN"
-          python scripts/vk_anima_manager.py \
-            --plan operations/vk-anima-tactus/content-plan.json \
-            --report vk-anima-report/report.json
-      - name: Upload sanitized management report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: anima-tactus-vk-report-${{ github.run_id }}
-          path: vk-anima-report
-          if-no-files-found: warn
-          retention-days: 30
