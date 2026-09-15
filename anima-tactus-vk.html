@@ -37,7 +37,7 @@
     <section class="card" aria-labelledby="title">
       <div class="mark" aria-hidden="true">AT</div>
       <h1 id="title">Подключение ANIMA TACTUS к VK</h1>
-      <p id="intro">Один защищённый вход завершит фирменный маршрут «первого касания» и применит только безопасные изменения.</p>
+      <p id="intro">Один защищённый вход поможет закончить настройку сообщества и применит только безопасные изменения.</p>
       <p class="muted">Обложка и аватар останутся без изменений. Видео и клипы не удаляются, не скрываются, не обрезаются и не заменяются.</p>
       <button id="connect" type="button">Подключить VK и продолжить</button>
       <div id="status" class="status" role="status" aria-live="polite">Готово к подключению.</div>
@@ -58,31 +58,41 @@
     const STORAGE_VERIFIER = 'anima_vk_pkce_verifier';
     const STORAGE_STATE = 'anima_vk_oauth_state';
     const CANONICAL_NAME = 'ANIMA TACTUS — эмоции и самонаблюдение';
-    const CANONICAL_STATUS = 'Не исправлять себя. Сначала услышать. Вход: «ТАКТУС».';
-    const CANONICAL_DESCRIPTION = 'ANIMA TACTUS — пространство первого касания с собой.\n\nЗдесь не исправляют человека и не подбирают «правильную» эмоцию. После трудного момента мы предлагаем короткий маршрут: заметить факт → назвать чувства → определить интенсивность → выбрать безопасный следующий шаг.\n\nВ сообществе: авторские микропрактики, материалы для близких, новости приложения, «Семь встреч с собой» и 14-дневной программы.\n\nВаш вход — слово «ТАКТУС». Нажмите «Написать» и отправьте его без объяснений: дальше откроется карта первого касания.\n\nЭто образовательный инструмент самонаблюдения. Не является диагностикой, лечением или экстренной помощью.';
+    const CANONICAL_STATUS = 'Трудно понять, что вы чувствуете? Напишите «ТАКТУС».';
+    const CANONICAL_DESCRIPTION = 'ANIMA TACTUS помогает спокойно разобраться, что вы чувствуете и что можно сделать дальше.\n\nЗдесь мы не оцениваем человека и не обещаем «починить» его. Вы можете описать ситуацию, назвать чувства, отметить их силу от 0 до 10 и выбрать один безопасный шаг.\n\nВ сообществе публикуются короткие упражнения, материалы для близких и новости приложения. Вместе с приложением к выпуску готовится авторская программа «Назад в своё Я».\n\nЧтобы начать, нажмите «Написать» и отправьте «ТАКТУС». Необязательно сразу рассказывать всё — сначала мы предложим несколько понятных вариантов.\n\nANIMA TACTUS не ставит диагнозы, не лечит и не заменяет специалиста или экстренную помощь.';
     const MESSAGE_LINK = 'https://vk.me/club240179386';
-    const MESSAGE_LINK_TEXT = 'Первое касание — написать';
-    const PINNED_POST = `ПЕРВОЕ КАСАНИЕ
+    const MESSAGE_LINK_TEXT = 'Написать нам';
+    const PINNED_POST = `Если вы здесь впервые
 
-ANIMA TACTUS начинается не с анкеты, диагноза или обещания «починить себя». Оно начинается с честного момента: «Со мной сейчас что-то происходит — и я могу это заметить».
-
-Мы называем этот момент первым касанием.
+ANIMA TACTUS помогает разобраться, что с вами происходит, когда чувств много и трудно понять, что делать дальше.
 
 Здесь можно:
-• отделить факт от догадки;
-• назвать несколько настоящих чувств вместо одного «нормально»;
-• определить их интенсивность от 0 до 10;
-• выбрать ближайший безопасный шаг;
-• обратиться к живому человеку, когда одного инструмента недостаточно.
+• отделить то, что произошло, от своих догадок;
+• подобрать более точные слова для чувств;
+• оценить их силу от 0 до 10;
+• выбрать один безопасный шаг;
+• написать человеку, если самому справиться трудно.
 
-Уже здесь: авторские микропрактики и материалы для близких.
-Готовятся: приложение ANIMA TACTUS, «Семь встреч с собой» и 14-дневная программа. Продажи пока не открыты.
+Сейчас в сообществе уже есть короткие упражнения и материалы для близких. К выпуску готовятся приложение ANIMA TACTUS и авторская программа «Назад в своё Я».
 
-Ваш вход — одно слово: ТАКТУС
+С чего начать
 
-Нажмите «Написать» и отправьте «ТАКТУС». Не нужно сразу рассказывать всю историю: в ответ откроется карта первого касания.
+Нажмите «Написать» и отправьте слово «ТАКТУС». Необязательно сразу рассказывать всю историю. Сначала мы предложим несколько понятных вариантов, а вы выберете подходящий.
 
-ANIMA TACTUS — образовательный инструмент самонаблюдения. Он не ставит диагнозы, не является лечением и не заменяет профессиональную или экстренную помощь. При угрозе жизни или безопасности обратитесь в местную экстренную службу.`;
+ANIMA TACTUS не ставит диагнозы, не лечит и не заменяет специалиста или экстренную помощь. Если есть угроза жизни или безопасности, обратитесь в местную экстренную службу.`;
+
+    const HUMAN_COPY_BLOCKLIST = [
+      'карта первого касания',
+      'первое касание',
+      'контур чувства',
+      'замер живого',
+      'цифровой маршрут',
+      'живой отклик',
+      'семь встреч с собой',
+      'точка роста',
+      '14-днев',
+      '14 дней'
+    ];
 
     const connectButton = document.getElementById('connect');
     const statusBox = document.getElementById('status');
@@ -93,6 +103,21 @@ ANIMA TACTUS — образовательный инструмент самон�
     function setStatus(text, kind = '') {
       statusBox.textContent = text;
       statusBox.className = `status ${kind}`.trim();
+    }
+
+    function assertHumanCanonicalCopy() {
+      const text = [CANONICAL_STATUS, CANONICAL_DESCRIPTION, MESSAGE_LINK_TEXT, PINNED_POST]
+        .join('\n')
+        .toLocaleLowerCase('ru')
+        .replaceAll('ё', 'е');
+      for (const phrase of HUMAN_COPY_BLOCKLIST) {
+        if (text.includes(phrase.toLocaleLowerCase('ru').replaceAll('ё', 'е'))) {
+          throw new Error(`Текст остановлен перед публикацией: требуется человеческая редактура (${phrase})`);
+        }
+      }
+      if (!text.includes('назад в свое я')) {
+        throw new Error('Текст остановлен: не указана подтверждённая программа «Назад в своё Я»');
+      }
     }
 
     function randomBase64Url(bytesLength) {
@@ -115,6 +140,7 @@ ANIMA TACTUS — образовательный инструмент самон�
     }
 
     async function beginAuthorization() {
+      assertHumanCanonicalCopy();
       connectButton.disabled = true;
       setStatus('Открываю защищённый вход VK…');
       const verifier = randomBase64Url(64);
@@ -324,12 +350,12 @@ ANIMA TACTUS — образовательный инструмент самон�
           await vkApi('groups.editLink', { group_id: GROUP_ID, link_id: existing.id, text: MESSAGE_LINK_TEXT });
           operations.push('Подпись ссылки на сообщения обновлена');
         } else {
-          operations.push('Фирменная ссылка на первое касание уже настроена');
+          operations.push('Ссылка на сообщения уже настроена');
         }
         return;
       }
       await vkApi('groups.addLink', { group_id: GROUP_ID, link: MESSAGE_LINK, text: MESSAGE_LINK_TEXT });
-      operations.push('Добавлена ссылка «Первое касание — написать»');
+      operations.push('Добавлена ссылка «Написать нам»');
     }
 
     async function ensureWelcomePost(audit, operations) {
@@ -344,11 +370,13 @@ ANIMA TACTUS — образовательный инструмент самон�
       if (!welcome) {
         const closeMatch = posts.find((item) => {
           const text = String(item.text || '');
-          const legacyWelcome = text.includes('Добро пожаловать в ANIMA TACTUS')
+          const oldPublishedPost = text.includes('Добро пожаловать в ANIMA TACTUS')
             && text.includes('Как начать');
-          const brandedWelcome = text.includes('ПЕРВОЕ КАСАНИЕ')
+          const previousDraft = text.includes('ПЕРВОЕ КАСАНИЕ')
             && text.includes('Ваш вход');
-          return legacyWelcome || brandedWelcome;
+          const currentText = text.includes('Если вы здесь впервые')
+            && text.includes('С чего начать');
+          return oldPublishedPost || previousDraft || currentText;
         });
         if (closeMatch) {
           const attachments = Array.isArray(closeMatch.attachments) ? closeMatch.attachments : [];
@@ -581,6 +609,7 @@ ANIMA TACTUS — образовательный инструмент самон�
     }
 
     async function resumeIfCallback() {
+      assertHumanCanonicalCopy();
       const result = readOAuthResult();
       if (result.error) {
         history.replaceState({}, document.title, callbackUrl());
