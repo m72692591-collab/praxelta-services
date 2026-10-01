@@ -1,0 +1,19 @@
+{
+  "schema": "symbiosis_bounded_task_receipt/1",
+  "task_id": "praxelta-repair-v8-state-catalog-20260821-1",
+  "rollout_id": "FREE-FIRST-ROLLOUT-20260821-1",
+  "provider": "ollama-local",
+  "model": "qwen2.5-coder:1.5b",
+  "fallback_model": "qwen2.5-coder:0.5b",
+  "fallback_used": false,
+  "elapsed_ms": 15565,
+  "status": "READY",
+  "budget_rub": 0,
+  "stdout": {
+    "required_views": ["customer_request", "estimate", "transparent_parts", "capability_gated_hosted_checkout", "split_status", "active_order", "master_dashboard", "supplier_reserve_qr", "admin_reconciliation"],
+    "required_system_states": ["loading", "empty", "error", "blocked", "offline", "stale", "partial", "refund", "dispute"]
+  },
+  "stderr": "",
+  "contains_secrets": false,
+  "codex_final_qa_required": true
+}
