@@ -1,0 +1,196 @@
+name: PRAXELTA one-click V4 full Windows test
+
+on:
+  pull_request:
+    paths:
+      - "installer_payload/**"
+      - "scripts/praxelta-one-click-v4.ps1"
+      - ".github/workflows/test-one-click-v4.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-windows-install:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build exact one-click V4 file
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expected = '396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33'
+          $parts = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'installer_payload') -Filter 'inner.base64.part-*.txt' -File | Sort-Object Name)
+          if ($parts.Count -ne 11) { throw "PAYLOAD_PART_COUNT_$($parts.Count)" }
+
+          $builder = New-Object Text.StringBuilder
+          foreach ($part in $parts) {
+            [void]$builder.Append([IO.File]::ReadAllText($part.FullName, [Text.Encoding]::ASCII))
+          }
+          $encoded = $builder.ToString() -replace '\s', ''
+          $bytes = [Convert]::FromBase64String($encoded)
+          $innerZip = Join-Path $PWD 'praxelta-travel-ops-0.3.0.zip'
+          [IO.File]::WriteAllBytes($innerZip, $bytes)
+          $innerHash = (Get-FileHash -LiteralPath $innerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($innerHash -ne $expected) { throw "INNER_HASH_MISMATCH_$innerHash" }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead($innerZip)
+          try {
+            $names = @($archive.Entries | ForEach-Object FullName)
+            foreach ($required in @(
+              'praxelta-travel-ops-0.3.0/START_HERE.cmd',
+              'praxelta-travel-ops-0.3.0/pyproject.toml',
+              'praxelta-travel-ops-0.3.0/scripts/setup_windows.ps1',
+              'praxelta-travel-ops-0.3.0/scripts/write_pending_actions.ps1'
+            )) {
+              if ($names -notcontains $required) { throw "INNER_LAYOUT_MISSING_$required" }
+            }
+          } finally {
+            $archive.Dispose()
+          }
+
+          $bodyPath = Join-Path $PWD 'scripts\praxelta-one-click-v4.ps1'
+          $tokens = $null
+          $parseErrors = $null
+          [void][Management.Automation.Language.Parser]::ParseFile($bodyPath, [ref]$tokens, [ref]$parseErrors)
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | Format-List *
+            throw "BODY_PARSER_ERRORS_$($parseErrors.Count)"
+          }
+          $body = [IO.File]::ReadAllText($bodyPath, [Text.Encoding]::UTF8)
+
+          $header = @'
+          @echo off
+          setlocal EnableExtensions
+          chcp 65001 >nul
+          title PRAXELTA Travel - ONE CLICK V4
+          set "PRAXELTA_SELF=%~f0"
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop';$p=$env:PRAXELTA_SELF;$raw=[IO.File]::ReadAllText($p,[Text.Encoding]::UTF8);$m1=-join([char[]](58,95,95,80,82,65,88,69,76,84,65,95,80,83,95,86,52,95,95));$m2=-join([char[]](58,95,95,80,82,65,88,69,76,84,65,95,90,73,80,95,86,52,95,95));$i1=$raw.LastIndexOf($m1);$i2=$raw.LastIndexOf($m2);if($i1-lt0-or$i2-lt0-or$i2-le$i1){throw'SELF_EXTRACT_MARKER_MISSING'};$script=$raw.Substring($i1+$m1.Length,$i2-($i1+$m1.Length));$encoded=$raw.Substring($i2+$m2.Length)-replace'[^A-Za-z0-9+/=]','';$bytes=[Convert]::FromBase64String($encoded);$sha=[Security.Cryptography.SHA256]::Create();try{$hash=-join($sha.ComputeHash($bytes)|ForEach-Object{$_.ToString('x2')})}finally{$sha.Dispose()};if($hash-ne'396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33'){throw('EMBEDDED_ZIP_HASH_MISMATCH_'+$hash)};$tmp=Join-Path $env:TEMP('praxelta-v4-'+[Guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $tmp -Force|Out-Null;$zip=Join-Path $tmp'praxelta-travel-ops-0.3.0.zip';[IO.File]::WriteAllBytes($zip,$bytes);try{&([ScriptBlock]::Create($script))-SelfPath $p -EmbeddedZipPath $zip}finally{Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue}"
+          set "RC=%ERRORLEVEL%"
+          if not "%RC%"=="0" (
+            echo.
+            echo PRAXELTA Travel V4 installation failed with exit code %RC%.
+            echo Log: %USERPROFILE%\Documents\PRAXELTA\Travel\state\logs\one-click-v4-install.log
+            if not defined PRAXELTA_NO_PAUSE pause
+          )
+          exit /b %RC%
+          :__PRAXELTA_PS_V4__
+          '@
+          $header = ($header -replace '^          ', '').TrimStart()
+          $payload = [Convert]::ToBase64String($bytes, [Base64FormattingOptions]::InsertLineBreaks)
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_V4.cmd'
+          $content = $header + "`r`n" + $body.Trim("`r", "`n") + "`r`n:__PRAXELTA_ZIP_V4__`r`n" + $payload + "`r`n"
+          [IO.File]::WriteAllText($installer, $content, (New-Object Text.UTF8Encoding($false)))
+
+          $raw = [IO.File]::ReadAllText($installer, [Text.Encoding]::UTF8)
+          $psMarker = ':__PRAXELTA_PS_V4__'
+          $zipMarker = ':__PRAXELTA_ZIP_V4__'
+          $psCount = ([regex]::Matches($raw, [regex]::Escape($psMarker))).Count
+          $zipCount = ([regex]::Matches($raw, [regex]::Escape($zipMarker))).Count
+          if ($psCount -ne 1 -or $zipCount -ne 1) { throw "MARKER_COUNT_PS_${psCount}_ZIP_${zipCount}" }
+          $zipIndex = $raw.LastIndexOf($zipMarker)
+          $selfEncoded = $raw.Substring($zipIndex + $zipMarker.Length) -replace '[^A-Za-z0-9+/=]', ''
+          $selfBytes = [Convert]::FromBase64String($selfEncoded)
+          $selfZip = Join-Path $PWD 'self-extracted-inner.zip'
+          [IO.File]::WriteAllBytes($selfZip, $selfBytes)
+          $selfHash = (Get-FileHash -LiteralPath $selfZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($selfHash -ne $expected) { throw "SELF_EXTRACT_HASH_MISMATCH_$selfHash" }
+
+          $installerHash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$installerHash  PRAXELTA_ONE_CLICK_V4.cmd" | Set-Content -LiteralPath "$installer.sha256" -Encoding ASCII
+          Write-Host "ONE_CLICK_V4_BUILT=$installerHash"
+
+      - name: Execute exact one-click V4 file end to end
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_V4.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v4-installed'
+          $env:PRAXELTA_CI = '1'
+          $env:PRAXELTA_CI_TARGET = $target
+          $env:PRAXELTA_NO_PAUSE = '1'
+
+          & $env:ComSpec /d /c "`"$installer`""
+          $code = [int]$LASTEXITCODE
+          if ($code -ne 0) {
+            $log = Join-Path $target 'state\logs\one-click-v4-install.log'
+            $evidence = Join-Path $target 'state\ONE_CLICK_V4_INSTALL.json'
+            if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log -Tail 400 }
+            if (Test-Path -LiteralPath $evidence) { Get-Content -LiteralPath $evidence -Raw }
+            throw "ONE_CLICK_V4_EXIT_$code"
+          }
+
+          $evidencePath = Join-Path $target 'state\ONE_CLICK_V4_INSTALL.json'
+          if (-not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) { throw 'V4_EVIDENCE_MISSING' }
+          $evidence = Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($evidence.status -ne 'TECHNICAL_INSTALL_COMPLETED') { throw "V4_EVIDENCE_STATUS_$($evidence.status)" }
+          foreach ($required in @(
+            'START_HERE.cmd',
+            'pyproject.toml',
+            '.venv\Scripts\python.exe',
+            'state\OWNER_PENDING_ACTIONS.txt',
+            'state\logs\one-click-v4-install.log'
+          )) {
+            if (-not (Test-Path -LiteralPath (Join-Path $target $required))) { throw "V4_INSTALLED_FILE_MISSING_$required" }
+          }
+          $python = Join-Path $target '.venv\Scripts\python.exe'
+          & $python -m praxelta_travel_ops.cli doctor
+          if ($LASTEXITCODE -ne 0) { throw 'V4_POST_INSTALL_DOCTOR_FAILED' }
+          Write-Host 'PRAXELTA_ONE_CLICK_V4_FULL_WINDOWS_INSTALL_PASS'
+
+      - name: Create verification report
+        if: always()
+        shell: powershell
+        run: |
+          $installer = Join-Path $PWD 'PRAXELTA_ONE_CLICK_V4.cmd'
+          $target = Join-Path $env:RUNNER_TEMP 'praxelta-v4-installed'
+          $hash = if (Test-Path -LiteralPath $installer) { (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
+          $evidencePath = Join-Path $target 'state\ONE_CLICK_V4_INSTALL.json'
+          $status = 'MISSING'
+          if (Test-Path -LiteralPath $evidencePath) {
+            try { $status = (Get-Content -LiteralPath $evidencePath -Raw -Encoding UTF8 | ConvertFrom-Json).status } catch { $status = 'UNREADABLE' }
+          }
+          $report = [ordered]@{
+            schema = 1
+            installer = 'PRAXELTA_ONE_CLICK_V4.cmd'
+            sha256 = $hash
+            windows_runner = 'windows-2022'
+            powershell = $PSVersionTable.PSVersion.ToString()
+            embedded_release_sha256 = '396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33'
+            evidence_status = $status
+            marker_counts = [ordered]@{ ps = 1; zip = 1 }
+            network_download_inside_installer = $false
+          }
+          $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath 'PRAXELTA_ONE_CLICK_V4-verification.json' -Encoding UTF8
+          @(
+            '# PRAXELTA_ONE_CLICK_V4 - Windows verification',
+            '',
+            ('- SHA-256: ' + $hash),
+            '- Runner: Windows Server 2022',
+            ('- Windows PowerShell: ' + $PSVersionTable.PSVersion.ToString()),
+            '- Embedded release SHA-256: 396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33',
+            '- Markers: exactly one script marker and one ZIP marker',
+            ('- End-to-end evidence: ' + $status),
+            '- Network download inside installer: none',
+            '- Owner secrets embedded: none'
+          ) | Set-Content -LiteralPath 'PRAXELTA_ONE_CLICK_V4-verification.md' -Encoding UTF8
+
+      - name: Upload exact tested V4 file and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-one-click-v4-${{ github.run_number }}
+          path: |
+            PRAXELTA_ONE_CLICK_V4.cmd
+            PRAXELTA_ONE_CLICK_V4.cmd.sha256
+            PRAXELTA_ONE_CLICK_V4-verification.json
+            PRAXELTA_ONE_CLICK_V4-verification.md
+            ${{ runner.temp }}\praxelta-v4-installed\state\ONE_CLICK_V4_INSTALL.json
+            ${{ runner.temp }}\praxelta-v4-installed\state\logs\one-click-v4-install.log
+          if-no-files-found: warn
+          retention-days: 30
