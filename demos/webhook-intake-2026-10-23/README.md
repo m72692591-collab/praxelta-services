@@ -11,7 +11,7 @@ Python 3.10+: `python -m unittest -v test_intake.py`
 ```sh
 curl -s -X POST http://127.0.0.1:8765/intake \
   -H 'Content-Type: application/json' \
-  -d '{"event_id":"evt-001","email":"demo\u005cu0040example.com","name":"Demo Person","source":"website","message":"Need a quote"}'
+  -d '{"event_id":"evt-001","email":"demo\u0040example.com","name":"Demo Person","source":"website","message":"Need a quote"}'
 ```
 
 Expected first result: `{"status":"accepted","lead_id":1,"operation":"created"}`. Same event ID + payload: `duplicate_event`; same event ID + changed payload: HTTP 409. Another event ID with same email updates the record.
