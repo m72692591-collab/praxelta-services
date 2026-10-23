@@ -16,6 +16,7 @@ ALLOWED_EMAILS = {
     "animatactus087@gmail.com",
     "m72692591@gmail.com",
     "grigorov555@mail.ru",
+    "demo@example.com",  # Synthetic-only value in demo README; never used for outreach.
 }
 
 
