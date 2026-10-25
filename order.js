@@ -59,7 +59,7 @@
   const showOrder = (link) => {
     const mailto = new URL(link.href);
     recipient = mailto.pathname;
-    const subject = mailto.searchParams.get("subject") || "Запрос ПРАКСЕЛЬТА";
+    const subject = mailto.searchParams.get("subject") || "Запрос МАЭСТРО";
     const baseBody = mailto.searchParams.get("body") || "";
     const body = sourceCode ? `${baseBody}\nИсточник: ${sourceCode}` : baseBody;
 
