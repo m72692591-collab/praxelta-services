@@ -1,7 +1,7 @@
-# PRAXELTA: video pilot — 2026-10-24
+# MAESTRO: video pilot — 2026-10-24
 
 ## Goal
-Create original faceless educational Shorts to attract paid implementation inquiries for PRAXELTA. No paid ads. No fake client results, fabricated integrations, client data, or copied videos.
+Create original faceless educational Shorts to attract paid implementation inquiries for MAESTRO. No paid ads. No fake client results, fabricated integrations, client data, or copied videos.
 
 ## First video (production request submitted)
 - Topic: Your Telegram bot is matching the wrong customers? Here is the fix.
@@ -25,13 +25,13 @@ Create original faceless educational Shorts to attract paid implementation inqui
 **0:13–0:23** — “Instead, issue a unique, short-lived, one-time pairing code for each customer.”
 **0:23–0:31** — “The user enters it in Telegram. Your backend verifies the code and stores the verified customer-to-chat mapping.”
 **0:31–0:39** — “Now future notifications use that validated mapping. Add expiry, retry limits and an easy way to revoke.”
-**0:39–0:45** — “Need a reliable Airtable–Telegram workflow? PRAXELTA builds careful business automation.”
+**0:39–0:45** — “Need a reliable Airtable–Telegram workflow? MAESTRO builds careful business automation.”
 
 ## Upload metadata
 **Short title:** Telegram Bot Sending Messages to the Wrong Person? Fix the Matching
 **Description:**
-A reliable Airtable ↔ Telegram integration must correctly bind each customer to their Telegram chat, not rely on matching names or mixing IDs. This video explains one-time-code verification using a conceptual (synthetic) example. Need help with automations? Visit PRAXELTA: https://m72692591-collab.github.io/praxelta-services/
-**Tags:** #TelegramBot #Airtable #Automation #SmallBusiness #PRAXELTA
+A reliable Airtable ↔ Telegram integration must correctly bind each customer to their Telegram chat, not rely on matching names or mixing IDs. This video explains one-time-code verification using a conceptual (synthetic) example. Need help with automations? Visit MAESTRO: https://m72692591-collab.github.io/praxelta-services/
+**Tags:** #TelegramBot #Airtable #Automation #SmallBusiness #MAESTRO
 
 ## Acceptance / publication gates
 - [ ] Watch finished render for factual errors, subtitles, licensing and legibility.
