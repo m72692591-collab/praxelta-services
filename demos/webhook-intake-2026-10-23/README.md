@@ -1,4 +1,4 @@
-# PRAXELTA — Webhook Lead Intake (synthetic local demo)
+# MAESTRO — Webhook Lead Intake (synthetic local demo)
 
 Small reference implementation for a **paid pilot proposal**: input JSON validation, local SQLite persistence, repeat-event idempotency, duplicate lead detection, and auditable processing results. Zero external APIs and zero paid dependencies. This is **not** deployed in production, does **not** send messages to Telegram/WhatsApp, and is not an n8n/Make export.
 

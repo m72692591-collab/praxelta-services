@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "canonical_brand": {
-    "canonical_ru": "ПРАКСЕЛЬТА",
-    "canonical_latin": "PRAXELTA",
+    "canonical_ru": "МАЭСТРО",
+    "canonical_latin": "MAESTRO",
     "status": "CANONICAL_PUBLIC",
     "owner_approved": true
   },
@@ -26,7 +26,7 @@
     "new_development_allowed": false
   },
   "github_metadata": {
-    "required_description": "Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ",
+    "required_description": "Публичная витрина и рабочие материалы МАЭСТРО",
     "current_description_requires_migration": true
   }
 }
