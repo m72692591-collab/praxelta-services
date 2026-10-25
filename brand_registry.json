@@ -12,12 +12,12 @@
     "shared_public_brand_allowed": false
   },
   "rejected_active_names": [
-    "\u041f\u043e\u0442\u043e\u043a",
-    "\u041f\u041e\u0422\u041e\u041a",
-    "\u043f\u043e\u0442\u043e\u043a",
-    "\u0050\u006f\u0074\u006f\u006b",
-    "\u0050\u004f\u0054\u004f\u004b",
-    "\u0070\u006f\u0074\u006f\u006b"
+    "Поток",
+    "ПОТОК",
+    "поток",
+    "Potok",
+    "POTOK",
+    "potok"
   ],
   "legacy_repository": {
     "repository": "m72692591-collab/potok-services",
@@ -28,5 +28,22 @@
   "github_metadata": {
     "required_description": "Публичная витрина и рабочие материалы МАЭСТРО",
     "current_description_requires_migration": true
-  }
+  },
+  "separate_products": [
+    {
+      "product_name": "ПРАКСЕЛЬТА Ремонт",
+      "brand": "ПРАКСЕЛЬТА",
+      "codebase_repository": "m72692591-collab/praxelta-private",
+      "status": "SEPARATE_UNTOUCHED",
+      "customer_data_shared_with_maestro": false,
+      "pricing_independent": true
+    },
+    {
+      "product_name": "MAESTRO BUSINESS",
+      "brand": "МАЭСТРО",
+      "codebase_repository": "m72692591-collab/maestro-control",
+      "status": "INDEPENDENT_DIGITAL_AGENCY",
+      "customer_data_shared_with_repair": false
+    }
+  ]
 }
