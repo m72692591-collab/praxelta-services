@@ -196,3 +196,38 @@ def test_successor_cannot_enable_unproven_commercial_gate() -> None:
             "unproven gate enabled: first_paid_case_verified" in error
             for error in errors
         )
+
+
+def test_unrecorded_edit_after_rebrand_is_still_blocked() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory) / "repo"
+        shutil.copytree(
+            ROOT,
+            root,
+            ignore=shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__"),
+        )
+        for name in ("README.md", "index.html"):
+            path = root / name
+            original = path.read_bytes()
+            path.write_bytes(original + b"\nunrecorded change\n")
+            errors = validator.validate(root, load(RESOLUTION), load(STATUS))
+            assert any(f"current blob drift: {name}" in error for error in errors)
+            path.write_bytes(original)
+
+
+def test_brand_successor_cannot_replace_its_historical_predecessor() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory) / "repo"
+        shutil.copytree(
+            ROOT,
+            root,
+            ignore=shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__"),
+        )
+        path = root / validator.BRAND_SUCCESSOR
+        data = load(path)
+        row = next(row for row in data["changes"] if row["path"] == "index.html")
+        row["previous_blob"] = "0" * 40
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        errors = validator.validate(root, load(RESOLUTION), load(STATUS))
+        assert any("brand successor predecessor mismatch" in error for error in errors)
+        assert any("active-product successor blob drift" in error for error in errors)

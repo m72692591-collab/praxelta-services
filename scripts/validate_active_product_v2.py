@@ -12,7 +12,7 @@ PRODUCT_NAME = "Управляемое продвижение и учёт обр
 ENTRY_NAME = "Экспресс"
 PRICE_RUB = 7900
 DURATION_DAYS = 7
-DESCRIPTION = "Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ"
+DESCRIPTION = "Публичная витрина и рабочие материалы МАЭСТРО"
 HOMEPAGE = "https://m72692591-collab.github.io/praxelta-services/"
 
 

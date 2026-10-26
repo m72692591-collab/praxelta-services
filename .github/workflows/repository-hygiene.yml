@@ -5,6 +5,8 @@ on:
     paths:
       - ".github/workflows/**"
       - "governance/**"
+      - "brand_registry.json"
+      - "operations/branding/GITHUB_METADATA_TARGET.json"
       - "scripts/validate_repository_hygiene.py"
       - "tests/test_repository_hygiene.py"
       - ".gitignore"
@@ -14,6 +16,8 @@ on:
     paths:
       - ".github/workflows/**"
       - "governance/**"
+      - "brand_registry.json"
+      - "operations/branding/GITHUB_METADATA_TARGET.json"
       - "scripts/validate_repository_hygiene.py"
       - "tests/test_repository_hygiene.py"
       - ".gitignore"
@@ -82,12 +86,20 @@ jobs:
           import os
           from pathlib import Path
           data = json.loads(Path('repository-hygiene-evidence/metadata.json').read_text(encoding='utf-8'))
-          expected_description = 'ПРАКСЕЛЬТА — управляемое продвижение локальных услуг и учёт обращений'
-          expected_homepage = 'https://m72692591-collab.github.io/praxelta-services/'
+          target = json.loads(Path('operations/branding/GITHUB_METADATA_TARGET.json').read_text(encoding='utf-8'))
+          registry = json.loads(Path('brand_registry.json').read_text(encoding='utf-8'))
+          assert target['schema_version'] == 2
+          assert target['repository'] == 'm72692591-collab/praxelta-services'
+          assert target['description'] == registry['github_metadata']['required_description']
+          assert registry['canonical_brand']['owner_approved'] is True
+          assert registry['canonical_brand']['canonical_ru'] in target['description']
+          assert target['homepage'] == 'https://m72692591-collab.github.io/praxelta-services/'
+          assert target['default_branch'] == 'main'
+          assert target['archived'] is False
           exact = (
-              data['description'] == expected_description
-              and data['homepage'] == expected_homepage
-              and data['default_branch'] == 'main'
+              data['description'] == target['description']
+              and data['homepage'] == target['homepage']
+              and data['default_branch'] == target['default_branch']
               and data['archived'] is False
           )
           with Path(os.environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as stream:
@@ -115,7 +127,7 @@ jobs:
             echo
             echo 'Требуемое описание:'
             echo
-            echo '`ПРАКСЕЛЬТА — управляемое продвижение локальных услуг и учёт обращений`'
+            python -c "import json; print(json.load(open('operations/branding/GITHUB_METADATA_TARGET.json', encoding='utf-8'))['description'])"
             echo
             echo 'Текущее API-состояние:'
             echo

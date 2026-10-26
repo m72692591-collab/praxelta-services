@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - "brand_registry.json"
       - ".github/workflows/repository-metadata-gate-v2.yml"
   push:
     branches:
       - main
     paths:
       - "operations/branding/GITHUB_METADATA_TARGET.json"
+      - "brand_registry.json"
       - ".github/workflows/repository-metadata-gate-v2.yml"
   workflow_dispatch:
 
@@ -53,10 +55,13 @@ jobs:
           from pathlib import Path
 
           target = json.loads(Path(os.environ['TARGET_PATH']).read_text(encoding='utf-8'))
+          registry = json.loads(Path('brand_registry.json').read_text(encoding='utf-8'))
           current = json.loads(Path(os.environ['RUNNER_TEMP'], 'current.json').read_text(encoding='utf-8'))
           assert target['schema_version'] == 2
           assert target['repository'] == os.environ['REPOSITORY_SLUG']
-          assert target['description'] == 'Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ'
+          assert target['description'] == registry['github_metadata']['required_description']
+          assert registry['canonical_brand']['owner_approved'] is True
+          assert registry['canonical_brand']['canonical_ru'] in target['description']
           assert target['homepage'] == 'https://m72692591-collab.github.io/praxelta-services/'
           assert target['default_branch'] == 'main'
           assert target['verification']['patch_is_not_completion'] is True

@@ -18,6 +18,9 @@ STATUS = Path(
 SUCCESSOR = Path(
     "operations/salvage/local-service-growth-v3/ACTIVE_PRODUCT_V2_SUCCESSOR.json"
 )
+BRAND_SUCCESSOR = Path(
+    "operations/salvage/local-service-growth-v3/MAESTRO_BRAND_SUCCESSOR_V1.json"
+)
 PRODUCT_V2 = Path(
     "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V2.json"
 )
@@ -38,6 +41,15 @@ EXPECTED_PATHS = {
     "styles.css",
 }
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
+BRAND_SUCCESSOR_PATHS = {
+    "AGENTS.md",
+    "README.md",
+    "SECURITY.md",
+    "docs/IMPLEMENTATION_PLAN.md",
+    "docs/OUTREACH_COPYBOOK.md",
+    "index.html",
+    "styles.css",
+}
 
 
 def load(path: Path) -> dict[str, Any]:
@@ -152,6 +164,58 @@ def validate_successor(
     return errors
 
 
+def read_brand_successor(
+    root: Path,
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    """Record a reviewed rebrand without rewriting the August evidence chain."""
+    path = root / BRAND_SUCCESSOR
+    if not path.is_file():
+        return {}, []
+    try:
+        data = load(path)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        return {}, [f"brand successor invalid: {exc}"]
+    errors: list[str] = []
+    expected = {
+        "schema_version": 1,
+        "status": "BRAND_ONLY_SUCCESSOR",
+        "historical_resolution": RESOLUTION.as_posix(),
+        "previous_product_successor": SUCCESSOR.as_posix(),
+        "brand_ru": "МАЭСТРО",
+        "brand_latin": "MAESTRO",
+        "history_rewrite": False,
+        "branch_deletion": False,
+        "deployment_performed": False,
+        "payments_enabled": False,
+        "live_lead_collection_enabled": False,
+    }
+    for key, value in expected.items():
+        if data.get(key) != value:
+            errors.append(f"brand successor contract drift: {key}")
+    source_commit = data.get("source_commit")
+    if not isinstance(source_commit, str) or SHA_PATTERN.fullmatch(source_commit) is None:
+        errors.append("brand successor source commit invalid")
+    changes = data.get("changes")
+    if not isinstance(changes, list):
+        return {}, errors + ["brand successor changes must be a list"]
+    entries: dict[str, dict[str, Any]] = {}
+    for row in changes:
+        if not isinstance(row, dict) or not isinstance(row.get("path"), str):
+            errors.append("brand successor change must contain a path")
+            continue
+        name = row["path"]
+        if name in entries:
+            errors.append(f"duplicate brand successor path: {name}")
+        entries[name] = row
+        for key in ("previous_blob", "successor_blob"):
+            value = row.get(key)
+            if not isinstance(value, str) or SHA_PATTERN.fullmatch(value) is None:
+                errors.append(f"brand successor invalid {key}: {name}")
+    if set(entries) != BRAND_SUCCESSOR_PATHS:
+        errors.append("brand successor path set drift")
+    return entries, errors
+
+
 def validate(
     root: Path,
     resolution: dict[str, Any],
@@ -211,6 +275,8 @@ def validate(
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             errors.append(f"active-product successor invalid: {exc}")
 
+    brand_changes, brand_errors = read_brand_successor(root)
+    errors.extend(brand_errors)
     successor_consumed = False
     for row in rows:
         if not isinstance(row, dict):
@@ -235,7 +301,22 @@ def validate(
         except (OSError, subprocess.CalledProcessError) as exc:
             errors.append(f"cannot hash current path {path}: {exc}")
         else:
-            if actual_current != current_blob:
+            # First verify the current rebrand, then validate its unchanged
+            # predecessor through the original historical resolution.
+            previous_current = actual_current
+            if path in brand_changes:
+                change = brand_changes[path]
+                previous_blob = (
+                    successor.get("successor_blob")
+                    if path == "index.html" and successor is not None
+                    else current_blob
+                )
+                if change.get("previous_blob") != previous_blob:
+                    errors.append(f"current blob drift: {path}: brand successor predecessor mismatch")
+                if change.get("successor_blob") != actual_current:
+                    errors.append(f"current blob drift: {path}: brand successor blob mismatch")
+                previous_current = change.get("previous_blob")
+            if previous_current != current_blob:
                 if (
                     path == "index.html"
                     and successor is not None
@@ -247,7 +328,7 @@ def validate(
                             successor,
                             path,
                             current_blob,
-                            actual_current,
+                            previous_current,
                         )
                     )
                     successor_consumed = True

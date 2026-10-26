@@ -56,8 +56,8 @@ def validate(
     )
 
     project = decision.get("project") or {}
-    require(project.get("brand_ru") == "ПРАКСЕЛЬТА", "Russian brand drift", errors)
-    require(project.get("brand_latin") == "PRAXELTA", "Latin brand drift", errors)
+    require(project.get("brand_ru") == "МАЭСТРО", "Russian brand drift", errors)
+    require(project.get("brand_latin") == "MAESTRO", "Latin brand drift", errors)
     require(
         project.get("independent_from") == "ANIMA TACTUS",
         "project separation drift",

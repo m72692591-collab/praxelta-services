@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "status": "BRAND_ONLY_SUCCESSOR",
+  "historical_resolution": "operations/salvage/local-service-growth-v3/DIVERGED_RESOLUTION.json",
+  "previous_product_successor": "operations/salvage/local-service-growth-v3/ACTIVE_PRODUCT_V2_SUCCESSOR.json",
+  "source_commit": "f90b3f833f6b522c7e13bfd8b3adb2ecc84e4ffd",
+  "brand_ru": "МАЭСТРО",
+  "brand_latin": "MAESTRO",
+  "changes": [
+    {
+      "path": "AGENTS.md",
+      "previous_blob": "9628faba8f854a3bbc83d8ecab1884be19f43467",
+      "successor_blob": "a1f95dba9cfb84d8bbf935919946855e9808fac8"
+    },
+    {
+      "path": "README.md",
+      "previous_blob": "8bacde9416fe48106446af7b84bc5924307c29c8",
+      "successor_blob": "832c142af5a4546104cee32b21ef1a0164500f17"
+    },
+    {
+      "path": "SECURITY.md",
+      "previous_blob": "47c2e613cd954227d76ccb798301ab4ddabdbae6",
+      "successor_blob": "4c2583caefa18fe7897166aec21bffb942e9540c"
+    },
+    {
+      "path": "docs/IMPLEMENTATION_PLAN.md",
+      "previous_blob": "74561423c382b77def46a118970b30374cb25b2d",
+      "successor_blob": "e905d19ff7a82452014285c05b48cd321f141a64"
+    },
+    {
+      "path": "docs/OUTREACH_COPYBOOK.md",
+      "previous_blob": "8783c76b4880310c86d0c7020e29caf40bae425a",
+      "successor_blob": "b3ae2b4ff0c00fc9e0de6d823c52e300b204e15f"
+    },
+    {
+      "path": "index.html",
+      "previous_blob": "6b338f78c75bfb6b14577cfb4438b9d96a715d06",
+      "successor_blob": "a0f39f69ef9761eefe6dfacf902390290c5a61fa"
+    },
+    {
+      "path": "styles.css",
+      "previous_blob": "bd4fdb55ab1e78d41a40b47f9ce61878969a9914",
+      "successor_blob": "00918ef5c0cee14d8c0611fcf580eabc725e334c"
+    }
+  ],
+  "history_rewrite": false,
+  "branch_deletion": false,
+  "deployment_performed": false,
+  "payments_enabled": false,
+  "live_lead_collection_enabled": false,
+  "rationale": "Сравнение семи текущих файлов с историческими Git blobs подтверждает только уже внесённое переименование ПРАКСЕЛЬТЫ в МАЭСТРО. Для index.html сохранён промежуточный переход ACTIVE_PRODUCT_V2_SUCCESSOR. Исторические решения, исходные hashes, цены, согласия, правила публикации и неподтверждённые коммерческие статусы не переписываются. Эта запись фиксирует проверенную преемственность файлов и не является разрешением на публикацию, платежи или отправку сообщений."
+}

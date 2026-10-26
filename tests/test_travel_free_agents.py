@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 import json
 from pathlib import Path
+import shutil
 
 from agents import travel_free_agents as agents
 
@@ -21,6 +22,45 @@ def test_public_travel_javascript_has_no_network_or_storage() -> None:
     result = agents.check_public_security(ROOT)
     assert result.status == "PASS", result.details
     assert result.metrics["violations"] == 0
+
+
+def copy_public_security_files(target: Path) -> None:
+    for name in (
+        "brand_registry.json", "travel-selection.html", "travel-pilot.html",
+        "travel-selection.js", "travel-pilot.js", "travel-selection-privacy.html",
+        "travel-selection-terms.html", "travel-selection-disclosure.html",
+    ):
+        shutil.copyfile(ROOT / name, target / name)
+
+
+def test_legal_pages_must_contain_the_registered_brand(tmp_path) -> None:
+    copy_public_security_files(tmp_path)
+    page = tmp_path / "travel-selection-privacy.html"
+    brand = agents.load_json(tmp_path / "brand_registry.json")["canonical_brand"]["canonical_ru"]
+    page.write_text(page.read_text(encoding="utf-8").replace(brand, "ДРУГОЙ ПРОЕКТ"), encoding="utf-8")
+    result = agents.check_public_security(tmp_path)
+    assert result.status == "FAIL"
+    assert "travel-selection-privacy.html: canonical brand absent" in result.details
+
+
+def test_missing_registered_brand_is_a_critical_failure(tmp_path) -> None:
+    copy_public_security_files(tmp_path)
+    registry = agents.load_json(tmp_path / "brand_registry.json")
+    registry["canonical_brand"]["canonical_ru"] = ""
+    (tmp_path / "brand_registry.json").write_text(json.dumps(registry), encoding="utf-8")
+    result = agents.check_public_security(tmp_path)
+    assert result.status == "FAIL"
+    assert result.critical is True
+    assert any("brand_registry.json" in detail for detail in result.details)
+
+
+def test_registered_brand_does_not_allow_browser_network_access(tmp_path) -> None:
+    copy_public_security_files(tmp_path)
+    with (tmp_path / "travel-selection.js").open("a", encoding="utf-8") as handle:
+        handle.write("\nfetch('/unexpected-network-request');\n")
+    result = agents.check_public_security(tmp_path)
+    assert result.status == "FAIL"
+    assert "travel-selection.js: forbidden primitive fetch(" in result.details
 
 
 def test_public_repository_has_no_real_secret_patterns() -> None:

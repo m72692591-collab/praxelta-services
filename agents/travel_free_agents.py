@@ -143,6 +143,15 @@ def check_required_files(root: Path, config: dict[str, Any]) -> AgentResult:
 def check_public_security(root: Path) -> AgentResult:
     failures: list[str] = []
     checked = 0
+    canonical_brand = ""
+    try:
+        brand = load_json(root / "brand_registry.json")["canonical_brand"]
+        value = brand.get("canonical_ru")
+        if not isinstance(value, str) or not value.strip() or brand.get("owner_approved") is not True:
+            raise ValueError("approved canonical Russian brand is missing")
+        canonical_brand = value.strip().casefold()
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        failures.append(f"brand_registry.json: {error}")
 
     for name in ("travel-selection.html", "travel-pilot.html"):
         path = root / name
@@ -186,7 +195,7 @@ def check_public_security(root: Path) -> AgentResult:
             continue
         checked += 1
         text = path.read_text(encoding="utf-8").casefold()
-        if "праксельта" not in text:
+        if canonical_brand and canonical_brand not in text:
             failures.append(f"{name}: canonical brand absent")
 
     status = "FAIL" if failures else "PASS"
