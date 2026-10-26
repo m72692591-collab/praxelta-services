@@ -47,3 +47,17 @@ footer{background:#030913;color:#b4c1d8;border-color:rgba(173,196,225,.2)}
 #lead{position:relative;overflow:hidden}#lead .lead-photo{position:absolute;inset:0 50% 0 0;background:linear-gradient(90deg,rgba(4,10,21,.1),rgba(4,10,21,.86)),url('hero-team.png') 65% center/cover no-repeat;opacity:.7}#lead .formwrap{position:relative}
 @media(max-width:980px){.scene-layout{grid-template-columns:1fr}.scene-frame{height:420px}#products .grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.visual-stripe{margin:-58px 0 52px;height:360px}.visual-stripe>div{left:22px;right:22px;bottom:10%}.visual-stripe strong{font-size:36px}#products .grid3{grid-template-columns:1fr}#products .grid3 .card{min-height:300px}.scene-frame{height:350px}.scene-layout{gap:24px}#portfolio .portfolio-photo,#portfolio .portfolio-3d{min-height:440px}#lead .lead-photo{inset:0;background:linear-gradient(rgba(4,10,21,.72),rgba(4,10,21,.94)),url('hero-team.png') 65% center/cover no-repeat}}
+/* Nine distinct editorial panels share one atlas, with one crop per service. */
+#products .grid3 .card{min-height:380px;padding-top:220px;justify-content:flex-end;background:#0c1829!important;border-color:#36506c}
+#products .grid3 .card:before{inset:0 0 auto;height:205px;background-image:url('services-atlas.png');background-size:305% 341%;background-repeat:no-repeat;border-radius:19px 19px 0 0}
+#products .grid3 .card:nth-child(1):before{background-position:0% 0%}
+#products .grid3 .card:nth-child(2):before{background-position:50% 0%}
+#products .grid3 .card:nth-child(3):before{background-position:100% 0%}
+#products .grid3 .card:nth-child(4):before{background-position:0% 46%}
+#products .grid3 .card:nth-child(5):before{background-position:50% 46%}
+#products .grid3 .card:nth-child(6):before{background-position:100% 46%}
+#products .grid3 .card:nth-child(7):before{background-position:0% 90%}
+#products .grid3 .card:nth-child(8):before{background-position:50% 90%}
+#products .grid3 .card:nth-child(9):before{background-position:100% 90%}
+#products .grid3 .card h3{margin-bottom:5px}#products .grid3 .card p{font-size:13px}#products .grid3 .card .mini{margin-top:7px}
+@media(max-width:640px){#products .grid3 .card{min-height:380px}#products .grid3 .card:before{height:210px}}
