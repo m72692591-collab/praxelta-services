@@ -75,3 +75,4 @@ footer{background:#030913;color:#b4c1d8;border-color:rgba(173,196,225,.2)}
 #portfolio .card.portfolio-leads>span:first-child{color:#65ead8!important}
 #portfolio .card.portfolio-leads .tag{color:#e3faf7}
 #portfolio .card.big.portfolio-photo>span:first-child{color:#ffbd84!important;text-shadow:0 2px 8px #030b18}
+@media(max-width:640px){body.viewing-3d .mobilecta,body.viewing-3d .maestro-genie-launcher{visibility:hidden;pointer-events:none}}
