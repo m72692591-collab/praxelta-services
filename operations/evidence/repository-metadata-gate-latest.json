@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
-  "checked_at_utc": "2026-08-20T01:40:21.283753+00:00",
+  "checked_at_utc": "2026-10-26T12:06:37.507589+00:00",
   "repository": "m72692591-collab/praxelta-services",
   "status": "EXTERNAL_BLOCKED_PROTECTED_ADMIN_EXECUTION_REQUIRED",
-  "target_description": "Публичная витрина и рабочие материалы ПРАКСЕЛЬТЫ",
+  "target_description": "Публичная витрина и рабочие материалы МАЭСТРО",
   "actual_description": "Публичная витрина услуг ПОТОК",
   "target_homepage": "https://m72692591-collab.github.io/praxelta-services/",
   "actual_homepage": "https://m72692591-collab.github.io/praxelta-services/",
