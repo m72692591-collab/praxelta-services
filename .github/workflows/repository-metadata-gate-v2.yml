@@ -1,18 +1,7 @@
 name: PRAXELTA repository metadata gate V2
 
+# Protected administration is manual; repository-hygiene checks live metadata on changes.
 on:
-  pull_request:
-    paths:
-      - "operations/branding/GITHUB_METADATA_TARGET.json"
-      - "brand_registry.json"
-      - ".github/workflows/repository-metadata-gate-v2.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "operations/branding/GITHUB_METADATA_TARGET.json"
-      - "brand_registry.json"
-      - ".github/workflows/repository-metadata-gate-v2.yml"
   workflow_dispatch:
 
 permissions:

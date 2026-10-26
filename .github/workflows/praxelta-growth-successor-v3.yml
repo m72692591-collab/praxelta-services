@@ -1,32 +1,7 @@
 name: PRAXELTA growth successor V3
 
+# Historical integration is reproduced manually; public quality checks current contracts.
 on:
-  pull_request:
-    paths:
-      - "scripts/safe_salvage_from_branch.py"
-      - "tests/test_safe_salvage_from_branch.py"
-      - "scripts/validate_local_growth_resolution.py"
-      - "tests/test_local_growth_resolution.py"
-      - "scripts/validate_local_growth_product_decision.py"
-      - "tests/test_local_growth_product_decision.py"
-      - ".github/workflows/praxelta-growth-successor-v3.yml"
-      - "operations/salvage/local-service-growth-v3/**"
-      - "operations/products/LOCAL_GROWTH_PRODUCT_DECISION_V1.json"
-      - "docs/**"
-      - "local-growth*"
-      - "pricing.json"
-      - "scripts/**"
-      - "output/pdf/**"
-      - "index.html"
-      - "offer.html"
-      - "order.js"
-      - "payment-*.html"
-      - "privacy.html"
-      - "refund.html"
-      - "sample.html"
-      - "sitemap.xml"
-      - "styles.css"
-      - "terms.html"
   workflow_dispatch:
 
 permissions:

@@ -3,26 +3,36 @@ name: PRAXELTA travel free agents
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 4 * * *"
+    - cron: "17 4 * * 1"
   pull_request:
     paths:
-      - "travel-selection.*"
-      - "travel-pilot.*"
+      - "travel-selection*"
+      - "travel-pilot*"
       - "travel-pilot-content-pack.json"
+      - "brand_registry.json"
       - "agents/**"
       - "operations/travel-selection/**"
+      - "scripts/check_public_site.py"
+      - "scripts/test_travel_selection_js.mjs"
       - "tests/test_travel_free_agents.py"
+      - "tests/test_travel_pilot_static.py"
+      - "requirements-dev.txt"
       - ".github/workflows/travel-free-agents.yml"
   push:
     branches:
       - main
     paths:
-      - "travel-selection.*"
-      - "travel-pilot.*"
+      - "travel-selection*"
+      - "travel-pilot*"
       - "travel-pilot-content-pack.json"
+      - "brand_registry.json"
       - "agents/**"
       - "operations/travel-selection/**"
+      - "scripts/check_public_site.py"
+      - "scripts/test_travel_selection_js.mjs"
       - "tests/test_travel_free_agents.py"
+      - "tests/test_travel_pilot_static.py"
+      - "requirements-dev.txt"
       - ".github/workflows/travel-free-agents.yml"
 
 permissions:

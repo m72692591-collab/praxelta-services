@@ -1,19 +1,7 @@
 name: Deploy and verify PRAXELTA Pages
 
+# Legacy deployment audit; the built-in Pages workflow publishes main.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "*.html"
-      - "*.css"
-      - "*.js"
-      - "*.json"
-      - "*.xml"
-      - "output/pdf/**"
-      - "scripts/check_public_site.py"
-      - "scripts/test_service_network_js.mjs"
-      - ".github/workflows/deploy-praxelta-pages.yml"
   workflow_dispatch:
 
 permissions:

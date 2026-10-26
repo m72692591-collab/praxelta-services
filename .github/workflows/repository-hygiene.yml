@@ -22,8 +22,6 @@ on:
       - "tests/test_repository_hygiene.py"
       - ".gitignore"
   workflow_dispatch:
-  schedule:
-    - cron: "47 */6 * * *"
 
 permissions:
   contents: read
