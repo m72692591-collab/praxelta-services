@@ -1,0 +1,127 @@
+name: PRAXELTA V5 setup diagnostics
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/diagnose-v5-setup.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  diagnose-windows-2022:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Download the exact V5 artifact from the full run
+        uses: actions/download-artifact@v4
+        with:
+          name: praxelta-exact-v5-11
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 32426344123
+          path: artifact
+
+      - name: Extract exact V5 release and run bootstrap directly
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $TranscriptPath = Join-Path $PWD 'v5-diagnostic-transcript.txt'
+          $ErrorPath = Join-Path $PWD 'v5-diagnostic-error.txt'
+          Start-Transcript -LiteralPath $TranscriptPath -Force | Out-Null
+          trap {
+            ($_ | Format-List * -Force | Out-String) | Set-Content -LiteralPath $ErrorPath -Encoding UTF8
+            try { Stop-Transcript | Out-Null } catch { }
+            throw $_
+          }
+
+          Write-Host '=== DOWNLOADED ARTIFACT TREE ==='
+          Get-ChildItem -LiteralPath (Join-Path $PWD 'artifact') -Recurse -Force | ForEach-Object { Write-Host $_.FullName }
+          $matches = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'artifact') -Recurse -File -Filter 'PRAXELTA_ONE_CLICK_INSTALL_V5.cmd')
+          if ($matches.Count -ne 1) { throw "V5_ARTIFACT_COUNT_$($matches.Count)" }
+          $v5 = $matches[0].FullName
+          $v5Hash = (Get-FileHash -LiteralPath $v5 -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "V5_PATH=$v5"
+          Write-Host "V5_HASH=$v5Hash"
+
+          $bytes = [IO.File]::ReadAllBytes($v5)
+          $markerText = '__PRAXELTA_PAYLOAD_5_94C2F7E5D3174B76A96D004979E0E278__'
+          $marker = [Text.Encoding]::ASCII.GetBytes($markerText + "`r`n")
+          $index = -1
+          for ($i = $bytes.Length - $marker.Length; $i -ge 0; $i--) {
+            $ok = $true
+            for ($j = 0; $j -lt $marker.Length; $j++) {
+              if ($bytes[$i + $j] -ne $marker[$j]) { $ok = $false; break }
+            }
+            if ($ok) { $index = $i; break }
+          }
+          if ($index -lt 0) { throw 'V5_MARKER_MISSING' }
+          $payload = New-Object byte[] ($bytes.Length - ($index + $marker.Length))
+          [Array]::Copy($bytes, $index + $marker.Length, $payload, 0, $payload.Length)
+
+          $work = Join-Path $env:RUNNER_TEMP 'praxelta-v5-diagnostic'
+          $outerZip = Join-Path $work 'outer.zip'
+          $outer = Join-Path $work 'outer'
+          $inner = Join-Path $work 'inner'
+          New-Item -ItemType Directory -Path $outer -Force | Out-Null
+          New-Item -ItemType Directory -Path $inner -Force | Out-Null
+          [IO.File]::WriteAllBytes($outerZip, $payload)
+          Expand-Archive -LiteralPath $outerZip -DestinationPath $outer -Force
+
+          $innerMatches = @(Get-ChildItem -LiteralPath $outer -Filter 'praxelta-travel-ops-0.3.0.zip' -File -Recurse)
+          if ($innerMatches.Count -ne 1) { throw "INNER_RELEASE_COUNT_$($innerMatches.Count)" }
+          $innerZip = $innerMatches[0].FullName
+          $innerHash = (Get-FileHash -LiteralPath $innerZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "INNER_HASH=$innerHash"
+          if ($innerHash -ne '396551a0ef5e0e2af22e849d12b93a839ec213be27f7e65b53896fda3e9ecf33') {
+            throw "INNER_HASH_MISMATCH_$innerHash"
+          }
+          Expand-Archive -LiteralPath $innerZip -DestinationPath $inner -Force
+          $roots = @(Get-ChildItem -LiteralPath $inner -Directory -Filter 'praxelta-travel-ops-0.3.0' -Recurse)
+          if ($roots.Count -ne 1) { throw "INNER_ROOT_COUNT_$($roots.Count)" }
+          $root = $roots[0].FullName
+          Write-Host "INNER_ROOT=$root"
+
+          $utf8Bom = New-Object Text.UTF8Encoding($true)
+          Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.ps1' | ForEach-Object {
+            $text = [IO.File]::ReadAllText($_.FullName, [Text.Encoding]::UTF8)
+            [IO.File]::WriteAllText($_.FullName, $text, $utf8Bom)
+          }
+
+          Write-Host '=== COMMAND DISCOVERY ==='
+          Get-Command py.exe, python.exe, python3.exe -ErrorAction SilentlyContinue | Format-List Name,Source,Version
+          Write-Host '=== PYTHON VERSIONS ==='
+          foreach ($command in @('py.exe -3 --version', 'python.exe --version', 'python3.exe --version')) {
+            Write-Host "> $command"
+            cmd.exe /d /c $command
+            Write-Host "exit=$LASTEXITCODE"
+          }
+
+          Write-Host '=== BOOTSTRAP PYTHON DIRECT ==='
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $root 'scripts\bootstrap_python.ps1')
+          $bootstrapCode = [int]$LASTEXITCODE
+          Write-Host "BOOTSTRAP_EXIT=$bootstrapCode"
+          if ($bootstrapCode -ne 0) { throw "BOOTSTRAP_FAILED_$bootstrapCode" }
+
+          Write-Host '=== SETUP WINDOWS DIRECT ==='
+          $env:PRAXELTA_CI = '1'
+          & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File (Join-Path $root 'scripts\setup_windows.ps1')
+          $setupCode = [int]$LASTEXITCODE
+          Write-Host "SETUP_EXIT=$setupCode"
+          if ($setupCode -ne 0) { throw "SETUP_FAILED_$setupCode" }
+
+          Write-Host 'PRAXELTA_V5_DIRECT_SETUP_DIAGNOSTIC_PASS'
+          Stop-Transcript | Out-Null
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: praxelta-v5-diagnostic-${{ github.run_number }}
+          path: |
+            v5-diagnostic-transcript.txt
+            v5-diagnostic-error.txt
+            ${{ runner.temp }}\praxelta-v5-diagnostic
+          if-no-files-found: warn
+          retention-days: 14
