@@ -1,10 +1,7 @@
 name: PRAXELTA public quality
 
+# Paused automatic test notifications per owner request on 2026-11-01.
 on:
-  pull_request:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
