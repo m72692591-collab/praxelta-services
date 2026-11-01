@@ -1,18 +1,7 @@
 name: PRAXELTA repository metadata admin contract
 
+# Owner pause 2026-11-01: manual repository metadata tests.
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/repository-metadata-admin-update.yml"
-      - ".github/workflows/repository-metadata-admin-contract.yml"
-      - "tests/test_repository_metadata_admin_workflow.py"
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/repository-metadata-admin-update.yml"
-      - ".github/workflows/repository-metadata-admin-contract.yml"
-      - "tests/test_repository_metadata_admin_workflow.py"
   workflow_dispatch:
 
 permissions:
