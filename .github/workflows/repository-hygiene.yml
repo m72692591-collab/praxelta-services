@@ -1,26 +1,7 @@
 name: PRAXELTA repository hygiene
 
+# Owner maintenance: pause automatic CI notifications and runner usage (2026-11-01).
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/**"
-      - "governance/**"
-      - "brand_registry.json"
-      - "operations/branding/GITHUB_METADATA_TARGET.json"
-      - "scripts/validate_repository_hygiene.py"
-      - "tests/test_repository_hygiene.py"
-      - ".gitignore"
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/**"
-      - "governance/**"
-      - "brand_registry.json"
-      - "operations/branding/GITHUB_METADATA_TARGET.json"
-      - "scripts/validate_repository_hygiene.py"
-      - "tests/test_repository_hygiene.py"
-      - ".gitignore"
   workflow_dispatch:
 
 permissions:
