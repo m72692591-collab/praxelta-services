@@ -1,12 +1,7 @@
 name: ANIMA TACTUS VK source validation
 
+# Owner pause 2026-11-01: manual ANIMA VK source test only.
 on:
-  pull_request:
-    paths:
-      - "scripts/vk_anima_manager.py"
-      - "tests/test_vk_anima_manager.py"
-      - "operations/vk-anima-tactus/content-plan.json"
-      - ".github/workflows/vk-anima-manager.yml"
   workflow_dispatch:
 
 permissions:
