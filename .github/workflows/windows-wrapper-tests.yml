@@ -1,20 +1,7 @@
 name: PRAXELTA Windows wrapper tests
 
+# Owner maintenance: pause automatic CI notifications and runner usage (2026-11-01).
 on:
-  pull_request:
-    paths:
-      - "scripts/test_praxelta_self_extract_v13.cmd"
-      - "scripts/test_praxelta_finalizer_repair_v14.ps1"
-      - ".github/workflows/quality.yml"
-      - ".github/workflows/windows-wrapper-tests.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "scripts/test_praxelta_self_extract_v13.cmd"
-      - "scripts/test_praxelta_finalizer_repair_v14.ps1"
-      - ".github/workflows/quality.yml"
-      - ".github/workflows/windows-wrapper-tests.yml"
   workflow_dispatch:
 
 permissions:
