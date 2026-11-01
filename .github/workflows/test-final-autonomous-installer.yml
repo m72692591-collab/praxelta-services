@@ -1,10 +1,7 @@
 name: PRAXELTA final autonomous installer
 
+# Owner maintenance: pause automatic CI notifications and runner usage (2026-11-01).
 on:
-  pull_request:
-    paths:
-      - "scripts/praxelta-final-autoinstall.ps1"
-      - ".github/workflows/test-final-autonomous-installer.yml"
   workflow_dispatch:
 
 permissions:
