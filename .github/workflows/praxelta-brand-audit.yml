@@ -1,10 +1,7 @@
 name: PRAXELTA brand audit
 
+# Owner pause 2026-11-01: diagnostic runs only on request.
 on:
-  pull_request:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
