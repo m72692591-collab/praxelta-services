@@ -1,20 +1,7 @@
 name: PRAXELTA repository metadata updater tests
 
+# Owner maintenance: pause automatic CI notifications and runner usage (2026-11-01).
 on:
-  pull_request:
-    paths:
-      - "RUN_UPDATE_GITHUB_DESCRIPTION.cmd"
-      - "scripts/update_github_description.ps1"
-      - "tests/test_repository_metadata_updater.py"
-      - ".github/workflows/repository-metadata-updater-tests.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "RUN_UPDATE_GITHUB_DESCRIPTION.cmd"
-      - "scripts/update_github_description.ps1"
-      - "tests/test_repository_metadata_updater.py"
-      - ".github/workflows/repository-metadata-updater-tests.yml"
   workflow_dispatch:
 
 permissions:
