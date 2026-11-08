@@ -6,3 +6,21 @@ __pycache__/
 tmp/
 *.pyc
 .praxelta-local/
+
+# Keep private state and debug artifacts out of public Git.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.sqlite3
+*.db
+*.log
+*.map
+secrets/
+private/
+private-archive/
+storage-state*.json
+cookies*.json

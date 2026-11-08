@@ -2,7 +2,6 @@
   "schema_version": 2,
   "decision_id": "PRAXELTA_MANAGED_PROMOTION_ACTIVE_PRODUCT_V2",
   "decision_date": "2026-08-20",
-  "decision_source": "EXPLICIT_OWNER_CLOSURE_DIRECTIVE",
   "status": "ACTIVE_PRODUCT_PRELAUNCH",
   "project": {
     "brand_ru": "МАЭСТРО",
@@ -36,17 +35,7 @@
     "written_order_required_before_payment": true
   },
   "local_order_ledger": {
-    "status": "IMPLEMENTED_LOCAL_ONLY_PENDING_PHYSICAL_USE",
-    "script": "scripts/praxelta_order_ledger.py",
-    "storage": ".praxelta-local/order-ledger/orders.sqlite3",
     "tracked_in_git": false,
-    "deduplication": [
-      "unique order_id",
-      "unique payment_id_sha256",
-      "unique idempotency_key"
-    ],
-    "raw_customer_contact_stored": false,
-    "raw_payment_payload_stored": false,
     "revenue_requires_reconciliation": true,
     "profit_requires_direct_costs": true
   },
@@ -65,13 +54,9 @@
   },
   "deployment": {
     "status": "REDEPLOY_REQUIRED_FOR_V2",
-    "public_url": "https://m72692591-collab.github.io/praxelta-services/",
-    "source_commit": null,
-    "deployment_receipt": null,
-    "exact_live_manifest_required": true
+    "source_commit": null
   },
   "metadata": {
-    "target": "operations/branding/GITHUB_METADATA_TARGET.json",
     "patch_completed": false,
     "repeat_api_get_verified": false
   },
@@ -80,5 +65,6 @@
     "shared_customer_data_with_anima_tactus": false,
     "shared_webhook_secret_with_anima_tactus": false,
     "shared_order_namespace_with_anima_tactus": false
-  }
+  },
+  "public_notice": "Публичные условия и ограничения запуска. Внутренние инструкции и устройство системы в этом файле не публикуются."
 }
